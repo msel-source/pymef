@@ -390,9 +390,9 @@ void	*e_realloc(void *ptr, size_t n_bytes, const si1 *function, si4 line, ui4 be
 #define TIME_SERIES_METADATA_UNITS_DESCRIPTION_OFFSET			8768		// utf8[31]
 #define TIME_SERIES_METADATA_UNITS_DESCRIPTION_BYTES			128		// utf8[31]
 #define TIME_SERIES_METADATA_MAXIMUM_NATIVE_SAMPLE_VALUE_OFFSET		8896		// ssf8
-#define TIME_SERIES_METADATA_MAXIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY	(nan(NULL))	// NOTE this value must be tested with isnan(), or an equivalent function, rather than ==
+#define TIME_SERIES_METADATA_MAXIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY	NAN // (nan(NULL))	// NOTE this value must be tested with isnan(), or an equivalent function, rather than ==
 #define TIME_SERIES_METADATA_MINIMUM_NATIVE_SAMPLE_VALUE_OFFSET		8904		// sf8
-#define TIME_SERIES_METADATA_MINIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY	(nan(NULL))	// NOTE this value must be tested with isnan(), or an equivalent function, rather than ==
+#define TIME_SERIES_METADATA_MINIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY	NAN //(nan(NULL))	// NOTE this value must be tested with isnan(), or an equivalent function, rather than ==
 #define TIME_SERIES_METADATA_START_SAMPLE_OFFSET			8912
 #define TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY			-1
 #define TIME_SERIES_METADATA_NUMBER_OF_SAMPLES_OFFSET			8920		// si8
