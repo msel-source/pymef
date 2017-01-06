@@ -3737,7 +3737,7 @@ void	free_file_processing_struct(FILE_PROCESSING_STRUCT *fps)
         if (fps->raw_data != NULL && fps->raw_data_bytes > 0)
                 free(fps->raw_data);
         
-	if (fps->directives.close_file == MEF_TRUE)
+	if (fps->fp != NULL && fps->directives.close_file == MEF_TRUE)
 		(void) fclose(fps->fp);
         
         free(fps);
