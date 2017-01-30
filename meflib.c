@@ -5761,7 +5761,7 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 	}
 	
 	for (i = 0; i < session->number_of_video_channels; ++i) {
-		chan = session->time_series_channels + i;
+		chan = session->video_channels + i;
 		cmd1 = chan->metadata.section_1;
 		smd1 = session->time_series_metadata.section_1;
 		cvmd = chan->metadata.video_section_2;
