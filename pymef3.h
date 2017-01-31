@@ -18,9 +18,11 @@
 
 // METADATA_SECTION_1 *map_python_md1(PyObject *);
 void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd2);
-void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2  *vmd2);
+void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2);
+void    map_python_vi(PyObject *vi_dict, VIDEO_INDEX *vi);
 void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3);
 
+// Mef record structures
 void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh);
 void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type);
 void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type);
