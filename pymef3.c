@@ -36,7 +36,13 @@ DONE - Create decomp mef and substitute read_ts_data(copy-paste from Dan's funct
 
 DONE - Fix occasional segfault when reading ts data (not needed since we will do decomp mef)
 
+Check if write record function closes the file
+
 Create appedn ts data function
+
+Extract segment number whe writing or appending data
+
+Check file closing in all functions
 
 Write the help docstrings
 
@@ -94,6 +100,10 @@ static char write_mef_ts_data_and_indices_docstring[] =
 static char write_mef_v_indices_docstring[] =
     "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
     
+/* Documentation to be read in Python - append functions*/
+static char append_ts_data_and_indeces_docstring[] =
+    "Appends ts data";
+
 /* Documentation to be read in Python - read functions*/
 static char read_mef_ts_data_docstring[] =
     "Reads .timd time series directory";
@@ -105,12 +115,14 @@ static char read_mef_segment_metadata_docstring[] =
 "Reads metadata of a mef segment";
 
 /* Pyhon object declaration - write functions*/
-
 static PyObject *write_mef_data_record(PyObject *self, PyObject *args);
 static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args);
 static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args);
 static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args);
 static PyObject *write_mef_v_indices(PyObject *self, PyObject *args);
+
+/* Pyhon object declaration - append functions*/
+static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - read functions*/
 static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
@@ -125,6 +137,7 @@ static PyMethodDef module_methods[] = {
     {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
     {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
     {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
+    {"append_ts_data_and_indeces", append_ts_data_and_indeces, METH_VARARGS, append_ts_data_and_indeces_docstring},
     {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
     {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
@@ -657,7 +670,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     si1    *py_level_2_password;
     ui1    lossy_flag;
     
-    si8     samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
+    si8    samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
 
     // Method specific
     PASSWORD_DATA           *pwd;
@@ -796,7 +809,6 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     max_samp = RED_NEGATIVE_INFINITY;
     block_samps = samps_per_mef_block;
     file_offset = UNIVERSAL_HEADER_BYTES; 
-    np_array_ptr = (si4 *) PyArray_DATA(raw_data);
 
     // Write the data and update the metadata
     while (samps_remaining) {
@@ -808,8 +820,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
         curr_time += time_inc;
         
-        np_array_ptr = (si4 *) PyArray_DATA(raw_data) + (tmd2->number_of_samples - samps_remaining);
-        memcpy(rps->original_data, np_array_ptr, block_samps * 4);
+        rps->original_data = rps->original_ptr = (si4 *) PyArray_DATA(raw_data) + (tmd2->number_of_samples - samps_remaining);
 
         // filter - comment out if don't want
         // filtps->data_length = block_samps;
@@ -852,6 +863,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
     }
+    tmd2->maximum_contiguous_blocks = tmd2->number_of_blocks;
 
     // Write the files
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
@@ -866,9 +878,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     free_file_processing_struct(metadata_fps);
     free_file_processing_struct(ts_data_fps);
     free_file_processing_struct(ts_idx_fps);
+    free_file_processing_struct(gen_fps);
     rps->block_header = NULL;
     rps->compressed_data = NULL;
     rps->original_data = NULL;
+    rps->original_ptr = NULL;
     RED_free_processing_struct(rps);
 
     return Py_None;
@@ -988,6 +1002,322 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 /************************************************************************************/
 /*************************  MEF modify/append functions  ****************************/
 /************************************************************************************/
+
+static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
+{
+    // Specified by user
+    PyObject    *raw_data;
+    si1    *py_file_path;
+    si1    *py_level_1_password;
+    si1    *py_level_2_password;
+    ui1    lossy_flag;
+    
+    si8    samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
+
+    // Method specific
+    PASSWORD_DATA           *pwd;
+    UNIVERSAL_HEADER    *uh;
+    FILE_PROCESSING_STRUCT  *gen_fps, *metadata_fps, *ts_idx_fps, *ts_data_fps;
+    TIME_SERIES_METADATA_SECTION_2  *tmd2;
+    TIME_SERIES_INDEX   *tsi;
+    RED_PROCESSING_STRUCT   *rps;
+    RED_BLOCK_HEADER    *block_header;
+    FILE_PROCESSING_DIRECTIVES     *gen_directives;
+
+    si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
+    si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
+    si4     i, max_samp, min_samp, *np_array_ptr;
+    si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset, orig_number_of_blocks;
+    sf8     curr_time, time_inc;
+
+    // initialize MEF library
+    (void) initialize_meflib();
+
+    // --- Parse the input --- 
+    if (!PyArg_ParseTuple(args,"ssslOb",
+                          &py_file_path, // full path including segment
+                          &py_level_1_password,
+                          &py_level_2_password,
+                          &samps_per_mef_block,
+                          &raw_data,
+                          &lossy_flag)){
+        return NULL;
+    }
+
+    gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
+    initialize_universal_header(gen_fps, MEF_TRUE, MEF_FALSE, MEF_TRUE);
+    uh = gen_fps->universal_header;
+    pwd = gen_fps->password_data = process_password_data(NULL, py_level_1_password, py_level_2_password, uh);
+
+    // Check for directory type
+    MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
+    extract_path_parts(file_path, path_out, name, type);
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+        // Segment - OK - extract segment number and check for time series
+        // ASK For this we sohuld parse the path OR ask user to specify this
+
+        // Copy the segment name for later use
+        MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
+
+        // TODO - extact segment number
+        MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
+        extract_path_parts(path_in, path_out, name, type);
+        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
+            // Get session name
+            MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
+            extract_path_parts(path_in, path_out, name, type);
+        }else{
+            //Fire an error that this is not time series directory - hence makes no sense to write metadata
+            PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
+            PyErr_Occurred();
+            return NULL;
+        }
+
+    }else{
+        //Fire an error that this is not segment directory - hence makes no sense to write metadata
+        PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
+        PyErr_Occurred();
+        return NULL;
+    }
+
+    PySys_WriteStdout("Passed the checks\n");
+   fflush(stdout);
+
+    // Create directives so that we can modify the files, not just read them?????
+    // gen_directives = &gen_fps->directives;
+    // gen_directives->open_mode = FPS_R_PLUS_OPEN_MODE;
+
+
+    // Read in the metadata file
+    MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_METADATA_FILE_TYPE_STRING);
+    metadata_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
+    tmd2 = metadata_fps->metadata.time_series_section_2;
+
+    
+    PySys_WriteStdout("NUmber of blocks is %d\n",tmd2->number_of_blocks);
+    fflush(stdout);
+
+    orig_number_of_blocks = tmd2->number_of_blocks;
+    tmd2->number_of_blocks +=  (si8) ceil((sf8) PyArray_SHAPE(raw_data)[0] / (sf8) samps_per_mef_block);
+    if (samps_per_mef_block > tmd2->maximum_block_samples)
+        tmd2->maximum_block_samples = samps_per_mef_block;
+
+    PySys_WriteStdout("NUmber of blocks is %d\n",tmd2->number_of_blocks);
+   fflush(stdout);
+
+    // NOTE Remember to change this in metadata file before!!! or it needs to be passed in as an argument
+    // Get the start time and end time from the metadata file
+    uh->start_time = metadata_fps->universal_header->start_time;
+    uh->end_time = metadata_fps->universal_header->end_time;
+
+    // Read in the indeces file
+    MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
+    ts_idx_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
+    uh = ts_idx_fps->universal_header;
+    generate_UUID(uh->file_UUID);
+    uh->number_of_entries = tmd2->number_of_blocks;
+    uh->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
+
+
+    // Read in the time series data file
+    MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
+    ts_data_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
+
+    PySys_WriteStdout("Raw data byts is %d\n",ts_data_fps->raw_data_bytes);
+   fflush(stdout);
+
+    
+    PySys_WriteStdout("Raw data byts now is %d\n",ts_data_fps->raw_data_bytes);
+   fflush(stdout);
+
+    uh = ts_data_fps->universal_header;
+    generate_UUID(uh->file_UUID);
+    uh->number_of_entries = tmd2->number_of_blocks;
+    uh->maximum_entry_size = samps_per_mef_block;
+    ts_data_fps->directives.io_bytes = FPS_FULL_FILE;
+    ts_data_fps->directives.close_file = MEF_FALSE;
+    //write_MEF_file(ts_data_fps);
+
+
+    PySys_WriteStdout("The files have been read\n");
+   fflush(stdout);
+
+    // TODO optional filtration
+    // use allocation below if lossy
+    if (lossy_flag == 1){
+        rps = RED_allocate_processing_struct(samps_per_mef_block, 0, samps_per_mef_block, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), samps_per_mef_block, samps_per_mef_block, pwd);
+        // ASK RED lossy compression user specified???
+        rps->compression.mode = RED_MEAN_RESIDUAL_RATIO;
+        rps->directives.detrend_data = MEF_TRUE;
+        rps->directives.require_normality = MEF_TRUE;
+        rps->compression.goal_mean_residual_ratio = 0.10;
+        rps->compression.goal_tolerance = 0.01;
+    }else{
+        rps = RED_allocate_processing_struct(samps_per_mef_block, 0, 0, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), 0, 0, pwd);
+    }
+
+    // WATCH OUT HERE - we might have to do ts_data_fps->RED_blokcs[end]
+    rps->block_header = (RED_BLOCK_HEADER *) (rps->compressed_data = ts_data_fps->RED_blocks);
+
+    // create new RED blocks
+    curr_time = metadata_fps->universal_header->start_time;
+    time_inc = ((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6;
+    samps_remaining = (si8) PyArray_SHAPE(raw_data)[0];
+    block_header = rps->block_header;
+    tsi = ts_idx_fps->time_series_indices;
+    start_sample = tmd2->number_of_samples + 1;
+    tmd2->number_of_samples = tmd2->number_of_samples + (si8) PyArray_SHAPE(raw_data)[0];
+    min_samp = RED_POSITIVE_INFINITY;
+    max_samp = RED_NEGATIVE_INFINITY;
+    block_samps = samps_per_mef_block; 
+    np_array_ptr = (si4 *) PyArray_DATA(raw_data);
+
+    PySys_WriteStdout("Prepared RED\n");
+   fflush(stdout);
+
+    // WATCHOUT HERE
+    // Move file_offset to the end of RED blocks
+    file_offset = UNIVERSAL_HEADER_BYTES + ts_data_fps->raw_data_bytes;
+    //tsi += orig_number_of_blocks;
+
+    // for (i=0; i < orig_number_of_blocks; ++i){
+    //     ++tsi;
+    // }
+
+
+    PySys_WriteStdout("N bytes is %d\n",file_offset);
+   fflush(stdout);
+
+    
+    PySys_WriteStdout("At the while\n");
+   fflush(stdout);
+
+   //IMPOERTANT - REMEMBER TO FSEEK TO THE END OF THE FILE
+    // e_fseek(ts_data_fps->fp, 0, SEEK_END, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
+    // // Write the data and update the metadata
+    // while (samps_remaining) {
+
+    //     PySys_WriteStdout("In the while\n");
+    //     fflush(stdout);
+
+    //     // check
+    //     if (samps_remaining < block_samps)
+    //         block_samps = samps_remaining;
+
+    //     PySys_WriteStdout("Passed check vlack samps is %d\n",block_samps);
+    //     fflush(stdout);
+
+    //     block_header->number_of_samples = block_samps;
+
+    //     PySys_WriteStdout("Assigned to block header\n");
+    //     fflush(stdout);
+
+    //     block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
+    //     curr_time += time_inc;
+        
+    //     PySys_WriteStdout("Accessing numpy array\n");
+    //     fflush(stdout);
+
+    //     np_array_ptr = (si4 *) PyArray_DATA(raw_data) + ((si8) PyArray_SHAPE(raw_data)[0] - samps_remaining);
+    //     memcpy(rps->original_data, np_array_ptr, block_samps * 4);
+
+    //     // filter - comment out if don't want
+    //     // filtps->data_length = block_samps;
+    //     // RED_filter(filtps);
+
+    //     PySys_WriteStdout("Read the original data, samps_remaining %d, block_samps %d\n",samps_remaining,block_samps);
+    //     fflush(stdout);
+
+    //     samps_remaining -= block_samps;
+
+    //     // compress
+    //     (void) RED_encode(rps);
+    //     ts_data_fps->universal_header->body_CRC = CRC_update((ui1 *) block_header, block_header->block_bytes, ts_data_fps->universal_header->body_CRC);
+    //     e_fwrite((void *) block_header, sizeof(ui1), block_header->block_bytes, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, EXIT_ON_FAIL);
+
+    //     PySys_WriteStdout("Wrote the block\n");
+    //     fflush(stdout);
+
+    //     // time series indices
+    //     tsi->file_offset = file_offset;
+    //     file_offset += (tsi->block_bytes = block_header->block_bytes);
+    //     tsi->start_time = block_header->start_time;
+    //     tsi->start_sample = start_sample;
+    //     start_sample += (tsi->number_of_samples = block_samps);
+    //     RED_find_extrema(rps->original_ptr, block_samps, tsi);
+    //     if (max_samp < tsi->maximum_sample_value)
+    //         max_samp = tsi->maximum_sample_value;
+    //     if (min_samp > tsi->minimum_sample_value)
+    //         min_samp = tsi->minimum_sample_value;
+    //     tsi->RED_block_flags = block_header->flags;
+    //     ++tsi;
+
+    //     // update metadata
+    //     if (tmd2->maximum_block_bytes < block_header->block_bytes)
+    //         tmd2->maximum_block_bytes = block_header->block_bytes;
+    //     if (tmd2->maximum_difference_bytes < block_header->difference_bytes)
+    //         tmd2->maximum_difference_bytes = block_header->difference_bytes;
+    // }
+
+    // // update metadata
+    // tmd2->maximum_contiguous_block_bytes = file_offset - UNIVERSAL_HEADER_BYTES;
+    // if (tmd2->units_conversion_factor >= 0.0) {
+    //     tmd2->maximum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
+    //     tmd2->minimum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
+    // } else {
+    //     tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
+    //     tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
+    // }
+
+    PySys_WriteStdout("Writing filess\n");
+   fflush(stdout);
+
+    // Write the files
+    //ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
+    //e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
+    //e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
+    
+    PySys_WriteStdout("Data written, closing file\n");
+   fflush(stdout);
+
+
+
+   // Why is this causing double free?!
+    //fclose(ts_data_fps->fp);
+
+    PySys_WriteStdout("Writing metadata and indices\n");
+   fflush(stdout);
+
+
+    // write out metadata & time series indices files
+    write_MEF_file(metadata_fps);
+    //write_MEF_file(ts_idx_fps);
+
+    PySys_WriteStdout("Files written, freeing stuff\n");
+   fflush(stdout);
+
+    // clean up
+    free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(ts_data_fps);
+
+    // Why is this causing double free?!
+    //free_file_processing_struct(ts_idx_fps);
+
+    PySys_WriteStdout("Freed the metadata and data\n");
+   fflush(stdout);
+
+    free_file_processing_struct(gen_fps);
+    rps->block_header = NULL;
+    rps->compressed_data = NULL;
+    rps->original_data = NULL;
+    RED_free_processing_struct(rps);
+
+    PySys_WriteStdout("Cleaned up, YAY!\n");
+   fflush(stdout);
+
+    return Py_None;
+
+}
 
 // ASK No need for modify functions - can be taken care of at python level - just load and rewrite
 
@@ -2289,9 +2619,9 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // Maximum and minimum data value
     if(tmd->maximum_native_sample_value != tmd->minimum_native_sample_value){
         PyDict_SetItemString(s2_dict, "maximum_native_sample_value",
-            Py_BuildValue("i", tmd->maximum_native_sample_value));
+            Py_BuildValue("d", tmd->maximum_native_sample_value));
         PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
-            Py_BuildValue("i", tmd->minimum_native_sample_value));
+            Py_BuildValue("d", tmd->minimum_native_sample_value));
         }
     else{
         PyDict_SetItemString(s2_dict, "maximum_native_sample_value",
