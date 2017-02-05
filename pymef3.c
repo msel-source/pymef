@@ -2617,18 +2617,25 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
                          
     // TODO  - this is kind o a hack!
     // Maximum and minimum data value
-    if(tmd->maximum_native_sample_value != tmd->minimum_native_sample_value){
+    if (tmd->maximum_native_sample_value != RED_NAN)
         PyDict_SetItemString(s2_dict, "maximum_native_sample_value",
             Py_BuildValue("d", tmd->maximum_native_sample_value));
-        PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
-            Py_BuildValue("d", tmd->minimum_native_sample_value));
-        }
-    else{
+        
+    else
         PyDict_SetItemString(s2_dict, "maximum_native_sample_value",
             Py_BuildValue("s", temp_str));
+        
+
+    if (tmd->minimum_native_sample_value != RED_NAN)
+        PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
+            Py_BuildValue("d", tmd->minimum_native_sample_value));
+    else
         PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
             Py_BuildValue("s", temp_str));
-        }
+
+
+    
+
     // Start sample
     if (tmd->start_sample != TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "start_sample",
