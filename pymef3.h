@@ -27,7 +27,7 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh);
 void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type);
 void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type);
 void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type);
-// MEFREC_Seiz_1_0_CHANNEL *map_python_Siez_type(PyObject *Siez_ch_type_dict);
+void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_0_CHANNEL *r_type);
 
 
 // ---------- Mef3 to python dictionaries -----------

@@ -36,13 +36,20 @@ DONE - Create decomp mef and substitute read_ts_data(copy-paste from Dan's funct
 
 DONE - Fix occasional segfault when reading ts data (not needed since we will do decomp mef)
 
-Check if write record function closes the file
+DONE - Create appedn ts data function
 
-Create appedn ts data function
+DONE - Fix uUTC reading (si8) into python. Seems incorrect now or I am missing something. (was likely connected to bad memory management)
+
+DONE - Decomp_mef sort of thing so we can get slices of data - we should modify read_mef_ts_data for this - will
+    be handled by start/stop time, if None, the data will be read from beginnig to end, ie whole channel, see Dan's C function for this
+
+Check if write record function closes the file
 
 Extract segment number whe writing or appending data
 
 Check file closing in all functions
+
+Test for memory leaks
 
 Write the help docstrings
 
@@ -53,14 +60,11 @@ Fix the info at the beginning (licence)
 Encryption / decryption at all levels - allow for no encryption, level 1 encryption, level 2 encryption - user
  can specify by inserting None into the password field
 
-Fix uUTC reading (si8) into python. Seems incorrect now or I am missing something.
-
 Check that everything is OK with CRC calculations when writing files
 
-Decomp_mef sort of thing so we can get slices of data - we should modify read_mef_ts_data for this - will
- be handled by start/stop time, if None, the data will be read from beginnig to end, ie whole channel, see Dan's C function for this
-
 Fix seizures record typ reading compilation problems
+
+Address all warnings when compiling
 
 Build in optional lossy compression
 
@@ -89,7 +93,7 @@ static char pymef3_docstring[] =
     "This module provides an interface for reading .mef (v 3.x) files.";
 
 /* Documentation to be read in Python - write functions*/
-static char write_mef_data_record_docstring[] =
+static char write_mef_data_records_docstring[] =
     "Writes .mefd session directory + data and indeces files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
 static char write_mef_ts_metadata_docstring[] =
     "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
@@ -115,7 +119,7 @@ static char read_mef_segment_metadata_docstring[] =
 "Reads metadata of a mef segment";
 
 /* Pyhon object declaration - write functions*/
-static PyObject *write_mef_data_record(PyObject *self, PyObject *args);
+static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
 static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args);
 static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args);
 static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args);
@@ -132,7 +136,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
 
 /* Specification of the members of the module */
 static PyMethodDef module_methods[] = {
-    {"write_mef_data_record", write_mef_data_record, METH_VARARGS, write_mef_data_record_docstring},
+    {"write_mef_data_records", write_mef_data_records, METH_VARARGS, write_mef_data_records_docstring},
     {"write_mef_ts_metadata", write_mef_ts_metadata, METH_VARARGS, write_mef_ts_metadata_docstring},
     {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
     {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
@@ -177,7 +181,7 @@ PyObject * PyInit_pymef3(void)
 /******************************  MEF write functions  *******************************/
 /************************************************************************************/
 
-static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
+static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 {
     // Specified by user
     si1    *py_file_path;
@@ -188,12 +192,12 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
     si8     recording_start_uutc_time, recording_stop_uutc_time;
     
     PyObject    *py_record_list, *py_record_dict, *temp_o, *temp_UTF_str;
-    Py_ssize_t  li, annot_bytes;
+    Py_ssize_t  annot_bytes;
 
     // Method specific
     FILE_PROCESSING_STRUCT *gen_fps, *rec_data_fps, *rec_idx_fps;
-    si8     bytes, max_rec_bytes, file_offset;
-    ui4     type_code;
+    si8     bytes, rb_bytes, max_rec_bytes, file_offset;
+    ui4     type_code, n_records, li;
     ui1     *rd;
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], record_file_name[MEF_BASE_FILE_NAME_BYTES];
@@ -267,9 +271,10 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
         path_processed = 1;
     }
 
-    // Determine the number and size of records - ASK this is pretty dumb that I am calling this twice
+    // Determine the number and size of records - ASK this is pretty dumb that I am calling this twice, we caould do it piecemeal instead
+    n_records = (ui4) PyList_Size(py_record_list);
     bytes = UNIVERSAL_HEADER_BYTES;
-    for (li = 0; li<PyList_Size(py_record_list); li++){
+    for (li = 0; li<n_records; li++){
 
         py_record_dict = PyList_GetItem(py_record_list, li);
         temp_o = PyDict_GetItemString(py_record_dict,"type_string");
@@ -280,15 +285,32 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
         // Fork for different record types
         switch (type_code) {
             case MEFREC_EDFA_TYPE_CODE:
-                bytes += RECORD_HEADER_BYTES + MEFREC_EDFA_1_0_BYTES; // + optional annotation
+                bytes += RECORD_HEADER_BYTES; // + optional annotation
+                rb_bytes = MEFREC_EDFA_1_0_BYTES;
                 temp_o = PyDict_GetItemString(py_record_dict,"annotation");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsUTF8AndSize(temp_o, annot_bytes); // Encode to UTF-8 python objects
-                    bytes += 16 - (bytes % 16); // ASK this padding could be done in a better way???
+                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    rb_bytes += (si8) annot_bytes + 1; // strncpy copies the null termination as well
                 }
+                rb_bytes += 16 - (rb_bytes % 16);
+                bytes += rb_bytes;
                 break;
             case MEFREC_LNTP_TYPE_CODE:
-                bytes += RECORD_HEADER_BYTES + sizeof(MEFREC_LNTP_1_0); // TODO + optional annotation
+                // TODO - add template but I do not know what that is!!
+                bytes += RECORD_HEADER_BYTES + sizeof(MEFREC_LNTP_1_0);
+                break;
+            case MEFREC_Note_TYPE_CODE:
+                bytes += RECORD_HEADER_BYTES;
+                rb_bytes = 0;
+                temp_o = PyDict_GetItemString(py_record_dict,"note");
+                if (temp_o != NULL){
+                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    rb_bytes += (si8) annot_bytes + 1;
+                }
+                rb_bytes += 16 - (rb_bytes % 16);
+                bytes += rb_bytes;
                 break;
             case MEFREC_Seiz_TYPE_CODE:
                 bytes += RECORD_HEADER_BYTES + sizeof(MEFREC_Seiz_1_0); // TODO + optional annotation
@@ -300,19 +322,16 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
     }
 
     // Create file processing structs for record data and indeces files
-    //bytes = UNIVERSAL_HEADER_BYTES + RECORD_HEADER_BYTES + sizeof(struct edf_hdr_struct) + (edf_hdr.annotations_in_file * (EDFLIB_MAX_ANNOTATION_LEN + RECORD_HEADER_BYTES));
     rec_data_fps = allocate_file_processing_struct(bytes, RECORD_DATA_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
-    // TODO This needs to be though over - will user specify this? Will this be automated?
     MEF_snprintf(rec_data_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, record_file_name, RECORD_DATA_FILE_TYPE_STRING);
     generate_UUID(rec_data_fps->universal_header->file_UUID);
-    bytes = UNIVERSAL_HEADER_BYTES + ((si8) PyList_Size(py_record_list) * RECORD_INDEX_BYTES);
-    rec_idx_fps = allocate_file_processing_struct(bytes, RECORD_INDICES_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
 
-    // TODO This needs to be though over - will user specify this? Will this be automated?
+    bytes = UNIVERSAL_HEADER_BYTES + (n_records * RECORD_INDEX_BYTES);
+    rec_idx_fps = allocate_file_processing_struct(bytes, RECORD_INDICES_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(rec_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, record_file_name, RECORD_INDICES_FILE_TYPE_STRING);
     generate_UUID(rec_idx_fps->universal_header->file_UUID);
     rec_idx_fps->universal_header->maximum_entry_size = RECORD_INDEX_BYTES;
-    rec_data_fps->universal_header->number_of_entries = rec_idx_fps->universal_header->number_of_entries = (si8) PyList_Size(py_record_list);
+    rec_data_fps->universal_header->number_of_entries = rec_idx_fps->universal_header->number_of_entries = n_records;
 
     rd = rec_data_fps->records;
     ri = rec_idx_fps->record_indices;
@@ -323,8 +342,7 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
 
     // Run through the python list, read records and write them
     max_rec_bytes = 0;
-    for (li = 0; li<PyList_Size(py_record_list); li++){
-
+    for (li = 0; li<n_records; li++){
 
         // set up record header
         rh = (RECORD_HEADER *) rd;
@@ -339,7 +357,7 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
 
         ri->time = rh->time;
 
-                if (rh->version_major == NULL)
+        if (rh->version_major == NULL)
             rh->version_major = ri->version_major = 1;
         else
             ri->version_major = rh->version_major;
@@ -361,7 +379,7 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
                 // ASK should there by types created by this function and passed to subfunctinos?
                 map_python_EDFA_type(py_record_dict, (si1 *) rd);
 
-                // Type strins
+                // Type strings
                 rh->bytes = MEFREC_EDFA_1_0_BYTES;
                 MEF_strncpy(ri->type_string, MEFREC_EDFA_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_EDFA_TYPE_STRING, TYPE_BYTES);
@@ -398,11 +416,11 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
             case MEFREC_Note_TYPE_CODE:
                 MEF_strncpy(ri->type_string, MEFREC_Note_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_Note_TYPE_STRING, TYPE_BYTES);
-                temp_o = PyDict_GetItemString(py_record_dict,"Note");
+                temp_o = PyDict_GetItemString(py_record_dict,"note");
                 if (temp_o != NULL){
                     temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
                     temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char
-                    rh->bytes += MEF_strcpy((si1 *) rd + MEFREC_EDFA_1_0_BYTES, temp_str_bytes);
+                    rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
                 rh->bytes = MEF_pad(rd, rh->bytes, 16);
                 break;
@@ -422,10 +440,15 @@ static PyObject *write_mef_data_record(PyObject *self, PyObject *args)
             case MEFREC_UnRc_TYPE_CODE:
                 rh->bytes = 0;
                 break;
+
+            default:
+                rh->bytes = 0;
+                break;
         }
 
         if (rh->bytes > max_rec_bytes)
             max_rec_bytes = rh->bytes;
+
         rd += rh->bytes;
         file_offset += (RECORD_HEADER_BYTES + rh->bytes);
         ++ri;
@@ -1166,8 +1189,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
         block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
         curr_time += time_inc;
 
-        np_array_ptr = (si4 *) PyArray_DATA(raw_data) + ((si8) PyArray_SHAPE(raw_data)[0] - samps_remaining);
-        memcpy(rps->original_data, np_array_ptr, block_samps * 4);
+        rps->original_data = rps->original_ptr = (si4 *) PyArray_DATA(raw_data) + ((si8) PyArray_SHAPE(raw_data)[0] - samps_remaining);
 
         // filter - comment out if don't want
         // filtps->data_length = block_samps;
@@ -2092,9 +2114,6 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
     si1     *temp_str_bytes;
     si8     temp_time;
 
-    // Declare rh struct
-    //RECORD_HEADER  *rh;
-
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(rh_dict,"type_string");
     if (temp_o != NULL){
@@ -2132,9 +2151,6 @@ void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type)
     // Helpers
     PyObject    *temp_o;
 
-    // Declare edfa struct
-    //MEFREC_EDFA_1_0  *r_type;
-
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(EDFA_type_dict,"duration");
     if (temp_o !=NULL)
@@ -2147,9 +2163,6 @@ void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type)
 {
     // Helpers
     PyObject    *temp_o;
-
-    // Declare edfa struct
-    //MEFREC_LNTP_1_0  *r_type;
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(LNTP_type_dict,"length");
@@ -2165,9 +2178,6 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
     PyObject    *temp_o, *temp_UTF_str;
 
     si1     *temp_str_bytes;
-
-    // Declare edfa struct
-    //MEFREC_Seiz_1_0  *r_type;
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(Siez_type_dict,"earliest_onset");
@@ -2215,26 +2225,23 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
 }
 
 // TODO Figure out why this is giving me hell
-// MEFREC_Seiz_1_0_CHANNEL *map_python_Siez_type(PyObject *Siez_ch_type_dict)
-// {
-//     // Helpers
-//     PyObject    *temp_o;
+void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_0_CHANNEL *r_type)
+{
+    // Helpers
+    PyObject    *temp_o;
 
-//     // Declare edfa struct
-//     MEFREC_Seiz_1_0_CHANNEL  *r_type;
+    // Assign from dict to struct
+    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))
+        MEF_strcpy(r_type->name, PyUnicode_AS_DATA(temp_o));
 
-//     // Assign from dict to struct
-//     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))
-//         MEF_strcpy(r_type->name, PyUnicode_AS_DATA(temp_o));
+    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset"))
+        r_type->onset = PyLong_AsLong(temp_o);
 
-//     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset"))
-//         r_type->onset = PyLong_AsLong(temp_o);
+    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"offset"))
+        r_type->offset = PyLong_AsLong(temp_o);
 
-//     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"offset"))
-//         r_type->offset = PyLong_AsLong(temp_o);
-
-//     return r_type;
-// }   
+    return;
+}   
 
 /*****************************  Mef struct to Python  *******************************/
 
@@ -2722,7 +2729,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
     // Frame rate
     if (vmd->frame_rate != VIDEO_METADATA_FRAME_RATE_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "frame_rate",
-            Py_BuildValue("i", vmd->frame_rate));
+            Py_BuildValue("d", vmd->frame_rate));
     else
         PyDict_SetItemString(s2_dict, "frame_rate",
             Py_BuildValue("s", temp_str));
@@ -3427,7 +3434,7 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
         record_dict = map_mef3_rh(rh);
         PyDict_SetItem(all_record_dict,Py_BuildValue("i", i),record_dict); // ASK Matt / Dan. Could also be type_string, 
 
-        rd += rh->bytes;
+        rd += (RECORD_HEADER_BYTES + rh->bytes);
         
     }
 
