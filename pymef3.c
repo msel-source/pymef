@@ -45,24 +45,23 @@ DONE - Decomp_mef sort of thing so we can get slices of data - we should modify 
 
 DONE - Check if write record function closes the file
 
+DONE - Fix seizures record typ reading compilation problems
+
+DONE - Move Python function declarations and docstrings to the header file.
+
+DONE - Create list for file indeces
+
 Extract segment number when writing or appending data
 
 Check file closing in all functions
 
-Test for memory leaks
-
 Write the help docstrings
 
-Move Python function declarations and docstrings to the header file.
 
 Fix the info at the beginning (licence)
 
 Encryption / decryption at all levels - allow for no encryption, level 1 encryption, level 2 encryption - user
  can specify by inserting None into the password field
-
-Check that everything is OK with CRC calculations when writing files
-
-Fix seizures record typ reading compilation problems
 
 Address all warnings when compiling
 
@@ -88,80 +87,6 @@ MEFL_LIB bug - read_MEF_session - was reading time_series_channels instead of vi
 /************************************************************************************/
 /*********************************  Python stuff  ***********************************/
 /************************************************************************************/
-
-static char pymef3_docstring[] =
-    "This module provides an interface for reading .mef (v 3.x) files.";
-
-/* Documentation to be read in Python - write functions*/
-static char write_mef_data_records_docstring[] =
-    "Writes .mefd session directory + data and indeces files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
-static char write_mef_ts_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
-static char write_mef_v_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
-static char write_mef_ts_data_and_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
-static char write_mef_v_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
-    
-/* Documentation to be read in Python - append functions*/
-static char append_ts_data_and_indeces_docstring[] =
-    "Appends ts data";
-
-/* Documentation to be read in Python - read functions*/
-static char read_mef_ts_data_docstring[] =
-    "Reads .timd time series directory";
-static char read_mef_session_metadata_docstring[] =
-    "Reads metadata of a mef session";
-static char read_mef_channel_metadata_docstring[] =
-    "Reads metadata of a mef channel";
-static char read_mef_segment_metadata_docstring[] =
-"Reads metadata of a mef segment";
-
-/* Pyhon object declaration - write functions*/
-static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
-static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args);
-static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args);
-static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args);
-static PyObject *write_mef_v_indices(PyObject *self, PyObject *args);
-
-/* Pyhon object declaration - append functions*/
-static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args);
-
-/* Pyhon object declaration - read functions*/
-static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
-static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
-static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
-static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
-
-/* Specification of the members of the module */
-static PyMethodDef module_methods[] = {
-    {"write_mef_data_records", write_mef_data_records, METH_VARARGS, write_mef_data_records_docstring},
-    {"write_mef_ts_metadata", write_mef_ts_metadata, METH_VARARGS, write_mef_ts_metadata_docstring},
-    {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
-    {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
-    {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
-    {"append_ts_data_and_indeces", append_ts_data_and_indeces, METH_VARARGS, append_ts_data_and_indeces_docstring},
-    {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
-    {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
-    {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
-    {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
-    {NULL, NULL, 0, NULL}
-};
-
-
-/* Definition of struct for python 3 */
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "pymef3",     /* m_name */
-    "This module provides an interface operations with MEF3 format",  /* m_doc */
-    -1,                  /* m_size */
-    module_methods,    /* m_methods */
-    NULL,                /* m_reload */
-    NULL,                /* m_traverse */
-    NULL,                /* m_clear */
-    NULL,                /* m_free */
-};
 
 /* Module initialisation */
 PyObject * PyInit_pymef3(void)
@@ -3054,10 +2979,12 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
     PyObject *s2_dict;
     PyObject *s3_dict;
     PyObject *sdi_dict;
+    PyObject *idx_list;
     
     // Helper variables
     si1   *time_str, temp_str[256];
-    si8   long_file_time;
+    ui4   i;
+    si8   long_file_time, number_of_entries;
     
     METADATA_SECTION_1      *md1;
         TIME_SERIES_METADATA_SECTION_2  *tmd2;
@@ -3094,11 +3021,9 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
             tmd2 = segment->metadata_fps->metadata.time_series_section_2;
-            tsi = segment->time_series_indices_fps->time_series_indices;
             break;
         case VIDEO_CHANNEL_TYPE:
-            vmd2 = segment->metadata_fps->metadata.video_section_2;
-            vi = segment->video_indices_fps->video_indices; 
+            vmd2 = segment->metadata_fps->metadata.video_section_2; 
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -3135,19 +3060,34 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
     // TODO - this should be a list - there is more indices in indices file!!!!
 
     // Create indeces dictionary
+    
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
-            sdi_dict = map_mef3_ti(tsi);
+            number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
+            tsi = segment->time_series_indices_fps->time_series_indices;
+            idx_list = PyList_New(number_of_entries);
+            for(i = 0; i < number_of_entries; i++){
+                sdi_dict = map_mef3_ti(tsi);
+                PyList_SET_ITEM(idx_list, i, sdi_dict);
+                tsi++;
+            }
             break;
         case VIDEO_CHANNEL_TYPE:
-            sdi_dict = map_mef3_vi(vi);
+            number_of_entries = segment->video_indices_fps->universal_header->number_of_entries;
+            vi = segment->video_indices_fps->video_indices;
+            idx_list = PyList_New(number_of_entries);
+            for(i = 0; i < number_of_entries; i++){
+                sdi_dict = map_mef3_vi(vi);
+                PyList_SET_ITEM(idx_list, i, sdi_dict);
+                vi++;
+            }
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
             PyErr_Occurred();
             return NULL;
     }
-    PyDict_SetItemString(metadata_dict, "indeces", sdi_dict);
+    PyDict_SetItemString(metadata_dict, "indeces", idx_list);
 
     return metadata_dict;
 }
@@ -3717,6 +3657,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
     // Dictionary
     PyObject *dict_out;
     PyObject *dict_channel;
+    PyObject *channel_list;
 
     si4         i, mn1 = MEF_FALSE, mn2 = MEF_FALSE;
     MEFREC_Seiz_1_0     *seizure;
@@ -3793,14 +3734,15 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
 
         channels = (MEFREC_Seiz_1_0_CHANNEL *) ((ui1 *) rh + MEFREC_Seiz_1_0_CHANNELS_OFFSET);            
         
+        channel_list = PyList_New(seizure->number_of_channels);
         for (i = 0; i < seizure->number_of_channels; ++i) {
 
             dict_channel = PyDict_New();
 
             if (strlen(channels[i].name))
-                PyDict_SetItemString(dict_channel, "channel_name", Py_BuildValue("s", channels[i].name));
+                PyDict_SetItemString(dict_channel, "name", Py_BuildValue("s", channels[i].name));
             else
-                PyDict_SetItemString(dict_channel, "channel_name", Py_BuildValue("s", "no_entry"));
+                PyDict_SetItemString(dict_channel, "name", Py_BuildValue("s", "no_entry"));
 
             PyDict_SetItemString(dict_channel,"onset_uUTC",Py_BuildValue("l", channels[i].onset));
             local_date_time_string(channels[i].onset, time_str);
@@ -3810,8 +3752,9 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
             local_date_time_string(channels[i].offset, time_str);
             PyDict_SetItemString(dict_channel,"offset_str",Py_BuildValue("s", time_str));
 
-            PyDict_SetItemString(dict_out,Py_BuildValue("i", i), dict_channel);
+            PyList_SET_ITEM(channel_list, i, dict_channel);
         }
+        PyDict_SetItemString(dict_out,"channels", channel_list);
     }
     // Unrecognized record version
     else {

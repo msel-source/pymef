@@ -11,6 +11,82 @@
 #define FLOAT_EQUAL(x,y) ( ((y - EPSILON) < x) && (x <( y + EPSILON)) )
 
 
+/* Python methods definitions and help */
+
+static char pymef3_docstring[] =
+    "This module provides an interface for reading .mef (v 3.x) files.";
+
+/* Documentation to be read in Python - write functions*/
+static char write_mef_data_records_docstring[] =
+    "Writes .mefd session directory + data and indeces files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
+static char write_mef_ts_metadata_docstring[] =
+    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+static char write_mef_v_metadata_docstring[] =
+    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+static char write_mef_ts_data_and_indices_docstring[] =
+    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+static char write_mef_v_indices_docstring[] =
+    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+    
+/* Documentation to be read in Python - append functions*/
+static char append_ts_data_and_indeces_docstring[] =
+    "Appends ts data";
+
+/* Documentation to be read in Python - read functions*/
+static char read_mef_ts_data_docstring[] =
+    "Reads .timd time series directory";
+static char read_mef_session_metadata_docstring[] =
+    "Reads metadata of a mef session";
+static char read_mef_channel_metadata_docstring[] =
+    "Reads metadata of a mef channel";
+static char read_mef_segment_metadata_docstring[] =
+"Reads metadata of a mef segment";
+
+/* Pyhon object declaration - write functions*/
+static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
+static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args);
+static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args);
+static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args);
+static PyObject *write_mef_v_indices(PyObject *self, PyObject *args);
+
+/* Pyhon object declaration - append functions*/
+static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args);
+
+/* Pyhon object declaration - read functions*/
+static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
+static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
+static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
+static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
+
+/* Specification of the members of the module */
+static PyMethodDef module_methods[] = {
+    {"write_mef_data_records", write_mef_data_records, METH_VARARGS, write_mef_data_records_docstring},
+    {"write_mef_ts_metadata", write_mef_ts_metadata, METH_VARARGS, write_mef_ts_metadata_docstring},
+    {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
+    {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
+    {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
+    {"append_ts_data_and_indeces", append_ts_data_and_indeces, METH_VARARGS, append_ts_data_and_indeces_docstring},
+    {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
+    {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
+    {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
+    {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
+    {NULL, NULL, 0, NULL}
+};
+
+
+/* Definition of struct for python 3 */
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "pymef3",     /* m_name */
+    "This module provides an interface operations with MEF3 format",  /* m_doc */
+    -1,                  /* m_size */
+    module_methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+};
+
 /* Function declarations */
 
 // ---------- Python dictionaries to mef3 -----------
@@ -38,8 +114,6 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd);
 PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd);
 PyObject *map_mef3_md3(METADATA_SECTION_3 *md3);
 
-PyObject *map_mef3_rh(RECORD_HEADER *rh);
-PyObject *map_mef3_ri(RECORD_INDEX *ri);
 PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti);
 PyObject *map_mef3_vi(VIDEO_INDEX *vi);
 
