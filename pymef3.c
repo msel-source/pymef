@@ -43,9 +43,9 @@ DONE - Fix uUTC reading (si8) into python. Seems incorrect now or I am missing s
 DONE - Decomp_mef sort of thing so we can get slices of data - we should modify read_mef_ts_data for this - will
     be handled by start/stop time, if None, the data will be read from beginnig to end, ie whole channel, see Dan's C function for this
 
-Check if write record function closes the file
+DONE - Check if write record function closes the file
 
-Extract segment number whe writing or appending data
+Extract segment number when writing or appending data
 
 Check file closing in all functions
 
@@ -191,13 +191,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     
     si8     recording_start_uutc_time, recording_stop_uutc_time;
     
-    PyObject    *py_record_list, *py_record_dict, *temp_o, *temp_UTF_str;
+    PyObject    *py_record_list, *py_record_dict, *py_seiz_chan_list, *temp_o, *temp_UTF_str;
     Py_ssize_t  annot_bytes;
 
     // Method specific
     FILE_PROCESSING_STRUCT *gen_fps, *rec_data_fps, *rec_idx_fps;
     si8     bytes, rb_bytes, max_rec_bytes, file_offset;
-    ui4     type_code, n_records, li;
+    ui4     type_code, n_records, li, lj;
     ui1     *rd;
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], record_file_name[MEF_BASE_FILE_NAME_BYTES];
@@ -313,7 +313,21 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 bytes += rb_bytes;
                 break;
             case MEFREC_Seiz_TYPE_CODE:
-                bytes += RECORD_HEADER_BYTES + sizeof(MEFREC_Seiz_1_0); // TODO + optional annotation
+                bytes += RECORD_HEADER_BYTES + MEFREC_Seiz_1_0_BYTES;
+                py_seiz_chan_list = PyDict_GetItemString(py_record_dict,"channels");
+                bytes += (MEFREC_Seiz_1_0_CHANNEL_BYTES * PyList_Size(py_seiz_chan_list));
+                break;
+            case MEFREC_SyLg_TYPE_CODE:
+                bytes += RECORD_HEADER_BYTES;
+                rb_bytes = 0;
+                temp_o = PyDict_GetItemString(py_record_dict,"text");
+                if (temp_o != NULL){
+                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    rb_bytes += (si8) annot_bytes + 1;
+                }
+                rb_bytes += 16 - (rb_bytes % 16);
+                bytes += rb_bytes;
                 break;
             default:
                 bytes += 0;  // + optional annotation
@@ -349,7 +363,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         
         rh->encryption = ri->encryption = LEVEL_2_ENCRYPTION_DECRYPTED;  // ASK level 2 because may conatin subject identifying data
         ri->file_offset = file_offset;
-        
 
         // get info from python dictionary
         py_record_dict = PyList_GetItem(py_record_list, li);
@@ -405,12 +418,18 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
 
             case MEFREC_Seiz_TYPE_CODE:
-                // TODO deal with the seiz_type channel part
                 map_python_Siez_type(py_record_dict, (si1 *) rd);
                 rh->bytes = MEFREC_Seiz_1_0_BYTES;
                 MEF_strncpy(ri->type_string, MEFREC_Seiz_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_Seiz_TYPE_STRING, TYPE_BYTES);
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                // Inidividual channels
+                py_seiz_chan_list = PyDict_GetItemString(py_record_dict,"channels");
+                for (lj = 0; lj < PyList_Size(py_seiz_chan_list); lj++){
+                    py_record_dict = PyList_GetItem(py_seiz_chan_list, lj);
+                    map_python_Siez_type_channel(py_record_dict, (si1 *) (rd+MEFREC_Seiz_1_0_BYTES+(lj*MEFREC_Seiz_1_0_CHANNEL_BYTES)));
+                    rh->bytes += MEFREC_Seiz_1_0_CHANNEL_BYTES;
+                }
+                // No need to pad, seizure structs are 16 safe
                 break;
 
             case MEFREC_Note_TYPE_CODE:
@@ -428,14 +447,14 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
             case MEFREC_SyLg_TYPE_CODE:
                 MEF_strncpy(ri->type_string, MEFREC_SyLg_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_SyLg_TYPE_STRING, TYPE_BYTES);
-                temp_o = PyDict_GetItemString(py_record_dict,"SyLg");
+                temp_o = PyDict_GetItemString(py_record_dict,"text");
                 if (temp_o != NULL){
                     temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
                     temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char
-                    rh->bytes += MEF_strcpy((si1 *) rd + MEFREC_EDFA_1_0_BYTES, temp_str_bytes);
+                    rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
-                break;
                 rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                break;
 
             case MEFREC_UnRc_TYPE_CODE:
                 rh->bytes = 0;
@@ -464,7 +483,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     free_file_processing_struct(rec_idx_fps);
 
     //Py_INCREF(Py_None);
-    return Py_None; 
+    return Py_None;
 }
 
 static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
@@ -1269,10 +1288,10 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     RED_free_processing_struct(rps);
 
     return Py_None;
-
 }
 
-// ASK No need for modify functions - can be taken care of at python level - just load and rewrite
+// ASK No need for modify functions - can be taken care of at python level - just load and rewrite,
+// memory load would be minute in thes cases.
 
 // static PyObject *modify_mef_data_record(PyObject *self, PyObject *args)
 // {
@@ -2101,10 +2120,6 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
 
 /**************************  Python record struct to Mef  ****************************/
 
-// TODO - rewrite functions below to accept struct poiners
-// ASK Not sure about allocations here, should the RECORD HEADER be passed from the parent script?
-// It would probably be better because I would not have to allocate and free memory so many times!
-// I actually do not need to allocate memory in parent struct - re do this later!!!
 void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
 {
     // Helpers
@@ -2224,15 +2239,18 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
     return;
 }
 
-// TODO Figure out why this is giving me hell
 void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_0_CHANNEL *r_type)
 {
     // Helpers
-    PyObject    *temp_o;
+    PyObject    *temp_o, *temp_UTF_str;
+
+    si1     *temp_str_bytes;
 
     // Assign from dict to struct
     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))
-        MEF_strcpy(r_type->name, PyUnicode_AS_DATA(temp_o));
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->name, temp_str_bytes);
 
     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset"))
         r_type->onset = PyLong_AsLong(temp_o);
@@ -2244,8 +2262,6 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
 }   
 
 /*****************************  Mef struct to Python  *******************************/
-
-// TODO - create universal function to build values - we have a lot of unnecessary code right now!
 
 PyObject *map_mef3_universal_header(UNIVERSAL_HEADER *uh)
 {
@@ -3626,7 +3642,7 @@ PyObject *map_mef3_Note_type(RECORD_HEADER *rh)
     // Version 1.0
     if (rh->version_major == 1 && rh->version_minor == 0) {
         Note = (si1 *) rh + MEFREC_Note_1_0_TEXT_OFFSET;
-        PyDict_SetItemString(dict_out,"note_text",Py_BuildValue("s", Note));
+        PyDict_SetItemString(dict_out,"note",Py_BuildValue("s", Note));
     }
     // Unrecognized record version
     else {
@@ -3818,12 +3834,19 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     // Version 1.0
     if (rh->version_major == 1 && rh->version_minor == 0) {
         log_entry = (si1 *) rh + MEFREC_SyLg_1_0_TEXT_OFFSET;
-        PyDict_SetItemString(dict_out,"system_log_text",Py_BuildValue("s", log_entry));
+        PyDict_SetItemString(dict_out,"text",Py_BuildValue("s", log_entry));
     }
     // Unrecognized record version
     else {
-        PyDict_SetItemString(dict_out,"note_text",Py_BuildValue("s", "Unrecognized SyLg version."));
+        PyDict_SetItemString(dict_out,"text",Py_BuildValue("s", "Unrecognized SyLg version."));
     }
     
     return dict_out;
 }
+
+
+/**************************  Other helper functions  ****************************/
+
+// int extract_segment_number(si1 segment_name[MEF_BASE_FILE_NAME_BYTES]){
+
+// }
