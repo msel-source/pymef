@@ -877,7 +877,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     SEGMENT    *seg;
     PASSWORD_DATA           *pwd;
     UNIVERSAL_HEADER    *uh;
-    FILE_PROCESSING_STRUCT  *gen_fps, *metadata_fps, *v_idx_fps;
+    FILE_PROCESSING_STRUCT  *gen_fps, *v_idx_fps;
     VIDEO_METADATA_SECTION_2  *vmd2;
     VIDEO_INDEX   *vi;
 
@@ -948,7 +948,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // Set up mef3 video indices file
     v_indices_file_bytes = (PyList_Size(vi_list) * VIDEO_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
-    v_idx_fps = allocate_file_processing_struct(v_indices_file_bytes, VIDEO_INDICES_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
+    v_idx_fps = allocate_file_processing_struct(v_indices_file_bytes, VIDEO_INDICES_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(v_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, VIDEO_INDICES_FILE_TYPE_STRING);
     uh = v_idx_fps->universal_header;
     generate_UUID(uh->file_UUID);
