@@ -59,7 +59,7 @@ DONE - Check times in universal headers - why are they negative? (was connected 
 
 DONE - Check times in time series indeces - they are going down instead of up! (solved by the line above)
 
-Check file closing in all functions
+DONE - Check file closing in all functions (problem was in ts data reading fixed at the end, see git)
 
 Write the help docstrings
 
@@ -1472,7 +1472,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) // This will b
 
     // Iterate through segments, looking for data that matches our criteria 
     n_segments = chan->number_of_segments;
-    start_segment = end_segment = -1; // ASK - this should be unnecessary - taken care of at the beginnig
+    start_segment = end_segment = -1; // ASK - this shouldn't be unnecessary - taken care of at the beginnig
 
     // With samples, it's a little easier, since there are no sample number gaps between segments.
     // so just iterate through segments and see which segments the start and end are in.
@@ -1716,8 +1716,16 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) // This will b
     free (rps->difference_buffer);
     free (rps);
     
-    if (chan->number_of_segments > 0)
-        chan->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+    for (i=0;i<chan->number_of_segments;i++){
+        chan->segments[i].metadata_fps->directives.free_password_data = MEF_TRUE;
+        chan->segments[i].metadata_fps->directives.close_file = MEF_TRUE;
+        if (chan->segments[i].record_data_fps != NULL)
+            chan->segments[i].record_data_fps->directives.close_file = MEF_TRUE;
+        if (chan->segments[i].record_indices_fps != NULL)
+            chan->segments[i].record_indices_fps->directives.close_file = MEF_TRUE;
+        chan->segments[i].time_series_data_fps->directives.close_file = MEF_TRUE;
+        chan->segments[i].time_series_indices_fps->directives.close_file = MEF_TRUE;
+    }
     free_channel(chan, MEF_TRUE);
 
     return py_array_out;
