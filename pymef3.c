@@ -1022,6 +1022,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    // We don't really need this
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
     initialize_universal_header(gen_fps, MEF_TRUE, MEF_FALSE, MEF_TRUE);
     uh = gen_fps->universal_header;
@@ -1065,6 +1066,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_METADATA_FILE_TYPE_STRING);
     metadata_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
     tmd2 = metadata_fps->metadata.time_series_section_2;
+    // We are appending so get only the end time
     metadata_fps->universal_header->end_time = recording_stop_uutc_time;
 
     orig_number_of_blocks = tmd2->number_of_blocks;
@@ -1072,23 +1074,14 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     if (samps_per_mef_block > tmd2->maximum_block_samples)
         tmd2->maximum_block_samples = samps_per_mef_block;
 
-    // Get the start time and end time from the metadata file
-    uh->start_time = metadata_fps->universal_header->start_time;
-    uh->end_time = metadata_fps->universal_header->end_time;
-
     // Read in the indeces file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
     ts_idx_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
-    uh = ts_idx_fps->universal_header;
-    generate_UUID(uh->file_UUID);
-    uh->number_of_entries = tmd2->number_of_blocks;
-    uh->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
-
 
     // Read in the time series data file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
     ts_data_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
-
+    
     // TODO optional filtration
     // use allocation below if lossy
     if (lossy_flag == 1){
@@ -1191,6 +1184,8 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     uh = ts_data_fps->universal_header;
     uh->number_of_entries = tmd2->number_of_blocks;
     uh->maximum_entry_size = samps_per_mef_block;
+    uh->start_time = metadata_fps->universal_header->start_time;
+    uh->end_time = metadata_fps->universal_header->end_time;
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
     e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
@@ -1198,6 +1193,9 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     // Update the header of indices file
     uh = ts_idx_fps->universal_header;
     uh->number_of_entries = tmd2->number_of_blocks;
+    uh->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
+    uh->start_time = metadata_fps->universal_header->start_time;
+    uh->end_time = metadata_fps->universal_header->end_time;
     ts_idx_fps->universal_header->header_CRC = CRC_calculate(ts_idx_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
     e_fseek(ts_idx_fps->fp, 0, SEEK_SET, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_idx_fps->fp, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
