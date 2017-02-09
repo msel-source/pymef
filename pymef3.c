@@ -51,12 +51,17 @@ DONE - Move Python function declarations and docstrings to the header file.
 
 DONE - Create list for file indeces
 
-Extract segment number when writing or appending data
+DONE - Extract segment number when writing or appending data
+
+DONE - Add ability to read universal headers (esp. for CRCs)
+
+DONE - Check times in universal headers - why are they negative? (was connected to GMT offset to being set, corrected by a line after initialize_meflib(), ask MATT about this)
+
+DONE - Check times in time series indeces - they are going down instead of up! (solved by the line above)
 
 Check file closing in all functions
 
 Write the help docstrings
-
 
 Fix the info at the beginning (licence)
 
@@ -74,6 +79,8 @@ Build in opional filtration
 /* NOTES
 
 All mkdirs will be in the pure python layer, perhaps apart from the segment number genration?
+
+What is recording time offset and how to use it??? Ask Matt.
 
 Metadata write functions could be merged into one!!!
 
@@ -149,7 +156,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     }
 
     /// initialize MEF library
-    (void) initialize_meflib();    
+    (void) initialize_meflib();   
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE;  
 
     // set up a generic mef3 fps for universal header and password data
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
@@ -165,8 +173,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     extract_path_parts(py_file_path, path_out, name, type);
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // TODO - extact segment number
-        uh->segment_number = 0;
+        // Segment - OK - extract segment number and check for time series
+        uh->segment_number = extract_segment_number(&name);
         if (!path_processed)
             MEF_strncpy(record_file_name, name, MEF_BASE_FILE_NAME_BYTES);
         path_processed = 1;
@@ -449,6 +457,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
     // set up a generic mef3 fps for universal header and password data
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
@@ -463,8 +472,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        // ASK For this we sohuld parse the path OR ask user to specify this
-        uh->segment_number = 0;
+        uh->segment_number = extract_segment_number(&name);
 
         // Copy the segment name for file name construction
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -557,6 +565,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
     // set up a generic mef3 fps for universal header and password data
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
@@ -571,8 +580,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        // ASK For this we sohuld parse the path OR ask user to specify this
-        uh->segment_number = 0;
+        uh->segment_number = extract_segment_number(&name);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -668,6 +676,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
 
@@ -682,8 +691,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        // ASK For this we sohuld parse the path OR ask user to specify this
-        uh->segment_number = 0;
+        uh->segment_number = extract_segment_number(&name);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -891,6 +899,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
 
@@ -905,8 +914,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        // ASK For this we sohuld parse the path OR ask user to specify this
-        uh->segment_number = 0;
+        uh->segment_number = extract_segment_number(&name);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -999,6 +1007,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
     // --- Parse the input --- 
     if (!PyArg_ParseTuple(args,"ssslllOb",
@@ -1022,8 +1031,6 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // Segment - OK - extract segment number and check for time series
-        // ASK For this we sohuld parse the path OR ask user to specify this
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -1262,6 +1269,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
     
     MEF_strncpy(session_path, py_session_path, MEF_FULL_FILE_NAME_BYTES);
     session = read_MEF_session(NULL, session_path, py_level_1_password, NULL, MEF_FALSE, MEF_TRUE);    
@@ -1303,6 +1311,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
     
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_TRUE);    
     
@@ -1343,6 +1352,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
     
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_TRUE);    
     
@@ -1352,7 +1362,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     // Read segment records if present and add it to metadata
     if (segment->record_indices_fps != NULL & segment->record_data_fps != NULL){
         seg_record_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
-        PyDict_SetItemString(seg_metadata_dict, "records", seg_record_dict);
+        PyDict_SetItemString(seg_metadata_dict, "records_info", seg_record_dict);
     }
 
     // clean up
@@ -1420,6 +1430,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) // This will b
 
     // initialize MEF library
     (void) initialize_meflib();
+    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
 
     MEF_strncpy(channel_path, py_channel_path, MEF_FULL_FILE_NAME_BYTES); // might be unnecesasry
     chan = read_MEF_channel(NULL, channel_path, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_FALSE);  
@@ -2188,7 +2199,7 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
 
 /*****************************  Mef struct to Python  *******************************/
 
-PyObject *map_mef3_universal_header(UNIVERSAL_HEADER *uh)
+PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
 {
     // Dictionaries
     PyObject *uh_dict;
@@ -2970,11 +2981,13 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
     return vi_dict;
 }
 
-PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through channels
+PyObject *map_mef3_segment(SEGMENT *segment)
 {
     // Dictionaries
     PyObject *metadata_dict;
     PyObject *spec_dict;
+    PyObject *uh_dict;
+    PyObject *uhs_dict;
     PyObject *s1_dict;
     PyObject *s2_dict;
     PyObject *s3_dict;
@@ -3016,7 +3029,8 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
             Py_BuildValue("s", temp_str));
                              
     
-    // Assign pointers for reading metadata
+    
+    // Assign pointers for reading metadata and read universal headers
     md1 = segment->metadata_fps->metadata.section_1;
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
@@ -3031,8 +3045,7 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
             return NULL;
     }      
     md3 = segment->metadata_fps->metadata.section_3;
-    
-    
+
     // Create section 1 dictionary
     s1_dict = map_mef3_md1(md1);
     PyDict_SetItemString(metadata_dict, "section_1", s1_dict);
@@ -3088,6 +3101,33 @@ PyObject *map_mef3_segment(SEGMENT *segment) // This funtion also loops through 
             return NULL;
     }
     PyDict_SetItemString(metadata_dict, "indeces", idx_list);
+
+    // Get universal headers
+    uhs_dict = PyDict_New();
+
+    // Metadata
+    uh_dict = map_mef3_uh(segment->metadata_fps->universal_header);
+    PyDict_SetItemString(uhs_dict, "metadata", uh_dict);
+
+    // Data an indices universal headers
+    switch (segment->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            uh_dict = map_mef3_uh(segment->time_series_data_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "time_series_data", uh_dict);
+            uh_dict = map_mef3_uh(segment->time_series_indices_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "time_series_indices", uh_dict);
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            uh_dict = map_mef3_uh(segment->video_indices_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "video_indeces", uh_dict);
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }
+
+    PyDict_SetItemString(metadata_dict, "universal_headers", uhs_dict);
 
     return metadata_dict;
 }
@@ -3234,7 +3274,7 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
     return metadata_dict;
 }
 
-PyObject *map_mef3_session(SESSION *session)
+PyObject *map_mef3_session(SESSION *session) // This funtion also loops through channels
 {
     // Dictionaries
     PyObject *metadata_dict;
@@ -3363,8 +3403,11 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
 {
 
     // Ditionary
-    PyObject    *all_record_dict;
+    PyObject    *record_info_dict;
+    PyObject    *all_record_list;
     PyObject    *record_dict;
+    PyObject    *uhs_dict;
+    PyObject    *uh_dict;
 
     void    *rd;
     si4     i;
@@ -3372,11 +3415,21 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
 
     RECORD_HEADER   *rh;
     RECORD_INDEX    *ri;
-
-    // Create output dictionary
-    all_record_dict = PyDict_New();
  
+    // Set up output dictionary
+    record_info_dict = PyDict_New();
+
+    // Get universal headers
+    uhs_dict = PyDict_New();
+    uh_dict = map_mef3_uh(ri_fps->universal_header);
+    PyDict_SetItemString(uhs_dict, "record_indices", uh_dict);
+    uh_dict = map_mef3_uh(rd_fps->universal_header);
+    PyDict_SetItemString(uhs_dict, "record_data", uh_dict);
+    PyDict_SetItemString(record_info_dict, "universal_headers", uhs_dict);
+
+    // Create list for records
     number_of_records = ri_fps->universal_header->number_of_entries;
+    all_record_list = PyList_New(number_of_records);
 
     // First entry
     ri = ri_fps->record_indices; // This is unneccesary now but can be used to filter read records. Will be done in python now.
@@ -3388,13 +3441,15 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
         rh = (RECORD_HEADER *) rd;
 
         record_dict = map_mef3_rh(rh);
-        PyDict_SetItem(all_record_dict,Py_BuildValue("i", i),record_dict); // ASK Matt / Dan. Could also be type_string, 
+        PyList_SET_ITEM(all_record_list, i, record_dict); // ASK Matt / Dan. Could also be type_string, 
 
         rd += (RECORD_HEADER_BYTES + rh->bytes);
         
     }
 
-    return all_record_dict;
+    PyDict_SetItemString(record_info_dict, "records", all_record_list);
+
+    return record_info_dict;
 }
 
 PyObject *map_mef3_rh(RECORD_HEADER *rh)
@@ -3790,6 +3845,26 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
 
 /**************************  Other helper functions  ****************************/
 
-// int extract_segment_number(si1 segment_name[MEF_BASE_FILE_NAME_BYTES]){
+si4 extract_segment_number(si1 *segment_name)
+{
+    si1     *c;
+    si4     segment_number;
+    ui4     i;
 
-// }
+    // move pointer to the end of the string
+    c = segment_name + strlen(segment_name) - 1;
+
+    // Get to the dash
+    while(*--c == '-'){
+        if (*c == '/'){
+            PyErr_SetString(PyExc_RuntimeError, "Segment name not in valid form XXX-000000");
+            PyErr_Occurred();
+            return NULL;
+        }
+    }
+    c++;
+
+    segment_number = (si4) strtol(c, NULL, 10);
+
+    return segment_number;
+}

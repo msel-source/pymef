@@ -107,7 +107,7 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
 
 
 // ---------- Mef3 to python dictionaries -----------
-PyObject *map_mef3_universal_header(UNIVERSAL_HEADER *uh);
+PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh);
 
 PyObject *map_mef3_md1(METADATA_SECTION_1 *md1);
 PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd);
@@ -132,3 +132,6 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh);
 PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh);
 PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh);
 PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
+
+// Helper functions
+si4 extract_segment_number(si1 *segment_name);
