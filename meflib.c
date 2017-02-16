@@ -3822,7 +3822,7 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 	}
 	
 	// count
-	sprintf(temp_str, "ls -1d %s/*.%s > /tmp/junk 2> /dev/null", enclosing_directory, extension);
+	sprintf(temp_str, "ls -1d \"%s\"/*.%s > /tmp/junk 2> /dev/null", enclosing_directory, extension);
 	system(temp_str);
 	fp = e_fopen("/tmp/junk", "r", __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	
