@@ -4930,6 +4930,8 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 	channel->maximum_number_of_records = 0;
 	channel->maximum_record_bytes = 0;
 	bzero(channel->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
+	channel->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
+	channel->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
 	
         // read channel record indices if present
 	MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", channel->path, channel->name, channel->extension, channel->name, RECORD_INDICES_FILE_TYPE_STRING);
@@ -5560,6 +5562,8 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 	session->maximum_number_of_records = 0;
 	session->maximum_record_bytes = 0;
 	bzero(session->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
+	session->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
+	session->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
 
 	// read session record indices if present
 	MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_INDICES_FILE_TYPE_STRING);
