@@ -61,6 +61,12 @@ DONE - Check times in time series indeces - they are going down instead of up! (
 
 DONE - Check file closing in all functions (problem was in ts data reading fixed at the end, see git)
 
+DONE - check the times in read_channel/read_session (bug in MEF_LIB, see the notes and git)
+
+DONE - Check maximum number_of_records / maximum_record_bytes in read_seesion - expected behavior, reading records at channel level not segments
+
+DONE - Deal with simple quates in channel names, grrrrrrrr!!!!!!
+
 Write the help docstrings
 
 Fix the info at the beginning (licence)
@@ -86,7 +92,11 @@ Metadata write functions could be merged into one!!!
 
 MEF_LIB "bug" - troubles when spaces in file paths
 
-MEFL_LIB bug - read_MEF_session - was reading time_series_channels instead of video_channels, see git
+MEF_LIB bug - generate_file_list - had troubles with \' sign. fixed in the bash command (the above could be fix the same way), see git
+
+MEF_LIB bug - read_MEF_session - was reading time_series_channels instead of video_channels, see git for the fix
+
+MEF_LIB bug - read_MEF_channel/read_MEF_session - the earliest_start_time is initialized with zero hence it starts in 1970 and can never be updated, see git fot the fix
 
 */
 
@@ -104,10 +114,7 @@ PyObject * PyInit_pymef3(void)
         return NULL;
 
     return m;
-
 }
-
-
 
 /************************************************************************************/
 /******************************  MEF write functions  *******************************/
@@ -972,8 +979,6 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     return Py_None;
 }
 
-
-
 /************************************************************************************/
 /*************************  MEF modify/append functions  ****************************/
 /************************************************************************************/
@@ -1237,8 +1242,6 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
 // {
     
 // }
-
-
 
 /************************************************************************************/
 /******************************  MEF read functions  ********************************/
@@ -1770,7 +1773,6 @@ MEF_strcpy(rh->type_string, temp_str_bytes); // assign to char that we want
 // METADATA_SECTION_1 *map_python_md1(PyObject *md1_dict)
 // {
 // }
-
 
 void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd2)
 {
@@ -3150,9 +3152,8 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
     PyObject *segments_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
+    si1   temp_str[256];
     si4   i;
-    si8   long_file_time;
     
     // Method
     SEGMENT *segment;
@@ -3177,20 +3178,16 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
     // Insert entries into dictionary
     
     // Earliest start time
-    long_file_time = (si8) (channel->earliest_start_time + 500000) / 1000000;
-    time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
-    if (channel->earliest_start_time)
+    if (channel->earliest_start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("k", channel->earliest_start_time));
+            Py_BuildValue("l", channel->earliest_start_time));
     else
         PyDict_SetItemString(spec_dict, "earliest_start_time",
             Py_BuildValue("s", temp_str));
     // Latest end time                     
-    long_file_time = (si8) (channel->latest_end_time + 500000) / 1000000;
-    time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
-    if (channel->latest_end_time)
+    if (channel->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("k", channel->latest_end_time));
+            Py_BuildValue("l", channel->latest_end_time));
     else
         PyDict_SetItemString(spec_dict, "latest_end_time",
             Py_BuildValue("s", temp_str));
@@ -3202,16 +3199,16 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
         PyDict_SetItemString(spec_dict, "anonymized_name",
             Py_BuildValue("s", temp_str));
     // Maximum number of records
-    if (channel->maximum_number_of_records)
+    if (channel->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("k", channel->maximum_number_of_records));
+            Py_BuildValue("l", channel->maximum_number_of_records));
     else
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
             Py_BuildValue("s", temp_str));
     // Maximum record bytes                  
-    if (channel->maximum_record_bytes)
+    if (channel->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("k", channel->maximum_record_bytes));
+            Py_BuildValue("l", channel->maximum_record_bytes));
     else
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
             Py_BuildValue("s", temp_str));
@@ -3312,20 +3309,16 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     // Insert entries into dictionary
     
     // Earliest start time
-    long_file_time = (si8) (session->earliest_start_time + 500000) / 1000000;
-    time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
-    if (session->earliest_start_time)
+    if (session->earliest_start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("k", session->earliest_start_time));
+            Py_BuildValue("l", session->earliest_start_time));
     else
         PyDict_SetItemString(spec_dict, "earliest_start_time",
             Py_BuildValue("s", temp_str));
     // Latest end time                     
-    long_file_time = (si8) (session->latest_end_time + 500000) / 1000000;
-    time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
-    if (session->latest_end_time)
+    if (session->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("k", session->latest_end_time));
+            Py_BuildValue("l", session->latest_end_time));
     else
         PyDict_SetItemString(spec_dict, "latest_end_time",
             Py_BuildValue("s", temp_str));
@@ -3337,16 +3330,16 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
         PyDict_SetItemString(spec_dict, "anonymized_name",
             Py_BuildValue("s", temp_str));
     // Maximum number of records
-    if (session->maximum_number_of_records)
+    if (session->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("k", session->maximum_number_of_records));
+            Py_BuildValue("l", session->maximum_number_of_records));
     else
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
             Py_BuildValue("s", temp_str));
     // Maximum record bytes                  
-    if (session->maximum_record_bytes)
+    if (session->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("k", session->maximum_record_bytes));
+            Py_BuildValue("l", session->maximum_record_bytes));
     else
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
             Py_BuildValue("s", temp_str));
@@ -3358,14 +3351,14 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
         PyDict_SetItemString(spec_dict, "session_name",
             Py_BuildValue("s", temp_str));
     // Number of time series channels            
-    if (session->number_of_time_series_channels)
+    if (session->number_of_time_series_channels != 0)
         PyDict_SetItemString(spec_dict, "number_of_times_series_channles",
             Py_BuildValue("i", session->number_of_time_series_channels));
     else
         PyDict_SetItemString(spec_dict, "number_of_times_series_channles",
             Py_BuildValue("i", 0));
     // Number of video channels            
-    if (session->number_of_video_channels)
+    if (session->number_of_video_channels != 0)
         PyDict_SetItemString(spec_dict, "number_of_video_channels",
             Py_BuildValue("i", session->number_of_video_channels));
     else
