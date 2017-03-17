@@ -19,8 +19,10 @@ United States
 """
 
 from distutils.core import setup, Extension
+import numpy
 
 # the c extension module
 extension_mod = Extension("pymef3", ["pymef3.c"])
 
-setup(name = "pymef3", ext_modules=[extension_mod])
+setup(name = "pymef3", ext_modules=[extension_mod],
+      include_dirs=[numpy.get_include()]) # This line needed for MSEL (+ the import at the beginning)
