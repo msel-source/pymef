@@ -257,6 +257,12 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 py_seiz_chan_list = PyDict_GetItemString(py_record_dict,"channels");
                 bytes += (MEFREC_Seiz_1_0_CHANNEL_BYTES * PyList_Size(py_seiz_chan_list));
                 break;
+            case MEFREC_CSti_TYPE_CODE:
+                bytes += RECORD_HEADER_BYTES;
+                rb_bytes = MEFREC_CSti_1_0_BYTES;
+                rb_bytes += 16 - (rb_bytes % 16);
+                bytes += rb_bytes;
+                break;
             case MEFREC_SyLg_TYPE_CODE:
                 bytes += RECORD_HEADER_BYTES;
                 rb_bytes = 0;
@@ -325,7 +331,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         // Fork for different record types
         rh->bytes = 0;
         type_code = *((ui4 *) rh->type_string);
-       
+
         switch (type_code) {
             case MEFREC_EDFA_TYPE_CODE:
 
@@ -382,6 +388,14 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                     rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
                 rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                break;
+
+            case MEFREC_CSti_TYPE_CODE:
+                map_python_CSti_type(py_record_dict, (si1 *) rd);
+                MEF_strncpy(ri->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
+                MEF_strncpy(rh->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
+                rh->bytes = MEFREC_CSti_1_0_BYTES;
+                MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_SyLg_TYPE_CODE:
@@ -1354,9 +1368,9 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
     MEF_globals->recording_time_offset_mode = RTO_IGNORE;
-    
+
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_TRUE);    
-    
+
     // map the segment info
     seg_metadata_dict = map_mef3_segment(segment);
 
@@ -2204,6 +2218,42 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
 
     return;
 }   
+
+void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
+{
+    // Helpers
+    PyObject    *temp_o, *temp_UTF_str;
+
+    si1     *temp_str_bytes;
+
+    // Assign from dict to struct
+    temp_o = PyDict_GetItemString(CSti_type_dict,"task_type");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->task_type, temp_str_bytes);
+    }
+
+    temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_duration");
+    if (temp_o != NULL)
+        r_type->stimulus_duration = PyLong_AsLong(temp_o);
+
+    temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_type");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->stimulus_type, temp_str_bytes);
+    }
+
+    temp_o = PyDict_GetItemString(CSti_type_dict,"patient_response");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->patient_response, temp_str_bytes);
+    }
+
+    return;
+}
 
 /*****************************  Mef struct to Python  *******************************/
 
@@ -3536,6 +3586,9 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         case MEFREC_Seiz_TYPE_CODE:
             type_dict = map_mef3_Seiz_type(rh);
             break;
+        case MEFREC_CSti_TYPE_CODE:
+            type_dict = map_mef3_CSti_type(rh);
+            break;
         case MEFREC_SyLg_TYPE_CODE:
             type_dict = map_mef3_SyLg_type(rh);
             break;
@@ -3813,6 +3866,49 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
     // Unrecognized record version
     else {
         PyDict_SetItemString(dict_out,"note_text",Py_BuildValue("s", "Unrecognized Seiz version."));
+    }
+     
+    return dict_out;
+}
+
+PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
+{
+    // Dictionary
+    PyObject *dict_out;
+
+    si4         i, mn1 = MEF_FALSE, mn2 = MEF_FALSE;
+    MEFREC_CSti_1_0     *cog_stim;
+    si1         time_str[32];
+        
+    // Dict definition
+    dict_out = PyDict_New();        
+
+
+    // Version 1.0
+    if (rh->version_major == 1 && rh->version_minor == 0) {
+        cog_stim = (MEFREC_CSti_1_0 *) ((ui1 *) rh + MEFREC_CSti_1_0_OFFSET);
+
+        if (strlen(cog_stim->task_type))
+            PyDict_SetItemString(dict_out,"task_type",Py_BuildValue("s", cog_stim->task_type));
+        else
+            PyDict_SetItemString(dict_out,"task_type",Py_BuildValue("s", "no_entry"));
+
+        PyDict_SetItemString(dict_out,"stimulus_duration",Py_BuildValue("l", cog_stim->stimulus_duration));
+
+        if (strlen(cog_stim->stimulus_type))
+            PyDict_SetItemString(dict_out,"stimulus_type",Py_BuildValue("s", cog_stim->stimulus_type));
+        else
+            PyDict_SetItemString(dict_out,"stimulus_type",Py_BuildValue("s", "no_entry"));
+
+        if (strlen(cog_stim->patient_response))
+            PyDict_SetItemString(dict_out,"patient_response",Py_BuildValue("s", cog_stim->patient_response));
+        else
+            PyDict_SetItemString(dict_out,"patient_response",Py_BuildValue("s", "no_entry"));
+        
+    }
+    // Unrecognized record version
+    else {
+        PyDict_SetItemString(dict_out,"note_text",Py_BuildValue("s", "Unrecognized CSti version."));
     }
      
     return dict_out;

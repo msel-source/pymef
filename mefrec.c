@@ -521,7 +521,89 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes)
 
 
 
+/********************************   Csti: Cognitive stimulation   ******************************/
+
+void	show_mefrec_CSti_type(RECORD_HEADER *record_header)
+{
+        MEFREC_CSti_1_0	*cog_stim;
+        si1			time_str[32];
+  
+        
+        // Version 1.0
+        if (record_header->version_major == 1 && record_header->version_minor == 0) {
+                cog_stim = (MEFREC_CSti_1_0 *) ((ui1 *) record_header + MEFREC_CSti_1_0_OFFSET);
+  
+                if (strlen(cog_stim->task_type))
+						UTF8_printf("Task type: %s\n", cog_stim->task_type);
+                else
+                    	printf("Task type: no_entry\n");
+
+				printf("Duration: %ld (microseconds)\n", cog_stim->stimulus_duration);
+				
+                if (strlen(cog_stim->stimulus_type))
+						UTF8_printf("Stimulation type: %s\n", cog_stim->stimulus_type);
+                else
+                    	printf("Stimulation type: no_entry\n");
+                if (strlen(cog_stim->patient_response))
+                    	UTF8_printf("Patient response: %s\n", cog_stim->patient_response);
+                else
+                    	printf("Patient response: no entry\n");
+        }
+        // Unrecognized record version
+        else {
+                printf("Unrecognized Note version\n");
+        }
+        
+        return;
+}
+
+si4	check_mefrec_CSti_type_alignment(ui1 *bytes)
+{
+	MEFREC_CSti_1_0		*cog_stim;
+	si4			free_flag = MEF_FALSE;
+    extern MEF_GLOBALS	*MEF_globals;
+	
+	
+	// check overall sizes
+	if (sizeof(MEFREC_CSti_1_0) != MEFREC_CSti_1_0_BYTES)
+		goto MEFREC_CSti_1_0_NOT_ALIGNED;
+	
+	// check fields - base structure
+	if (bytes == NULL) {
+		bytes = (ui1 *) e_malloc(LARGEST_RECORD_BYTES, __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
+		free_flag = MEF_TRUE;
+	}
+	cog_stim = (MEFREC_CSti_1_0 *) (bytes + MEFREC_CSti_1_0_OFFSET);
+	if (&cog_stim->task_type != (si1 *) (bytes + MEFREC_CSti_1_0_TASK_TYPE_OFFSET))
+		goto MEFREC_CSti_1_0_NOT_ALIGNED;
+	if (&cog_stim->stimulus_duration != (si8 *) (bytes + MEFREC_CSti_1_0_STIMULUS_DURATION_OFFSET))
+		goto MEFREC_CSti_1_0_NOT_ALIGNED;
+	if (cog_stim->stimulus_type != (si1 *) (bytes + MEFREC_CSti_1_0_STIMULUS_TYPE_OFFSET))
+		goto MEFREC_CSti_1_0_NOT_ALIGNED;
+	if (cog_stim->patient_response != (si1 *) (bytes + MEFREC_CSti_1_0_PATIENT_RESPONSE_OFFSET))
+		goto MEFREC_CSti_1_0_NOT_ALIGNED;
+
+	// aligned
+	if (free_flag == MEF_TRUE)
+		free(bytes);
+	
+	if (MEF_globals->verbose == MEF_TRUE)
+		(void) printf("%s(): MEFREC_CSti_1_0 structure is aligned\n", __FUNCTION__);
+	
+        return(MEF_TRUE);
+	
+	// not aligned
+	MEFREC_CSti_1_0_NOT_ALIGNED:
+	
+	if (free_flag == MEF_TRUE)
+		free(bytes);
+	
+	(void) fprintf(stderr, "%c%s(): MEFREC_Csti_1_0 structure is not aligned\n", 7, __FUNCTION__);
+        
+        return(MEF_FALSE);
+}
 
 
+/*************************************************************************************/
 
 

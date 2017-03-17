@@ -182,6 +182,37 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes);
 
 /*************************************************************************************/
 
+/********************************   Csti: Cognitive stimulation   ******************************/
+
+// Constants
+#define MEFREC_CSti_TYPE_STRING     "CSti"              // ascii[4]
+#define MEFREC_CSti_TYPE_CODE       (ui4) 0x69745343    // ui4 (little endian)
+// #define MEFREC_LNTP_TYPE_CODE    (ui4) 0x43537469    // ui4 (big endian)
+
+// Version 1.0
+#define MEFREC_CSti_1_0_OFFSET          RECORD_HEADER_BYTES
+#define MEFREC_CSti_1_0_BYTES           200 // Watch out here - need to pad when writing.
+#define MEFREC_CSti_1_0_TASK_TYPE_OFFSET              (RECORD_HEADER_BYTES + 0)        // utf8[15]
+#define MEFREC_CSti_1_0_TASK_TYPE_BYTES             64  
+#define MEFREC_CSti_1_0_STIMULUS_DURATION_OFFSET   (RECORD_HEADER_BYTES + 64)   // si8
+#define MEFREC_CSti_1_0_STIMULUS_TYPE_OFFSET       (RECORD_HEADER_BYTES + 72)     // utf8[15]
+#define MEFREC_CSti_1_0_STIMULUS_TYPE_BYTES      64
+#define MEFREC_CSti_1_0_PATIENT_RESPONSE_OFFSET       (RECORD_HEADER_BYTES + 136)     // utf8[15]
+#define MEFREC_CSti_1_0_PATIENT_RESPONSE_BYTES      64
+
+// Structures
+typedef struct {
+    si1 task_type[MEFREC_CSti_1_0_TASK_TYPE_BYTES];
+    si8 stimulus_duration;
+    si1 stimulus_type[MEFREC_CSti_1_0_STIMULUS_TYPE_BYTES];
+    si1 patient_response[MEFREC_CSti_1_0_PATIENT_RESPONSE_BYTES];
+} MEFREC_CSti_1_0;
+
+// Prototypes
+void    show_mefrec_CSti_type(RECORD_HEADER *record_header);
+si4 check_mefrec_CSti_type_alignment(ui1 *bytes);
+
+/*************************************************************************************/
 
 
 /***************************   UnRc: Unrecognized Record   ***************************/
