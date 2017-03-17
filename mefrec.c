@@ -106,6 +106,9 @@ void	show_record(RECORD_HEADER *record_header, ui4 record_number, PASSWORD_DATA 
 		case MEFREC_SyLg_TYPE_CODE:
 			show_mefrec_SyLg_type(record_header);
 			break;
+		case MEFREC_CSti_TYPE_CODE:
+			show_mefrec_CSti_type(record_header);
+			break;
 		case MEFREC_UnRc_TYPE_CODE:
 			printf("\"%s\" (0x%x) is an unrecognized record type\n", record_header->type_string, type_code);
 			break;
@@ -151,6 +154,8 @@ si1	check_record_structure_alignments(ui1 *bytes)
 	if ((check_mefrec_Seiz_type_alignment(bytes)) == MEF_FALSE)
 		return_value = MEF_FALSE;
 	if ((check_mefrec_SyLg_type_alignment(bytes)) == MEF_FALSE)
+		return_value = MEF_FALSE;
+	if ((check_mefrec_CSti_type_alignment(bytes)) == MEF_FALSE)
 		return_value = MEF_FALSE;
 	
         if (free_flag == MEF_TRUE)
@@ -520,8 +525,8 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes)
 /*************************************************************************************/
 
 
-
-/********************************   Csti: Cognitive stimulation   ******************************/
+//CSti functions not tested!!!!!!!
+/********************************   CSti: Cognitive stimulation   ******************************/
 
 void	show_mefrec_CSti_type(RECORD_HEADER *record_header)
 {
