@@ -525,14 +525,13 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes)
 /*************************************************************************************/
 
 
-//CSti functions not tested!!!!!!!
+//show_mefrec_CSti_type not tested!!!
 /********************************   CSti: Cognitive stimulation   ******************************/
 
 void	show_mefrec_CSti_type(RECORD_HEADER *record_header)
 {
         MEFREC_CSti_1_0	*cog_stim;
         si1			time_str[32];
-  
         
         // Version 1.0
         if (record_header->version_major == 1 && record_header->version_minor == 0) {
@@ -612,3 +611,132 @@ si4	check_mefrec_CSti_type_alignment(ui1 *bytes)
 /*************************************************************************************/
 
 
+//show_mefrec_ESti_type not tested!!!
+/********************************   ESti: Electrical stimulation   ******************************/
+
+void	show_mefrec_ESti_type(RECORD_HEADER *record_header)
+{
+        MEFREC_ESti_1_0	*el_stim;
+        si1			time_str[32];
+        
+        // Version 1.0
+        if (record_header->version_major == 1 && record_header->version_minor == 0) {
+                el_stim = (MEFREC_ESti_1_0 *) ((ui1 *) record_header + MEFREC_ESti_1_0_OFFSET);
+  				
+
+                printf("Amplitude: %f ", el_stim->amplitude);
+                switch (el_stim->ampunit_code) {
+                        case MEFREC_ESti_1_0_AMPUNIT_NO_ENTRY:
+                                printf("(no entry)\n");
+                                break;
+                        case MEFREC_ESti_1_0_AMPUNIT_UNKNOWN:
+                                printf("(unknown)\n");
+                                break;
+                        case MEFREC_ESti_1_0_AMPUNIT_MA:
+                                printf("(mA)\n");
+                                break;
+                        case MEFREC_ESti_1_0_AMPUNIT_V:
+                                printf("(V)\n");
+                                break;
+                        default:
+                                printf("(unrecognized code)\n");
+                                break;
+                }
+                printf("Frequency: %f (Hz)\n", el_stim->frequency);
+				printf("Pulse width: %ld (microseconds)\n", el_stim->pulse_width);
+				printf("Operating mode: ");
+				switch(el_stim->mode_code){
+						case MEFREC_ESti_1_0_MODE_NO_ENTRY:
+                                printf("(no entry)\n");
+                                break;
+                        case MEFREC_ESti_1_0_MODE_UNKNOWN:
+                                printf("(unknown)\n");
+                                break;
+                        case MEFREC_ESti_1_0_MODE_CURRENT:
+                                printf("(current)\n");
+                                break;
+                        case MEFREC_ESti_1_0_MODE_VOLTAGE:
+                                printf("(voltage)\n");
+                                break;
+                        default:
+                                printf("(unrecognized code)\n");
+                                break;
+				}
+				
+                if (strlen(el_stim->waveform))
+						UTF8_printf("Waveform: %s\n", el_stim->waveform);
+                else
+                    	printf("Waveform: no_entry\n");
+                if (strlen(el_stim->anode))
+                    	UTF8_printf("Anode: %s\n", el_stim->anode);
+                else
+                    	printf("Anode: no entry\n");
+                if (strlen(el_stim->catode))
+                    	UTF8_printf("Catode: %s\n", el_stim->catode);
+                else
+                    	printf("Catode: no entry\n");
+        }
+        // Unrecognized record version
+        else {
+                printf("Unrecognized Note version\n");
+        }
+        
+        return;
+}
+
+
+si4	check_mefrec_ESti_type_alignment(ui1 *bytes)
+{
+	MEFREC_ESti_1_0		*el_stim;
+	si4			free_flag = MEF_FALSE;
+    extern MEF_GLOBALS	*MEF_globals;
+	
+	
+	// check overall sizes
+	if (sizeof(MEFREC_ESti_1_0) != MEFREC_ESti_1_0_BYTES)
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	
+	// check fields - base structure
+	if (bytes == NULL) {
+		bytes = (ui1 *) e_malloc(LARGEST_RECORD_BYTES, __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
+		free_flag = MEF_TRUE;
+	}
+	el_stim = (MEFREC_ESti_1_0 *) (bytes + MEFREC_ESti_1_0_OFFSET);
+	if (&el_stim->amplitude != (si1 *) (bytes + MEFREC_ESti_1_0_AMPLITUDE_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (&el_stim->frequency != (si8 *) (bytes + MEFREC_ESti_1_0_FREQUENCY_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->pulse_width != (si1 *) (bytes + MEFREC_ESti_1_0_PULSE_WIDTH_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->ampunit_code != (si1 *) (bytes + MEFREC_ESti_1_0_AMPUNIT_CODE_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->mode_code != (si1 *) (bytes + MEFREC_ESti_1_0_MODE_CODE_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->waveform != (si1 *) (bytes + MEFREC_ESti_1_0_WAVEFORM_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->anode != (si1 *) (bytes + MEFREC_ESti_1_0_ANODE_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+	if (el_stim->catode != (si1 *) (bytes + MEFREC_ESti_1_0_CATODE_OFFSET))
+		goto MEFREC_ESti_1_0_NOT_ALIGNED;
+
+	// aligned
+	if (free_flag == MEF_TRUE)
+		free(bytes);
+	
+	if (MEF_globals->verbose == MEF_TRUE)
+		(void) printf("%s(): MEFREC_ESti_1_0 structure is aligned\n", __FUNCTION__);
+	
+        return(MEF_TRUE);
+	
+	// not aligned
+	MEFREC_ESti_1_0_NOT_ALIGNED:
+	
+	if (free_flag == MEF_TRUE)
+		free(bytes);
+	
+	(void) fprintf(stderr, "%c%s(): MEFREC_Esti_1_0 structure is not aligned\n", 7, __FUNCTION__);
+        
+        return(MEF_FALSE);
+}
+
+/*************************************************************************************/

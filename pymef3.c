@@ -263,6 +263,12 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rb_bytes += 16 - (rb_bytes % 16);
                 bytes += rb_bytes;
                 break;
+            case MEFREC_ESti_TYPE_CODE:
+                bytes += RECORD_HEADER_BYTES;
+                rb_bytes = MEFREC_ESti_1_0_BYTES;
+                //rb_bytes += 16 - (rb_bytes % 16);// unnecessary but kept for consistency
+                bytes += rb_bytes;
+                break;
             case MEFREC_SyLg_TYPE_CODE:
                 bytes += RECORD_HEADER_BYTES;
                 rb_bytes = 0;
@@ -280,6 +286,9 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
                 }
     }
+
+    printf("%d\n",(__LINE__));
+    fflush(stdout);
 
     // Create file processing structs for record data and indeces files
     rec_data_fps = allocate_file_processing_struct(bytes, RECORD_DATA_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
@@ -299,6 +308,10 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     // rh->version_major = ri->version_major = 1;
     // rh->version_minor = ri->version_minor = 0;
     file_offset = ri->file_offset = UNIVERSAL_HEADER_BYTES;
+
+    printf("%d\n",(__LINE__));
+    fflush(stdout);
+
 
     // Run through the python list, read records and write them
     max_rec_bytes = 0;
@@ -395,7 +408,19 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(ri->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_CSti_1_0_BYTES;
-                MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                break;
+
+            case MEFREC_ESti_TYPE_CODE:
+                map_python_ESti_type(py_record_dict, (si1 *) rd);
+                MEF_strncpy(ri->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
+                MEF_strncpy(rh->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
+                rh->bytes = MEFREC_ESti_1_0_BYTES;
+
+                printf("%d\n",(__LINE__));
+                fflush(stdout);
+
+                //MEF_pad(rd, rh->bytes, 16); // unnecessary but kept for consistency
                 break;
 
             case MEFREC_SyLg_TYPE_CODE:
@@ -427,11 +452,17 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         ++ri;
     }
 
+    printf("%d\n",(__LINE__));
+    fflush(stdout);
+
     rec_data_fps->universal_header->maximum_entry_size = max_rec_bytes + RECORD_HEADER_BYTES;
     rec_data_fps->directives.io_bytes = file_offset;
 
     write_MEF_file(rec_data_fps);
     free_file_processing_struct(rec_data_fps);
+
+    printf("%d\n",(__LINE__));
+    fflush(stdout);
 
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_idx_fps);
@@ -2255,6 +2286,54 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     return;
 }
 
+void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
+{
+    // Helpers
+    PyObject    *temp_o, *temp_UTF_str;
+
+    si1     *temp_str_bytes;
+
+    // Assign from dict to struct
+    temp_o = PyDict_GetItemString(ESti_type_dict,"amplitude");
+    if (temp_o != NULL)
+        r_type->amplitude = PyFloat_AsDouble(temp_o);
+    temp_o = PyDict_GetItemString(ESti_type_dict,"frequency");
+    if (temp_o != NULL)
+        r_type->frequency = PyFloat_AsDouble(temp_o);
+    temp_o = PyDict_GetItemString(ESti_type_dict,"pulse_width");
+    if (temp_o != NULL)
+        r_type->pulse_width = PyLong_AsLong(temp_o);
+    temp_o = PyDict_GetItemString(ESti_type_dict,"ampunit_code");
+    if (temp_o != NULL)
+        r_type->ampunit_code = PyLong_AsLong(temp_o);
+    temp_o = PyDict_GetItemString(ESti_type_dict,"mode_code");
+    if (temp_o != NULL)
+        r_type->mode_code = PyLong_AsLong(temp_o);
+
+    temp_o = PyDict_GetItemString(ESti_type_dict,"waveform");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->waveform, temp_str_bytes);
+    }
+
+    temp_o = PyDict_GetItemString(ESti_type_dict,"anode");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->anode, temp_str_bytes);
+    }
+
+    temp_o = PyDict_GetItemString(ESti_type_dict,"catode");
+    if (temp_o != NULL){
+        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        MEF_strcpy(r_type->catode, temp_str_bytes);
+    }
+
+    return;
+}
+
 /*****************************  Mef struct to Python  *******************************/
 
 PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
@@ -3589,6 +3668,9 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         case MEFREC_CSti_TYPE_CODE:
             type_dict = map_mef3_CSti_type(rh);
             break;
+        case MEFREC_ESti_TYPE_CODE:
+            type_dict = map_mef3_ESti_type(rh);
+            break;
         case MEFREC_SyLg_TYPE_CODE:
             type_dict = map_mef3_SyLg_type(rh);
             break;
@@ -3905,6 +3987,90 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
         else
             PyDict_SetItemString(dict_out,"patient_response",Py_BuildValue("s", "no_entry"));
         
+    }
+    // Unrecognized record version
+    else {
+        PyDict_SetItemString(dict_out,"note_text",Py_BuildValue("s", "Unrecognized CSti version."));
+    }
+     
+    return dict_out;
+}
+
+PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
+{
+    // Dictionary
+    PyObject *dict_out;
+
+    si4         i, mn1 = MEF_FALSE, mn2 = MEF_FALSE;
+    MEFREC_ESti_1_0     *el_stim;
+    si1         time_str[32];
+        
+    // Dict definition
+    dict_out = PyDict_New();        
+
+
+    // Version 1.0
+    if (rh->version_major == 1 && rh->version_minor == 0) {
+        el_stim = (MEFREC_ESti_1_0 *) ((ui1 *) rh + MEFREC_ESti_1_0_OFFSET);
+
+        PyDict_SetItemString(dict_out,"amplitude",Py_BuildValue("d", el_stim->amplitude));
+        PyDict_SetItemString(dict_out,"frequency",Py_BuildValue("d", el_stim->frequency));
+        PyDict_SetItemString(dict_out,"pulse_width",Py_BuildValue("l", el_stim->pulse_width));
+
+        PyDict_SetItemString(dict_out,"ampunit_code",Py_BuildValue("i", el_stim->ampunit_code));
+        switch (el_stim->ampunit_code) {
+            case MEFREC_ESti_1_0_AMPUNIT_NO_ENTRY:
+                PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "no_entry"));
+                break;
+            case MEFREC_ESti_1_0_AMPUNIT_UNKNOWN:
+                PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "unknown"));
+                break;
+            case MEFREC_ESti_1_0_AMPUNIT_MA:
+                PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "mA"));
+                break;
+            case MEFREC_ESti_1_0_AMPUNIT_V:
+            PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "V"));
+                break;
+            default:
+                PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "unrecognized"));
+                break;
+        }
+
+        PyDict_SetItemString(dict_out,"mode_code",Py_BuildValue("i", el_stim->mode_code));
+        switch (el_stim->mode_code) {
+            case MEFREC_ESti_1_0_MODE_NO_ENTRY:
+                PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "no_entry"));
+                break;
+            case MEFREC_ESti_1_0_MODE_UNKNOWN:
+                PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "unknown"));
+                break;
+            case MEFREC_ESti_1_0_MODE_CURRENT:
+                PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "current"));
+                break;
+            case MEFREC_ESti_1_0_MODE_VOLTAGE:
+            PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "voltage"));
+                break;
+            default:
+                PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "unrecognized"));
+                break;
+        }
+
+        if (strlen(el_stim->waveform))
+            PyDict_SetItemString(dict_out,"waveform",Py_BuildValue("s", el_stim->waveform));
+        else
+            PyDict_SetItemString(dict_out,"waveform",Py_BuildValue("s", "no_entry"));
+
+        if (strlen(el_stim->anode))
+            PyDict_SetItemString(dict_out,"anode",Py_BuildValue("s", el_stim->anode));
+        else
+            PyDict_SetItemString(dict_out,"anode",Py_BuildValue("s", "no_entry"));
+
+
+        if (strlen(el_stim->catode))
+            PyDict_SetItemString(dict_out,"catode",Py_BuildValue("s", el_stim->catode));
+        else
+            PyDict_SetItemString(dict_out,"catode",Py_BuildValue("s", "no_entry"));
+  
     }
     // Unrecognized record version
     else {

@@ -182,12 +182,13 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes);
 
 /*************************************************************************************/
 
+
 /********************************   Csti: Cognitive stimulation   ******************************/
 
 // Constants
 #define MEFREC_CSti_TYPE_STRING     "CSti"              // ascii[4]
 #define MEFREC_CSti_TYPE_CODE       (ui4) 0x69745343    // ui4 (little endian)
-// #define MEFREC_LNTP_TYPE_CODE    (ui4) 0x43537469    // ui4 (big endian)
+// #define MEFREC_ESti_TYPE_CODE    (ui4) 0x43537469    // ui4 (big endian)
 
 // Version 1.0
 #define MEFREC_CSti_1_0_OFFSET          RECORD_HEADER_BYTES
@@ -213,6 +214,59 @@ void    show_mefrec_CSti_type(RECORD_HEADER *record_header);
 si4 check_mefrec_CSti_type_alignment(ui1 *bytes);
 
 /*************************************************************************************/
+
+
+/********************************   Esti: Electric stimulation   ******************************/
+
+// Constants
+#define MEFREC_ESti_TYPE_STRING     "ESti"              // ascii[4]
+#define MEFREC_ESti_TYPE_CODE       (ui4) 0x69745345    // ui4 (little endian)
+// #define MEFREC_ESti_TYPE_CODE    (ui4) 0x45537469    // ui4 (big endian)
+
+// Version 1.0
+#define MEFREC_ESti_1_0_OFFSET          RECORD_HEADER_BYTES
+#define MEFREC_ESti_1_0_BYTES           416
+#define MEFREC_ESti_1_0_AMPLITUDE_OFFSET    (RECORD_HEADER_BYTES + 0)   //sf8
+#define MEFREC_ESti_1_0_FREQUENCY_OFFSET    (RECORD_HEADER_BYTES + 8)   //sf8
+#define MEFREC_ESti_1_0_PULSE_WIDTH_OFFSET  (RECORD_HEADER_BYTES + 16)  //si8
+#define MEFREC_ESti_1_0_AMPUNIT_CODE_OFFSET (RECORD_HEADER_BYTES + 24)  //si4
+#define MEFREC_ESti_1_0_MODE_CODE_OFFSET    (RECORD_HEADER_BYTES + 28)  //si4
+#define MEFREC_ESti_1_0_WAVEFORM_OFFSET     (RECORD_HEADER_BYTES + 32)  //utf8[31]
+#define MEFREC_ESti_1_0_WAVEFORM_BYTES      128
+#define MEFREC_ESti_1_0_ANODE_OFFSET        (RECORD_HEADER_BYTES + 160) //utf8[31]
+#define MEFREC_ESti_1_0_ANODE_BYTES         128
+#define MEFREC_ESti_1_0_CATODE_OFFSET       (RECORD_HEADER_BYTES + 288) //utf8[31]
+#define MEFREC_ESti_1_0_CATODE_BYTES        128
+
+// Unit codes
+#define MEFREC_ESti_1_0_AMPUNIT_NO_ENTRY      -1
+#define MEFREC_ESti_1_0_AMPUNIT_UNKNOWN       0
+#define MEFREC_ESti_1_0_AMPUNIT_MA     1
+#define MEFREC_ESti_1_0_AMPUNIT_V   2
+// Mode codes
+#define MEFREC_ESti_1_0_MODE_NO_ENTRY      -1
+#define MEFREC_ESti_1_0_MODE_UNKNOWN       0
+#define MEFREC_ESti_1_0_MODE_CURRENT     1
+#define MEFREC_ESti_1_0_MODE_VOLTAGE   2
+
+// Structures
+typedef struct {
+    sf8 amplitude;
+    sf8 frequency;
+    si8 pulse_width;
+    si4 ampunit_code;
+    si4 mode_code;
+    si1 waveform[MEFREC_ESti_1_0_WAVEFORM_BYTES];
+    si1 anode[MEFREC_ESti_1_0_ANODE_BYTES];
+    si1 catode[MEFREC_ESti_1_0_CATODE_BYTES];
+} MEFREC_ESti_1_0;
+
+// Prototypes
+void    show_mefrec_ESti_type(RECORD_HEADER *record_header);
+si4 check_mefrec_ESti_type_alignment(ui1 *bytes);
+
+/*************************************************************************************/
+
 
 
 /***************************   UnRc: Unrecognized Record   ***************************/

@@ -106,6 +106,7 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
 void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_0_CHANNEL *r_type);
 void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type);
 void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type);
+void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type);
 
 
 // ---------- Mef3 to python dictionaries -----------
@@ -134,6 +135,7 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh);
 PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh);
 PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh);
 PyObject *map_mef3_CSti_type(RECORD_HEADER *rh);
+PyObject *map_mef3_ESti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
 
 // Helper functions
