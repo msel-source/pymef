@@ -15,7 +15,7 @@
 
 /* TODO
 
-DONE - Fix in write_mef_times_series_data_and_indeces() - passing pointer to source numpy array causes segfualt when
+DONE - Fix in write_mef_times_series_data_and_indices() - passing pointer to source numpy array causes segfualt when
  freeing RED_procesging_struct
 
 DONE Fix - video metadata writing - encoding problems, file name gets messed up, not sure why because it is pretty
@@ -49,7 +49,7 @@ DONE - Fix seizures record typ reading compilation problems
 
 DONE - Move Python function declarations and docstrings to the header file.
 
-DONE - Create list for file indeces
+DONE - Create list for file indices
 
 DONE - Extract segment number when writing or appending data
 
@@ -57,7 +57,7 @@ DONE - Add ability to read universal headers (esp. for CRCs)
 
 DONE - Check times in universal headers - why are they negative? (was connected to GMT offset to being set, corrected by a line after initialize_meflib(), ask MATT about this)
 
-DONE - Check times in time series indeces - they are going down instead of up! (solved by the line above)
+DONE - Check times in time series indices - they are going down instead of up! (solved by the line above)
 
 DONE - Check file closing in all functions (problem was in ts data reading fixed at the end, see git)
 
@@ -66,6 +66,8 @@ DONE - check the times in read_channel/read_session (bug in MEF_LIB, see the not
 DONE - Check maximum number_of_records / maximum_record_bytes in read_seesion - expected behavior, reading records at channel level not segments
 
 DONE - Deal with simple quates in channel names, grrrrrrrr!!!!!!
+
+Address recording_time_offset feature in file writing
 
 Write the help docstrings
 
@@ -88,7 +90,7 @@ All mkdirs will be in the pure python layer, perhaps apart from the segment numb
 
 What is recording time offset and how to use it??? Ask Matt.
 
-Metadata write functions could be merged into one!!!
+Ts and v Metadata write functions could be merged into one!!!
 
 MEF_LIB "bug" - troubles when spaces in file paths
 
@@ -287,10 +289,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 }
     }
 
-    printf("%d\n",(__LINE__));
-    fflush(stdout);
-
-    // Create file processing structs for record data and indeces files
+    // Create file processing structs for record data and indices files
     rec_data_fps = allocate_file_processing_struct(bytes, RECORD_DATA_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(rec_data_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, record_file_name, RECORD_DATA_FILE_TYPE_STRING);
     generate_UUID(rec_data_fps->universal_header->file_UUID);
@@ -308,10 +307,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     // rh->version_major = ri->version_major = 1;
     // rh->version_minor = ri->version_minor = 0;
     file_offset = ri->file_offset = UNIVERSAL_HEADER_BYTES;
-
-    printf("%d\n",(__LINE__));
-    fflush(stdout);
-
 
     // Run through the python list, read records and write them
     max_rec_bytes = 0;
@@ -417,9 +412,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_ESti_1_0_BYTES;
 
-                printf("%d\n",(__LINE__));
-                fflush(stdout);
-
                 //MEF_pad(rd, rh->bytes, 16); // unnecessary but kept for consistency
                 break;
 
@@ -452,17 +444,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         ++ri;
     }
 
-    printf("%d\n",(__LINE__));
-    fflush(stdout);
-
     rec_data_fps->universal_header->maximum_entry_size = max_rec_bytes + RECORD_HEADER_BYTES;
     rec_data_fps->directives.io_bytes = file_offset;
 
     write_MEF_file(rec_data_fps);
     free_file_processing_struct(rec_data_fps);
-
-    printf("%d\n",(__LINE__));
-    fflush(stdout);
 
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_idx_fps);
@@ -1028,7 +1014,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 /*************************  MEF modify/append functions  ****************************/
 /************************************************************************************/
 
-static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
+static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 {
     // Specified by user
     PyObject    *raw_data;
@@ -1124,7 +1110,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     if (samps_per_mef_block > tmd2->maximum_block_samples)
         tmd2->maximum_block_samples = samps_per_mef_block;
 
-    // Read in the indeces file
+    // Read in the indices file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
     ts_idx_fps = read_MEF_file(NULL, full_file_name, py_level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
 
@@ -1166,7 +1152,7 @@ static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args)
     //Move file_offset to the end of RED blocks
     file_offset = UNIVERSAL_HEADER_BYTES + ts_data_fps->raw_data_bytes;
 
-    // fseek to the end of data and indeces file
+    // fseek to the end of data and indices file
     e_fseek(ts_data_fps->fp, 0, SEEK_END, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fseek(ts_idx_fps->fp, 0, SEEK_END, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
 
@@ -1300,7 +1286,6 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // Dictionaries
     PyObject *ses_metadata_dict;
-    PyObject *ses_record_dict;
     
     // Fuction specific
     SESSION *session;
@@ -1316,18 +1301,12 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
     MEF_globals->recording_time_offset_mode = RTO_IGNORE;
-    
+
     MEF_strncpy(session_path, py_session_path, MEF_FULL_FILE_NAME_BYTES);
     session = read_MEF_session(NULL, session_path, py_level_1_password, NULL, MEF_FALSE, MEF_TRUE);    
-    
+
     // Session info
     ses_metadata_dict = map_mef3_session(session);
-
-    // Read session records if present and add it to metadata
-    if (session->record_indices_fps != NULL & session->record_data_fps != NULL){
-        ses_record_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
-        PyDict_SetItemString(ses_metadata_dict, "records", ses_record_dict);
-    }
 
     // clean up
     free_session(session, MEF_TRUE); 
@@ -1343,7 +1322,6 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // Dictionaries
     PyObject *ch_metadata_dict;
-    PyObject *ch_record_dict;
     
     // Fuction specific
     CHANNEL *channel;
@@ -1363,18 +1341,12 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // map the channel info
     ch_metadata_dict = map_mef3_channel(channel);
-    
-    // Read channel records if present and add it to metadata
-    if (channel->record_indices_fps != NULL & channel->record_data_fps != NULL){
-        ch_record_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
-        PyDict_SetItemString(ch_metadata_dict, "records", ch_record_dict);
-    }
 
     // clean up
     free_channel(channel, MEF_TRUE);
     
     return ch_metadata_dict;   
-}
+} 
 
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
 {
@@ -1384,7 +1356,6 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // Dictionaries
     PyObject *seg_metadata_dict;
-    PyObject *seg_record_dict;
     
     // Fuction specific
     SEGMENT *segment;
@@ -1404,12 +1375,6 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
 
     // map the segment info
     seg_metadata_dict = map_mef3_segment(segment);
-
-    // Read segment records if present and add it to metadata
-    if (segment->record_indices_fps != NULL & segment->record_data_fps != NULL){
-        seg_record_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
-        PyDict_SetItemString(seg_metadata_dict, "records_info", seg_record_dict);
-    }
 
     // clean up
     free_segment(segment, MEF_TRUE);
@@ -2061,18 +2026,26 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
     temp_o = PyDict_GetItemString(md3_dict,"recording_time_offset");
     if (temp_o != NULL)
         md3->recording_time_offset = PyLong_AsLong(temp_o);
+    else
+        md3->recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_start_time");
     if (temp_o != NULL)
         md3->DST_start_time = PyLong_AsLong(temp_o);
+    else
+        md3->DST_start_time = METADATA_DST_START_TIME_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_end_time");
     if (temp_o != NULL)
         md3->DST_end_time = PyLong_AsLong(temp_o);
+    else
+        md3->DST_end_time = METADATA_DST_END_TIME_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"GMT_offset");
     if (temp_o != NULL)
         md3->GMT_offset = PyLong_AsLong(temp_o);
+    else
+        md3->GMT_offset = GMT_OFFSET_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_name_1");
     if (temp_o != NULL){
@@ -3122,6 +3095,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
 {
     // Dictionaries
     PyObject *metadata_dict;
+    PyObject *records_dict;
     PyObject *spec_dict;
     PyObject *uh_dict;
     PyObject *uhs_dict;
@@ -3165,8 +3139,12 @@ PyObject *map_mef3_segment(SEGMENT *segment)
         PyDict_SetItemString(spec_dict, "segment_name",
             Py_BuildValue("s", temp_str));
                              
-    
-    
+    // Read segment records if present and add it to metadata
+    if (segment->record_indices_fps != NULL & segment->record_data_fps != NULL){
+        records_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+    }
+
     // Assign pointers for reading metadata and read universal headers
     md1 = segment->metadata_fps->metadata.section_1;
     switch (segment->channel_type){
@@ -3209,7 +3187,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
 
     // TODO - this should be a list - there is more indices in indices file!!!!
 
-    // Create indeces dictionary
+    // Create indices dictionary
     
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
@@ -3237,7 +3215,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
             PyErr_Occurred();
             return NULL;
     }
-    PyDict_SetItemString(metadata_dict, "indeces", idx_list);
+    PyDict_SetItemString(metadata_dict, "indices", idx_list);
 
     // Get universal headers
     uhs_dict = PyDict_New();
@@ -3256,7 +3234,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
             break;
         case VIDEO_CHANNEL_TYPE:
             uh_dict = map_mef3_uh(segment->video_indices_fps->universal_header);
-            PyDict_SetItemString(uhs_dict, "video_indeces", uh_dict);
+            PyDict_SetItemString(uhs_dict, "video_indices", uh_dict);
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -3273,6 +3251,7 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
 {
     // Dictionaries
     PyObject *metadata_dict;
+    PyObject *records_dict;
     PyObject *spec_dict;
     PyObject *s1_dict;
     PyObject *s2_dict;
@@ -3349,6 +3328,12 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
         PyDict_SetItemString(spec_dict, "channel_name",
             Py_BuildValue("s", temp_str));
     
+    // Read channel records if present and add it to metadata
+    if (channel->record_indices_fps != NULL & channel->record_data_fps != NULL){
+        records_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records", records_dict);
+    }
+
     // Assign pointers for reading metadata
     md1 = channel->metadata.section_1;
     switch (channel->channel_type){
@@ -3410,6 +3395,7 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
 {
     // Dictionaries
     PyObject *metadata_dict;
+    PyObject *records_dict;
     PyObject *spec_dict;
     PyObject *ts_dict;
     PyObject *v_dict;
@@ -3493,7 +3479,13 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     else
         PyDict_SetItemString(spec_dict, "number_of_video_channels",
             Py_BuildValue("i", 0));                    
-    
+
+    // Read session records if present and add it to metadata
+    if (session->record_indices_fps != NULL & session->record_data_fps != NULL){
+        records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records", records_dict);
+    }
+
     // Loop over time series channels         
     for (i = 0; i < session->number_of_time_series_channels; ++i){
         if (i == 0){
@@ -4129,3 +4121,228 @@ si4 extract_segment_number(si1 *segment_name)
 
     return segment_number;
 }
+ 
+PyObject *sample_for_uutc(PyObject *self, PyObject *args)
+{
+
+    PyObject *ch_metadata_dict, *ch_md3_dict, *temp_dict, *temp_py_obj;
+    PyObject *seg_key_list, *seg_key, *segment_dict, *seg_md2_dict;
+    PyObject *indices_list, *index_dict;
+
+    si1 offset_flag;
+
+    si8 rt_off;
+
+    ui8 n_segments, n_indices;
+
+    ui8 i, j, uutc, sample;
+
+    sf8 native_samp_freq;
+
+    ui8 prev_sample_number, index_start_sample; 
+
+    si8 prev_time, index_start_time;
+
+    // --- Parse the input --- 
+    if (!PyArg_ParseTuple(args,"kO!",
+                          &uutc,
+                          &PyDict_Type, &ch_metadata_dict)){
+        return NULL;
+    }
+
+    // Get some necessary data
+    temp_dict = PyDict_GetItemString(ch_metadata_dict,"section_2");
+    temp_dict = PyDict_GetItemString(temp_dict,"sampling_frequency");
+    native_samp_freq = PyFloat_AsDouble(temp_dict);
+
+
+    temp_dict = PyDict_GetItemString(ch_metadata_dict,"segments");
+    n_segments = (ui8) PyDict_Size(temp_dict);    
+
+    // Get uutc offsets if used
+    ch_md3_dict = PyDict_GetItemString(ch_metadata_dict,"section_3");
+    temp_py_obj = PyDict_GetItemString(ch_md3_dict,"recording_time_offset");
+    if (PyLong_Check(temp_py_obj))
+        rt_off = PyLong_AsLong(temp_py_obj);
+    else
+        rt_off = 0;
+
+    offset_flag=  0;
+    if (rt_off!=0)
+        offset_flag = 1;
+
+    // Get segment dictionary keys in a list and sort it
+    seg_key_list = PyDict_Keys(temp_dict);
+    PyList_Sort(seg_key_list);
+
+    // Initialize values
+    seg_key = PyList_GetItem(seg_key_list, 0);
+    segment_dict = PyDict_GetItem(temp_dict,seg_key);
+    seg_md2_dict = PyDict_GetItemString(segment_dict,"section_2");
+
+    temp_py_obj = PyDict_GetItemString(seg_md2_dict,"start_sample");
+    prev_sample_number = PyLong_AsUnsignedLong(temp_py_obj);
+
+    indices_list = PyDict_GetItemString(segment_dict,"indices");
+    index_dict = PyList_GetItem(indices_list,0);
+    temp_py_obj = PyDict_GetItemString(index_dict,"start_time");
+    prev_time = PyLong_AsLong(temp_py_obj);
+    if (offset_flag == 1)
+        prev_time = (-prev_time + rt_off); 
+
+    // Segments
+    for (j = 0; j < n_segments; j++)
+    {
+        // Get the segment dictionary
+        seg_key = PyList_GetItem(seg_key_list, j);
+        segment_dict = PyDict_GetItem(temp_dict,seg_key);
+        seg_md2_dict = PyDict_GetItemString(segment_dict,"section_2");
+        indices_list = PyDict_GetItemString(segment_dict,"indices");
+        n_indices = (ui8) PyList_Size(indices_list);
+
+        // Blocks
+        for (i = 0; i < n_indices; ++i) 
+        {
+
+            // Get the index dictionary
+            index_dict = PyList_GetItem(indices_list,i);
+            temp_py_obj = PyDict_GetItemString(index_dict,"start_time");
+            index_start_time = PyLong_AsLong(temp_py_obj);
+            temp_py_obj = PyDict_GetItemString(index_dict,"start_sample");
+            index_start_sample = PyLong_AsUnsignedLong(temp_py_obj);
+
+            if (index_start_time > uutc)
+
+                goto done;
+
+            prev_sample_number = index_start_sample;
+
+            prev_time = index_start_time;
+            if (offset_flag == 1)
+                prev_time = (-prev_time + rt_off);
+        }
+    }
+
+    
+
+done:
+
+    sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+    
+
+    return Py_BuildValue("k", sample);
+
+}
+
+PyObject *uutc_for_sample(PyObject *self, PyObject *args)
+
+{
+
+    PyObject *ch_metadata_dict, *ch_md3_dict, *temp_dict, *temp_py_obj;
+    PyObject *seg_key_list, *seg_key, *segment_dict, *seg_md2_dict;
+    PyObject *indices_list, *index_dict;
+
+    si1 offset_flag;
+
+    si8 rt_off;
+
+    ui8 n_segments, n_indices;
+
+    ui8 i, j, uutc, sample;
+
+    sf8 native_samp_freq;
+
+    ui8 prev_sample_number, index_start_sample; 
+
+    si8 prev_time, index_start_time;
+
+    // --- Parse the input --- 
+    if (!PyArg_ParseTuple(args,"kO!",
+                          &sample,
+                          &PyDict_Type, &ch_metadata_dict)){
+        return NULL;
+    }
+
+    // Get some necessary data
+    temp_dict = PyDict_GetItemString(ch_metadata_dict,"section_2");
+    temp_dict = PyDict_GetItemString(temp_dict,"sampling_frequency");
+    native_samp_freq = PyFloat_AsDouble(temp_dict);
+
+
+    temp_dict = PyDict_GetItemString(ch_metadata_dict,"segments");
+    n_segments = (ui8) PyDict_Size(temp_dict);    
+
+    // Get uutc offsets if used
+    ch_md3_dict = PyDict_GetItemString(ch_metadata_dict,"section_3");
+    temp_py_obj = PyDict_GetItemString(ch_md3_dict,"recording_time_offset");
+    if (PyLong_Check(temp_py_obj))
+        rt_off = PyLong_AsLong(temp_py_obj);
+    else
+        rt_off = 0;
+
+    offset_flag=  0;
+    if (rt_off!=0)
+        offset_flag = 1;
+
+    // Get segment dictionary keys in a list and sort it
+    seg_key_list = PyDict_Keys(temp_dict);
+    PyList_Sort(seg_key_list);
+   
+    // Initialize values
+    seg_key = PyList_GetItem(seg_key_list, 0);
+    segment_dict = PyDict_GetItem(temp_dict,seg_key);
+    seg_md2_dict = PyDict_GetItemString(segment_dict,"section_2");
+
+    prev_sample_number = 0;
+
+    indices_list = PyDict_GetItemString(segment_dict,"indices");
+    index_dict = PyList_GetItem(indices_list,0);
+    temp_py_obj = PyDict_GetItemString(index_dict,"start_time");
+    prev_time = PyLong_AsLong(temp_py_obj);
+    if (offset_flag == 1)
+        prev_time = (-prev_time + rt_off);
+
+    // Segments
+    for (j = 0; j < n_segments; j++)
+    {
+        // Get the segment dictionary
+        seg_key = PyList_GetItem(seg_key_list, j);
+        segment_dict = PyDict_GetItem(temp_dict,seg_key);
+        seg_md2_dict = PyDict_GetItemString(segment_dict,"section_2");
+        indices_list = PyDict_GetItemString(segment_dict,"indices");
+        n_indices = (ui8) PyList_Size(indices_list);
+
+        // Blocks
+        for (i = 0; i < n_indices; ++i)
+        {
+
+            // Get the index dictionary
+            index_dict = PyList_GetItem(indices_list,i);
+            temp_py_obj = PyDict_GetItemString(index_dict,"start_time");
+            index_start_time = PyLong_AsLong(temp_py_obj);
+            temp_py_obj = PyDict_GetItemString(index_dict,"start_sample");
+            index_start_sample = PyLong_AsUnsignedLong(temp_py_obj);
+
+            if (index_start_sample > sample)
+
+                goto done;
+
+            prev_sample_number = index_start_sample;
+
+            prev_time = index_start_time;
+            if (offset_flag == 1)
+                prev_time = (-prev_time + rt_off);
+        }
+    }
+
+    
+
+done:
+
+    uutc = prev_time + (ui8) ((((sf8) (sample - prev_sample_number) / native_samp_freq) * 1000000.0) + 0.5);
+    
+
+    return Py_BuildValue("k", uutc);
+
+}
+

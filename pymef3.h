@@ -18,18 +18,18 @@ static char pymef3_docstring[] =
 
 /* Documentation to be read in Python - write functions*/
 static char write_mef_data_records_docstring[] =
-    "Writes .mefd session directory + data and indeces files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
+    "Writes .mefd session directory + data and indices files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
 static char write_mef_ts_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
 static char write_mef_v_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
 static char write_mef_ts_data_and_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
 static char write_mef_v_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indeces files. Help to be written";
+    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
     
 /* Documentation to be read in Python - append functions*/
-static char append_ts_data_and_indeces_docstring[] =
+static char append_ts_data_and_indices_docstring[] =
     "Appends ts data";
 
 /* Documentation to be read in Python - read functions*/
@@ -40,7 +40,13 @@ static char read_mef_session_metadata_docstring[] =
 static char read_mef_channel_metadata_docstring[] =
     "Reads metadata of a mef channel";
 static char read_mef_segment_metadata_docstring[] =
-"Reads metadata of a mef segment";
+    "Reads metadata of a mef segment";
+
+/* Documentation to be read in Python - helper functions*/
+static char sample_for_uutc_docstring[] =
+    "Reads .timd time series directory";
+static char uutc_for_sample_docstring[] =
+    "Reads metadata of a mef session";
 
 /* Pyhon object declaration - write functions*/
 static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
@@ -50,13 +56,18 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args);
 static PyObject *write_mef_v_indices(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - append functions*/
-static PyObject *append_ts_data_and_indeces(PyObject *self, PyObject *args);
+static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - read functions*/
 static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
 static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
+
+/* Python object declaration - helper functions */
+static PyObject *sample_for_uutc(PyObject *self, PyObject *args);
+static PyObject *uutc_for_sample(PyObject *self, PyObject *args);
+//static PyObject *check_password(PyObject *self, PyObject *args);
 
 /* Specification of the members of the module */
 static PyMethodDef module_methods[] = {
@@ -65,11 +76,13 @@ static PyMethodDef module_methods[] = {
     {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
     {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
     {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
-    {"append_ts_data_and_indeces", append_ts_data_and_indeces, METH_VARARGS, append_ts_data_and_indeces_docstring},
+    {"append_ts_data_and_indices", append_ts_data_and_indices, METH_VARARGS, append_ts_data_and_indices_docstring},
     {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
     {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
     {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
+    {"sample_for_uutc", sample_for_uutc, METH_VARARGS, sample_for_uutc_docstring},
+    {"uutc_for_sample", uutc_for_sample, METH_VARARGS, uutc_for_sample_docstring},
     {NULL, NULL, 0, NULL}
 };
 
