@@ -5574,7 +5574,7 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 		// copy level UUID
 		memcpy(session->level_UUID, session->record_indices_fps->universal_header->level_UUID, UUID_BYTES);
                 // read session records data
-                MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", session->path, session->name, RECORD_DATA_FILE_TYPE_STRING);
+                MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_DATA_FILE_TYPE_STRING);
                 session->record_data_fps = allocate_file_processing_struct(0, RECORD_DATA_FILE_TYPE_CODE, NULL, NULL, 0);
                 if (read_record_data == MEF_FALSE) {
                         session->record_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
