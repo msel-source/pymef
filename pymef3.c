@@ -3397,8 +3397,19 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     PyObject *metadata_dict;
     PyObject *records_dict;
     PyObject *spec_dict;
+
+    PyObject *ts_metadata;
     PyObject *ts_dict;
+    PyObject *s1_ts_dict;
+    PyObject *s2_ts_dict;
+    PyObject *s3_ts_dict;
+
+    PyObject *v_metadata;
     PyObject *v_dict;
+    PyObject *s1_v_dict;
+    PyObject *s2_v_dict;
+    PyObject *s3_v_dict;
+
     PyObject *channel_dict;
     
     // Helper variables
@@ -3408,6 +3419,11 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     
     // Method 
     CHANNEL *channel;
+
+    METADATA_SECTION_1      *md1;
+        TIME_SERIES_METADATA_SECTION_2  *tmd2;
+        VIDEO_METADATA_SECTION_2    *vmd2;
+    METADATA_SECTION_3      *md3;
 
     // Create python output dictionary
     metadata_dict = PyDict_New();
@@ -3484,6 +3500,56 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     if (session->record_indices_fps != NULL & session->record_data_fps != NULL){
         records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records", records_dict);
+    }
+
+    // Get time series metadata
+    if (session->number_of_time_series_channels > 0)
+    {
+        // Create dictionary
+        PyDict_SetItemString(metadata_dict, "time_series_metadata", PyDict_New()); 
+        ts_metadata = PyDict_GetItemString(metadata_dict, "time_series_metadata");
+
+        // Assign pointers for reading time series metadata
+        md1 = session->time_series_metadata.section_1;
+        tmd2 = session->time_series_metadata.time_series_section_2;
+        md3 = session->time_series_metadata.section_3;
+        
+        // Create section time series 1 dictionary
+        s1_ts_dict = map_mef3_md1(md1);
+        PyDict_SetItemString(ts_metadata, "section_1", s1_ts_dict);
+        
+        // Create section time series 2 dictionary
+        s2_ts_dict = map_mef3_tmd2(tmd2);
+        PyDict_SetItemString(ts_metadata, "section_2", s2_ts_dict); 
+        
+        // Create section time series 3 dictionary
+        s3_ts_dict = map_mef3_md3(md3);
+        PyDict_SetItemString(ts_metadata, "section_3", s3_ts_dict);
+    }
+
+    // Get video metadata
+    if (session->number_of_video_channels > 0)
+    {
+        // Create dictionary
+        PyDict_SetItemString(metadata_dict, "video_metadata", PyDict_New()); 
+        v_metadata = PyDict_GetItemString(metadata_dict, "video_metadata");
+
+        // Assign pointers for reading video metadata
+        md1 = session->video_metadata.section_1;
+        vmd2 = session->video_metadata.video_section_2;
+        md3 = session->video_metadata.section_3;
+        
+        // Create section video 1 dictionary
+        s1_v_dict = map_mef3_md1(md1);
+        PyDict_SetItemString(v_metadata, "section_1", s1_v_dict);
+        
+        // Create section video 2 dictionary
+        s2_v_dict = map_mef3_vmd2(vmd2);
+        PyDict_SetItemString(v_metadata, "section_2", s2_v_dict); 
+        
+        // Create section tvideo 3 dictionary
+        s3_v_dict = map_mef3_md3(md3);
+        PyDict_SetItemString(v_metadata, "section_3", s3_v_dict);
     }
 
     // Loop over time series channels         
