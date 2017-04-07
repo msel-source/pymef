@@ -43,10 +43,6 @@ static char read_mef_segment_metadata_docstring[] =
     "Reads metadata of a mef segment";
 
 /* Documentation to be read in Python - helper functions*/
-static char sample_for_uutc_docstring[] =
-    "Reads .timd time series directory";
-static char uutc_for_sample_docstring[] =
-    "Reads metadata of a mef session";
 
 /* Pyhon object declaration - write functions*/
 static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
@@ -65,8 +61,6 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
 
 /* Python object declaration - helper functions */
-static PyObject *sample_for_uutc(PyObject *self, PyObject *args);
-static PyObject *uutc_for_sample(PyObject *self, PyObject *args);
 //static PyObject *check_password(PyObject *self, PyObject *args);
 
 /* Specification of the members of the module */
@@ -81,8 +75,6 @@ static PyMethodDef module_methods[] = {
     {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
     {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
-    {"sample_for_uutc", sample_for_uutc, METH_VARARGS, sample_for_uutc_docstring},
-    {"uutc_for_sample", uutc_for_sample, METH_VARARGS, uutc_for_sample_docstring},
     {NULL, NULL, 0, NULL}
 };
 
