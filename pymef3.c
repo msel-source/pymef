@@ -1,9 +1,28 @@
 
 
-// Python 3 extension for opeartions with Multiscale Electrophysiology Format (MEF) version 3.0
-// For licences please see meflib.c
+/************************************************************************************/
+/****************************  MEF 3.0 Library Python Wrapper ***********************/
+/************************************************************************************/
 
-// Written by Jan, Dan, Matt, Ben
+
+// Python wrapper for Multiscale Electrophysiology Format (MEF) version 3.0 library
+// Copyright 2017, Mayo Foundation, Rochester MN. All rights reserved.
+// Written by Jan Cimbalnik, Matt Stead, Ben Brinkmann, and Dan Crepeau.
+
+// Usage and modification of this source code is governed by the Apache 2.0 license.
+// You may not use this file except in compliance with this License.
+// A copy of the Apache 2.0 License may be obtained at http://www.apache.org/licenses/LICENSE-2.0
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under this License is distributed on an "as is" basis,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expressed or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Thanks to all who acknowledge the Mayo Systems Electrophysiology Laboratory, Rochester, MN
+// in academic publications of their work facilitated by this software.
+
+// For further information about mef_lib.c API see meflib.c or documentation.
 
 #include "pymef3.h"
 
@@ -12,95 +31,6 @@
 #include "meflib.c"
 #include "mefrec.c"
 
-
-/* TODO
-
-DONE - Fix in write_mef_times_series_data_and_indices() - passing pointer to source numpy array causes segfualt when
- freeing RED_procesging_struct
-
-DONE Fix - video metadata writing - encoding problems, file name gets messed up, not sure why because it is pretty
- much he same code as in time series (had to copy file path coming from python - MEF_strncopy(file_path, path_out, MEF_FULL_FILE_NAME_BYTES))
-
-DONE - Fix metadata wtiting - cannot read the written metadata and don't know why. (I had ".tmet" hidden channel
- in the directoty, not woth a day of looking for this if you ask me!!!)
-
-DONE - Fix reading segment time series data - why allocate_file_preocessing_struc() allocating the data struct
- when MEF_FALSE is passed - results in errors if there are no data files. Which makes sense to some extent really but messes up my code :-) (fixed in pymef3.c by directly reading the metadata file instead of read_MEF_segment())
-
-DONE - Fix structure to python mapping - if statements should be XXX != NULL, otherwise 0 is trasnlated as not
- entered which is not the same (coparing with mef "not entered" values)
-
-DONE - Video index write function
-
-DONE - Create decomp mef and substitute read_ts_data(copy-paste from Dan's function)
-
-DONE - Fix occasional segfault when reading ts data (not needed since we will do decomp mef)
-
-DONE - Create appedn ts data function
-
-DONE - Fix uUTC reading (si8) into python. Seems incorrect now or I am missing something. (was likely connected to bad memory management)
-
-DONE - Decomp_mef sort of thing so we can get slices of data - we should modify read_mef_ts_data for this - will
-    be handled by start/stop time, if None, the data will be read from beginnig to end, ie whole channel, see Dan's C function for this
-
-DONE - Check if write record function closes the file
-
-DONE - Fix seizures record typ reading compilation problems
-
-DONE - Move Python function declarations and docstrings to the header file.
-
-DONE - Create list for file indices
-
-DONE - Extract segment number when writing or appending data
-
-DONE - Add ability to read universal headers (esp. for CRCs)
-
-DONE - Check times in universal headers - why are they negative? (was connected to GMT offset to being set, corrected by a line after initialize_meflib(), ask MATT about this)
-
-DONE - Check times in time series indices - they are going down instead of up! (solved by the line above)
-
-DONE - Check file closing in all functions (problem was in ts data reading fixed at the end, see git)
-
-DONE - check the times in read_channel/read_session (bug in MEF_LIB, see the notes and git)
-
-DONE - Check maximum number_of_records / maximum_record_bytes in read_seesion - expected behavior, reading records at channel level not segments
-
-DONE - Deal with simple quates in channel names, grrrrrrrr!!!!!!
-
-Address recording_time_offset feature in file writing
-
-Write the help docstrings
-
-Fix the info at the beginning (licence)
-
-Encryption / decryption at all levels - allow for no encryption, level 1 encryption, level 2 encryption - user
- can specify by inserting None into the password field
-
-Address all warnings when compiling
-
-Build in optional lossy compression
-
-Build in opional filtration
-
-*/
-
-/* NOTES
-
-All mkdirs will be in the pure python layer, perhaps apart from the segment number genration?
-
-What is recording time offset and how to use it??? Ask Matt.
-
-Ts and v Metadata write functions could be merged into one!!!
-
-MEF_LIB "bug" - troubles when spaces in file paths
-
-MEF_LIB bug - generate_file_list - had troubles with \' sign. fixed in the bash command (the above could be fix the same way), see git
-
-MEF_LIB bug - read_MEF_session - was reading time_series_channels instead of video_channels, see git for the fix
-
-MEF_LIB bug - read_MEF_channel/read_MEF_session - the earliest_start_time is initialized with zero hence it starts in 1970 and can never be updated, see git fot the fix
-
-*/
 
 
 /************************************************************************************/

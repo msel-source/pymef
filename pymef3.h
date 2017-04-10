@@ -1,6 +1,3 @@
-// Python extension for opeartions with Multiscale Electrophysiology Format (MEF) version 3.0
-// For licences please see meflib.c
-
 // Written by Jan Cimbalnik
 
 #include <Python.h>
