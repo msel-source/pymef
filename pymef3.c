@@ -1382,7 +1382,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     return seg_metadata_dict; 
 }
 
-static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) // This will be subsituted for read_mef_ts_data - do not want to break code now
+static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 {
     // Specified by user
     si1    *py_channel_path;
@@ -4187,4 +4187,74 @@ si4 extract_segment_number(si1 *segment_name)
 
     return segment_number;
 }
+
+static PyObject *check_mef_password(PyObject *self, PyObject *args)
+{
+    // We need to dive into session - get the first
+    // Specified by user
+    si1    *py_mef_file_path;
+    si1    *py_password;
+        
+
+    si1         password_bytes[PASSWORD_BYTES];
+    ui1         sha[SHA256_OUTPUT_SIZE];
+    si1         putative_level_1_password_bytes[PASSWORD_BYTES];
+    si4         i;
+
+    FILE *fp;
+    UNIVERSAL_HEADER *uh;
  
+    // --- Parse the input --- 
+    if (!PyArg_ParseTuple(args,"ss",
+                          &py_mef_file_path,
+                          &py_password)){
+        return NULL;
+    }
+    
+    // initialize MEF library
+    (void) initialize_meflib();
+
+    // Allocate universal header
+    uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
+    
+    // Read file universal header
+    fp = fopen(py_mef_file_path,"r");
+    fread((void *) uh, sizeof(UNIVERSAL_HEADER), 1, fp);
+    fclose(fp);
+
+    // Check the password - extracted from process_pasword_data
+    extract_terminal_password_bytes(py_password, password_bytes);
+    
+    // check for level 1 access
+    sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);  // generate SHA-256 hash of password bytes
+    
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i)  // compare with stored level 1 hash
+        if (sha[i] != uh->level_1_password_validation_field[i])
+            break;
+    if (i == PASSWORD_BYTES) {  // Level 1 password valid - cannot be level 2 password
+        // Clean up
+        free(uh);
+        return PyLong_FromLong(1);
+    }
+    
+    // invalid level 1 => check if level 2 password
+    for (i = 0; i < PASSWORD_BYTES; ++i)  // xor with level 2 password validation field
+        putative_level_1_password_bytes[i] = sha[i] ^ uh->level_2_password_validation_field[i];
+    
+    sha256((ui1 *) putative_level_1_password_bytes, PASSWORD_BYTES, sha); // generate SHA-256 hash of putative level 1 password
+    
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i)  // compare with stored level 1 hash
+        if (sha[i] != uh->level_1_password_validation_field[i])
+            break;
+    if (i == PASSWORD_VALIDATION_FIELD_BYTES){ // Level 2 password valid
+        // Clean up
+        free(uh);
+        return PyLong_FromLong(2);
+    }
+
+    // Clean up
+    free(uh);
+    
+    return PyLong_FromLong(0);   
+
+}

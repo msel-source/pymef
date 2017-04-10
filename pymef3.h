@@ -43,6 +43,8 @@ static char read_mef_segment_metadata_docstring[] =
     "Reads metadata of a mef segment";
 
 /* Documentation to be read in Python - helper functions*/
+static char check_mef_password_docstring[] =
+    "Checks the the mef password";
 
 /* Pyhon object declaration - write functions*/
 static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
@@ -61,7 +63,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
 
 /* Python object declaration - helper functions */
-//static PyObject *check_password(PyObject *self, PyObject *args);
+static PyObject *check_mef_password(PyObject *self, PyObject *args);
 
 /* Specification of the members of the module */
 static PyMethodDef module_methods[] = {
@@ -75,6 +77,7 @@ static PyMethodDef module_methods[] = {
     {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
     {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
+    {"check_mef_password", check_mef_password, METH_VARARGS, check_mef_password_docstring},
     {NULL, NULL, 0, NULL}
 };
 
