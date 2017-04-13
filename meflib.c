@@ -4530,8 +4530,8 @@ si4	offset_universal_header_times(FILE_PROCESSING_STRUCT *fps, si4 action)
 		apply_recording_time_offset(&uh->start_time);
 		apply_recording_time_offset(&uh->end_time);
 	} else if (remove == MEF_TRUE) {
-		apply_recording_time_offset(&uh->start_time);
-		apply_recording_time_offset(&uh->end_time);
+		remove_recording_time_offset(&uh->start_time);
+		remove_recording_time_offset(&uh->end_time);
 	}
 	
 	
@@ -5401,6 +5401,8 @@ FILE_PROCESSING_STRUCT	*read_MEF_file(FILE_PROCESSING_STRUCT *fps, si1 *file_nam
 	// decrypt encrypted data
 	switch (fps->file_type_code) {
 		case TIME_SERIES_METADATA_FILE_TYPE_CODE:
+			decrypt_metadata(fps);  // also sets global recording time offsets
+			break;
 		case VIDEO_METADATA_FILE_TYPE_CODE:
 			decrypt_metadata(fps);  // also sets global recording time offsets
 			break;
