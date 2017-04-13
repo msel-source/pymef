@@ -56,6 +56,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 {
     // Specified by user
     si1    *py_file_path;
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
     si1    *temp_str_bytes;
@@ -105,14 +107,16 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
     }else{
         level_1_password = NULL;
     }
 
     if (PyUnicode_Check(py_pass_2_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
     }else{
         level_2_password = NULL;
     }
@@ -434,8 +438,11 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     TIME_SERIES_METADATA_SECTION_2  *tmd2;
     METADATA_SECTION_3  *md3;
 
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
+    si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
@@ -463,14 +470,16 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
     }else{
         level_1_password = NULL;
     }
 
     if (PyUnicode_Check(py_pass_2_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
     }else{
         level_2_password = NULL;
     }
@@ -571,8 +580,11 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     VIDEO_METADATA_SECTION_2  *vmd2;
     METADATA_SECTION_3  *md3;
 
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
+    si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
@@ -600,14 +612,16 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
     }else{
         level_1_password = NULL;
     }
 
     if (PyUnicode_Check(py_pass_2_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
     }else{
         level_2_password = NULL;
     }
@@ -710,8 +724,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     RED_PROCESSING_STRUCT   *rps;
     RED_BLOCK_HEADER    *block_header;
 
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
+    si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
@@ -740,14 +757,16 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
     }else{
         level_1_password = NULL;
     }
 
     if (PyUnicode_Check(py_pass_2_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
     }else{
         level_2_password = NULL;
     }
@@ -961,8 +980,11 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     VIDEO_METADATA_SECTION_2  *vmd2;
     VIDEO_INDEX   *vi;
 
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
+    si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
@@ -991,14 +1013,16 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
     }else{
         level_1_password = NULL;
     }
 
     if (PyUnicode_Check(py_pass_2_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
     }else{
         level_2_password = NULL;
     }
@@ -1106,8 +1130,11 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     RED_BLOCK_HEADER    *block_header;
     FILE_PROCESSING_DIRECTIVES     *gen_directives;
 
+    si1     level_1_password_arr[PASSWORD_BYTES] = {0};
+    si1     level_2_password_arr[PASSWORD_BYTES] = {0};
     si1    *level_1_password;
     si1    *level_2_password;
+    si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
@@ -1393,6 +1420,8 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     // Fuction specific
     SESSION *session;
     si1     session_path[MEF_FULL_FILE_NAME_BYTES];
+    si1     password_arr[PASSWORD_BYTES] = {0};
+    si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
  
@@ -1410,10 +1439,11 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
     }else{
         password = NULL;
-    }   
+    }  
 
     MEF_strncpy(session_path, py_session_path, MEF_FULL_FILE_NAME_BYTES);
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
@@ -1440,6 +1470,8 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // Fuction specific
     CHANNEL *channel;
+    si1     password_arr[PASSWORD_BYTES] = {0};
+    si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
  
@@ -1457,10 +1489,12 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
     }else{
         password = NULL;
     }
+
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
@@ -1485,6 +1519,8 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // Fuction specific
     SEGMENT *segment;
+    si1     password_arr[PASSWORD_BYTES] = {0};
+    si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
   
@@ -1502,7 +1538,8 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        password = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
     }else{
         password = NULL;
     }
@@ -1522,7 +1559,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 {
     // Specified by user
     si1    *py_channel_path;
-    si1    *py_level_1_password;
+    PyObject    *py_password_obj;
     si8    start_samp;
     si8    end_samp;
  
@@ -1549,6 +1586,11 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     si8             block_start_time;
     sf8             *filt_data;
 
+    si1     password_arr[PASSWORD_BYTES] = {0};
+    si1     *temp_str_bytes;
+    si1     *password;
+    PyObject    *temp_UTF_str;
+
     // RED decompression
     ui4             kept_samples, skipped_samples, tot_samples;
     ui4             *dcdp;
@@ -1564,9 +1606,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"ssOO",
+    if (!PyArg_ParseTuple(args,"sOOO",
                           &py_channel_path,
-                          &py_level_1_password,
+                          &py_password_obj,
                           &ostart_samp,
                           &oend_samp)){
         return NULL;
@@ -1579,8 +1621,17 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     (void) initialize_meflib();
     MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
 
+    // tak care of password entries
+    if (PyUnicode_Check(py_password_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
+    }else{
+        password = NULL;
+    }
+
     MEF_strncpy(channel_path, py_channel_path, MEF_FULL_FILE_NAME_BYTES); // might be unnecesasry
-    chan = read_MEF_channel(NULL, channel_path, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_FALSE);  
+    chan = read_MEF_channel(NULL, channel_path, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_FALSE);  
     // else pass NULL instead of NULL
     
     if (chan->channel_type != TIME_SERIES_CHANNEL_TYPE) {
@@ -4329,7 +4380,13 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     // We need to dive into session - get the first
     // Specified by user
     si1    *py_mef_file_path;
-    si1    *py_password;
+    PyObject    *py_password_obj;
+
+
+    si1     password_arr[PASSWORD_BYTES] = {0};
+    si1     *temp_str_bytes;
+    si1     *password;
+    PyObject    *temp_UTF_str;
         
 
     si1         password_bytes[PASSWORD_BYTES];
@@ -4341,14 +4398,23 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     UNIVERSAL_HEADER *uh;
  
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"ss",
+    if (!PyArg_ParseTuple(args,"sO",
                           &py_mef_file_path,
-                          &py_password)){
+                          &py_password_obj)){
         return NULL;
     }
     
     // initialize MEF library
     (void) initialize_meflib();
+
+    // tak care of password entries
+    if (PyUnicode_Check(py_password_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
+    }else{
+        password = NULL;
+    }
 
     // Allocate universal header
     uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
@@ -4359,7 +4425,7 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     fclose(fp);
 
     // Check the password - extracted from process_pasword_data
-    extract_terminal_password_bytes(py_password, password_bytes);
+    extract_terminal_password_bytes(password, password_bytes);
     
     // check for level 1 access
     sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);  // generate SHA-256 hash of password bytes
