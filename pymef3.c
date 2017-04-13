@@ -102,7 +102,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -465,7 +465,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -607,7 +607,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -752,7 +752,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // Apply recording offset
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -1007,7 +1007,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
     // tak care of password entries
@@ -1159,7 +1159,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // Apply recording offset
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -1434,7 +1434,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1484,7 +1484,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1533,7 +1533,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1619,7 +1619,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -4457,6 +4457,5 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     // Clean up
     free(uh);
     
-    return PyLong_FromLong(0);   
-
+    return PyLong_FromLong(0);  
 }
