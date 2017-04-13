@@ -4659,65 +4659,68 @@ PASSWORD_DATA	*process_password_data(si1 *unspecified_password, si1 *level_1_pas
 		return(pwd);
 	}
 	
-        // user passed level 1 password for writing: generate validation field and encryption key
-	if (check_password(level_1_password, __FUNCTION__, __LINE__) == 0) {
-                
-                // passed a level 1 password - at least level 1 access
-                pwd->access_level = LEVEL_1_ACCESS;
-                
-                // get terminal bytes
-                extract_terminal_password_bytes(level_1_password, password_bytes);
-		
-                // generate Level 1 password validation field
-                sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);
-                memcpy(universal_header->level_1_password_validation_field, sha, PASSWORD_VALIDATION_FIELD_BYTES);
-                if (MEF_globals->verbose == MEF_TRUE)
-                        printf("Level 1 password validation field generated\n");
-                
-                // generate encryption key
-                AES_key_expansion(pwd->level_1_encryption_key, password_bytes);
-		if (MEF_globals->verbose == MEF_TRUE)
-                        printf("Level 1 encryption key generated\n");
+    // user passed level 1 password for writing: generate validation field and encryption key
+    if (level_1_password != NULL){
+		if (check_password(level_1_password, __FUNCTION__, __LINE__) == 0) {
+	                
+	                // passed a level 1 password - at least level 1 access
+	                pwd->access_level = LEVEL_1_ACCESS;
+	                
+	                // get terminal bytes
+	                extract_terminal_password_bytes(level_1_password, password_bytes);
+			
+	                // generate Level 1 password validation field
+	                sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);
+	                memcpy(universal_header->level_1_password_validation_field, sha, PASSWORD_VALIDATION_FIELD_BYTES);
+	                if (MEF_globals->verbose == MEF_TRUE)
+	                        printf("Level 1 password validation field generated\n");
+	                
+	                // generate encryption key
+	                AES_key_expansion(pwd->level_1_encryption_key, password_bytes);
+			if (MEF_globals->verbose == MEF_TRUE)
+                printf("Level 1 encryption key generated\n");
                 
                 // user also passed level 2 password for writing: generate validation field and encryption key
                 // Level 2 encryption requires a level 1 password, even if level 1 encryption is not used
-                if (check_password(level_2_password, __FUNCTION__, __LINE__) == 0) {
-                        
-                        // passed a level 2 password - level 2 access
-                        pwd->access_level = LEVEL_2_ACCESS;
-                        
-                        // get terminal bytes
-                        extract_terminal_password_bytes(level_2_password, l2_password_bytes);
-			
-                        // generate Level 2 password validation field
-                        sha256((ui1 *) l2_password_bytes, PASSWORD_BYTES, sha);
-                        memcpy(universal_header->level_2_password_validation_field, sha, PASSWORD_VALIDATION_FIELD_BYTES);
-                        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) // exclusive or with level 1 password bytes
-                                universal_header->level_2_password_validation_field[i] ^= password_bytes[i];
-                        if (MEF_globals->verbose == MEF_TRUE)
-                                printf("Level 2 password validation field generated\n");
-                        
-                        // generate encryption key
-                        AES_key_expansion(pwd->level_2_encryption_key, l2_password_bytes);
-                        if (MEF_globals->verbose == MEF_TRUE)
-                                printf("Level 2 encryption key generated\n");
-			
-                        
-                } else {
-			fprintf(stderr, "%s(), line %d: Level 2 password is not of valid form\n", __FUNCTION__, __LINE__);
+            	if (level_2_password != NULL){
+	                if (check_password(level_2_password, __FUNCTION__, __LINE__) == 0) {
+	                        
+	                        // passed a level 2 password - level 2 access
+	                        pwd->access_level = LEVEL_2_ACCESS;
+	                        
+	                        // get terminal bytes
+	                        extract_terminal_password_bytes(level_2_password, l2_password_bytes);
+				
+	                        // generate Level 2 password validation field
+	                        sha256((ui1 *) l2_password_bytes, PASSWORD_BYTES, sha);
+	                        memcpy(universal_header->level_2_password_validation_field, sha, PASSWORD_VALIDATION_FIELD_BYTES);
+	                        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) // exclusive or with level 1 password bytes
+	                                universal_header->level_2_password_validation_field[i] ^= password_bytes[i];
+	                        if (MEF_globals->verbose == MEF_TRUE)
+	                                printf("Level 2 password validation field generated\n");
+	                        
+	                        // generate encryption key
+	                        AES_key_expansion(pwd->level_2_encryption_key, l2_password_bytes);
+	                        if (MEF_globals->verbose == MEF_TRUE)
+	                                printf("Level 2 encryption key generated\n");
+				
+	                        
+	                } else {
+						fprintf(stderr, "%s(), line %d: Level 2 password is not of valid form\n", __FUNCTION__, __LINE__);
+						if (MEF_globals->behavior_on_fail & EXIT_ON_FAIL) {
+							(void) fprintf(stderr, "\t=> exiting program\n\n");
+							exit(1);
+						}
+					}
+				}
+		} else {
+			fprintf(stderr, "%s(), line %d: Level 1 password is not of valid form\n", __FUNCTION__, __LINE__);
 			if (MEF_globals->behavior_on_fail & EXIT_ON_FAIL) {
 				(void) fprintf(stderr, "\t=> exiting program\n\n");
 				exit(1);
 			}
 		}
-	} else {
-		fprintf(stderr, "%s(), line %d: Level 1 password is not of valid form\n", __FUNCTION__, __LINE__);
-		if (MEF_globals->behavior_on_fail & EXIT_ON_FAIL) {
-			(void) fprintf(stderr, "\t=> exiting program\n\n");
-			exit(1);
-		}
-	}
-        
+    }  
         
 	return(pwd);
 }
