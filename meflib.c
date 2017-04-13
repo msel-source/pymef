@@ -7164,7 +7164,7 @@ inline void	remove_recording_time_offset(si8 *time)
         if (*time == UUTC_NO_ENTRY)
                 return;
 	
-	if (*time >= 0)  // positive times indicate recording time offset not applied
+	if (*time > 0)  // positive times indicate recording time offset not applied, 0 - unlikely any records started at 1970.
 		return;
 	
 	// remove recording time offset & make positive to indicate removal
