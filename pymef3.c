@@ -96,8 +96,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     }
 
     /// initialize MEF library
-    (void) initialize_meflib();   
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE;  
+    (void) initialize_meflib();  
+
+    // Apply recording offset
+    MEF_globals->recording_time_offset = recording_start_uutc_time;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -452,7 +455,10 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
+
+    // Apply recording offset
+    MEF_globals->recording_time_offset = recording_start_uutc_time;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -586,11 +592,10 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
 
-    // initialize MEF library
-    (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
+    // Apply recording offset
+    MEF_globals->recording_time_offset = recording_start_uutc_time;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -728,7 +733,9 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
+
+    // Apply recording offset
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -795,16 +802,13 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // TODO - take care of different encryptions
-
-    // ASK There can be a fork here - we can create entierly new metadata file if there is none in the segment, python layer can also take care of this (can call write_ts_metadata first)
     // Get the metadata and update some fields - update the rest when processing RED
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_METADATA_FILE_TYPE_STRING);
     metadata_fps = read_MEF_file(NULL, full_file_name, level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
-    // seg = read_MEF_segment(NULL, file_path, TIME_SERIES_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_FALSE);
-    // metadata_fps = seg->metadata_fps;
-    tmd2 = metadata_fps->metadata.time_series_section_2;
 
+    MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
+
+    tmd2 = metadata_fps->metadata.time_series_section_2;
     tmd2->number_of_samples = (si8) PyArray_SHAPE(raw_data)[0];
     tmd2->number_of_blocks = (si8) ceil((sf8) tmd2->number_of_samples / (sf8) samps_per_mef_block);
     tmd2->maximum_block_samples = samps_per_mef_block;
@@ -978,7 +982,10 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
+
+    // Apply recording offset
+    MEF_globals->recording_time_offset = recording_start_uutc_time;
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
     // tak care of password entries
@@ -1123,7 +1130,9 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE; 
+
+    // Apply recording offset
+    MEF_globals->recording_time_offset_mode = RTO_REMOVE_ON_INPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -1195,6 +1204,9 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     tmd2 = metadata_fps->metadata.time_series_section_2;
     // We are appending so get only the end time
     metadata_fps->universal_header->end_time = recording_stop_uutc_time;
+
+    MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
+
 
     orig_number_of_blocks = tmd2->number_of_blocks;
     tmd2->number_of_blocks +=  (si8) ceil((sf8) PyArray_SHAPE(raw_data)[0] / (sf8) samps_per_mef_block);
@@ -1393,7 +1405,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1440,7 +1452,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1450,6 +1462,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
         password = NULL;
     }
     
+    MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
     // map the channel info
@@ -1459,7 +1472,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     free_channel(channel, MEF_TRUE);
     
     return ch_metadata_dict;   
-} 
+}
 
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
 {
@@ -1484,7 +1497,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1564,7 +1577,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_IGNORE;
+    MEF_globals->recording_time_offset_mode = RTO_APPLY_ON_OUTPUT;
 
     MEF_strncpy(channel_path, py_channel_path, MEF_FULL_FILE_NAME_BYTES); // might be unnecesasry
     chan = read_MEF_channel(NULL, channel_path, UNKNOWN_CHANNEL_TYPE, py_level_1_password, NULL, MEF_FALSE, MEF_FALSE);  
