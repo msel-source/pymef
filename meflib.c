@@ -4936,31 +4936,6 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 	channel->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
 	channel->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
 	
-        // read channel record indices if present
-	MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", channel->path, channel->name, channel->extension, channel->name, RECORD_INDICES_FILE_TYPE_STRING);
-	channel->record_indices_fps = read_MEF_file(NULL, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
-        if (channel->record_indices_fps != NULL) {
-		if (password_data == NULL)
-			password_data = channel->record_indices_fps->password_data;
-		// copy level UUID
-		memcpy(channel->level_UUID, channel->record_indices_fps->universal_header->level_UUID, UUID_BYTES);
-                // read channel record data
-                MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", channel->path, channel->name, channel->extension, channel->name, RECORD_DATA_FILE_TYPE_STRING);
-                channel->record_data_fps = allocate_file_processing_struct(0, RECORD_DATA_FILE_TYPE_CODE, NULL, NULL, 0);
-                if (read_record_data == MEF_FALSE) {
-                        channel->record_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
-                        channel->record_data_fps->directives.close_file = MEF_FALSE;
-                }
-                (void) read_MEF_file(channel->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
-                if (channel->record_data_fps == NULL)
-                        UTF8_fprintf(stderr, "%s() Warning: Channel record indices file, but no channel record data file (\"%s\") in channel directory\n\n", __FUNCTION__, full_file_name);
-		channel->maximum_number_of_records = channel->record_data_fps->universal_header->number_of_entries;
-		channel->maximum_record_bytes = channel->record_data_fps->universal_header->maximum_entry_size;
-		channel->earliest_start_time = channel->record_data_fps->universal_header->start_time;
-		channel->latest_end_time = channel->record_data_fps->universal_header->end_time;
-		MEF_strncpy(channel->anonymized_name, channel->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	}
-	
 	// loop over segments
 	segment_names = generate_file_list(NULL, &n_segments, chan_path, SEGMENT_DIRECTORY_TYPE_STRING);
 	channel->segments = (SEGMENT *) e_calloc((size_t) n_segments, sizeof(SEGMENT), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
@@ -5224,6 +5199,31 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
                 }
         }
 	
+        // read channel record indices if present
+		MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", channel->path, channel->name, channel->extension, channel->name, RECORD_INDICES_FILE_TYPE_STRING);
+		channel->record_indices_fps = read_MEF_file(NULL, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
+	    if (channel->record_indices_fps != NULL) {
+			if (password_data == NULL)
+				password_data = channel->record_indices_fps->password_data;
+			// copy level UUID
+			memcpy(channel->level_UUID, channel->record_indices_fps->universal_header->level_UUID, UUID_BYTES);
+            // read channel record data
+            MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", channel->path, channel->name, channel->extension, channel->name, RECORD_DATA_FILE_TYPE_STRING);
+            channel->record_data_fps = allocate_file_processing_struct(0, RECORD_DATA_FILE_TYPE_CODE, NULL, NULL, 0);
+            if (read_record_data == MEF_FALSE) {
+                    channel->record_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
+                    channel->record_data_fps->directives.close_file = MEF_FALSE;
+            }
+            (void) read_MEF_file(channel->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
+            if (channel->record_data_fps == NULL)
+                    UTF8_fprintf(stderr, "%s() Warning: Channel record indices file, but no channel record data file (\"%s\") in channel directory\n\n", __FUNCTION__, full_file_name);
+			channel->maximum_number_of_records = channel->record_data_fps->universal_header->number_of_entries;
+			channel->maximum_record_bytes = channel->record_data_fps->universal_header->maximum_entry_size;
+			channel->earliest_start_time = channel->record_data_fps->universal_header->start_time;
+			channel->latest_end_time = channel->record_data_fps->universal_header->end_time;
+			MEF_strncpy(channel->anonymized_name, channel->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
+		}
+
 	if (MEF_globals->verbose == MEF_TRUE) {
 		if (channel_type == TIME_SERIES_CHANNEL_TYPE) {
 			printf("------------ Time Series Channel Metadata --------------\n");
@@ -5239,6 +5239,8 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 		show_metadata(temp_fps);
 		free_file_processing_struct(temp_fps);
 	}
+
+
 	
 	
 	return(channel);
@@ -5569,31 +5571,6 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 	bzero(session->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
 	session->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
 	session->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
-
-	// read session record indices if present
-	MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_INDICES_FILE_TYPE_STRING);
-	session->record_indices_fps = read_MEF_file(NULL, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
-        if (session->record_indices_fps != NULL) {
-		if (password_data == NULL)
-			password_data = session->record_indices_fps->password_data;
-		// copy level UUID
-		memcpy(session->level_UUID, session->record_indices_fps->universal_header->level_UUID, UUID_BYTES);
-                // read session records data
-                MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_DATA_FILE_TYPE_STRING);
-                session->record_data_fps = allocate_file_processing_struct(0, RECORD_DATA_FILE_TYPE_CODE, NULL, NULL, 0);
-                if (read_record_data == MEF_FALSE) {
-                        session->record_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
-                        session->record_data_fps->directives.close_file = MEF_FALSE;
-                }
-                (void) read_MEF_file(session->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
-                if (session->record_data_fps == NULL)
-                        UTF8_fprintf(stderr, "%s() Warning: Session record indices file, but no session records data file (\"%s\") in session directory\n\n", __FUNCTION__, full_file_name);
-		session->maximum_number_of_records = session->record_data_fps->universal_header->number_of_entries;
-		session->maximum_record_bytes = session->record_data_fps->universal_header->maximum_entry_size;
-		session->earliest_start_time = session->record_data_fps->universal_header->start_time;
-		session->latest_end_time = session->record_data_fps->universal_header->end_time;
-		MEF_strncpy(session->anonymized_name, session->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	}
         
 	// loop over time series channels
 	channel_names = generate_file_list(NULL, &n_channels, sess_path, TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING);
@@ -5867,6 +5844,31 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 			bzero(stmd->protected_region, METADATA_SECTION_3_PROTECTED_REGION_BYTES);
 		if (memcmp(smd3->discretionary_region, cmd3->discretionary_region, METADATA_SECTION_3_DISCRETIONARY_REGION_BYTES))
 			bzero(smd3->discretionary_region, METADATA_SECTION_3_DISCRETIONARY_REGION_BYTES);
+	}
+
+	// read session record indices if present
+	MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_INDICES_FILE_TYPE_STRING);
+	session->record_indices_fps = read_MEF_file(NULL, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
+    if (session->record_indices_fps != NULL) {
+		if (password_data == NULL)
+			password_data = session->record_indices_fps->password_data;
+		// copy level UUID
+		memcpy(session->level_UUID, session->record_indices_fps->universal_header->level_UUID, UUID_BYTES);
+        // read session records data
+        MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s/%s.%s", session->path, session->name, SESSION_DIRECTORY_TYPE_STRING, session->name, RECORD_DATA_FILE_TYPE_STRING);
+        session->record_data_fps = allocate_file_processing_struct(0, RECORD_DATA_FILE_TYPE_CODE, NULL, NULL, 0);
+        if (read_record_data == MEF_FALSE) {
+                session->record_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
+                session->record_data_fps->directives.close_file = MEF_FALSE;
+        }
+        (void) read_MEF_file(session->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
+        if (session->record_data_fps == NULL)
+                UTF8_fprintf(stderr, "%s() Warning: Session record indices file, but no session records data file (\"%s\") in session directory\n\n", __FUNCTION__, full_file_name);
+		session->maximum_number_of_records = session->record_data_fps->universal_header->number_of_entries;
+		session->maximum_record_bytes = session->record_data_fps->universal_header->maximum_entry_size;
+		session->earliest_start_time = session->record_data_fps->universal_header->start_time;
+		session->latest_end_time = session->record_data_fps->universal_header->end_time;
+		MEF_strncpy(session->anonymized_name, session->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
 	}
 	
 	if (MEF_globals->verbose == MEF_TRUE) {
