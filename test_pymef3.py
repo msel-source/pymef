@@ -43,9 +43,16 @@ sampling_frequency = 5000
 secs_to_append = 5
 pass_1 = 'chair'
 pass_2 = 'table'
+# pass_1 = None
+# pass_2 = None
 
 # Clean up the session_path
 os.system('rm -rf '+test_session_path)
+
+start_time = 946684800000000 # midnight, 1 January 2000 from Dan's code
+end_time = int(start_time + 1e6*secs_to_write)
+record_time_1 = int(start_time + 1e6)
+record_time_2 = int(start_time + 2*1e6)
 
 # %% ---------- Mef write test ----------
 print("\n\n---------- Writing mef files ----------\n\n")
@@ -60,21 +67,21 @@ record_list = []
 note_dict = {'type_string':'Note',
 			 'version_major':1,
 			 'version_minor':0,
-			 'time':int(946684800000000 + 1e6),
+			 'time':record_time_1,
 			 'note':'Note_test'}
 
 # Create SyLg
 sylg_dict = {'type_string':'SyLg',
 			 'version_major':1,
 			 'version_minor':0,
-			 'time':int(946684800000000 + 1e6),
+			 'time':record_time_1,
 			 'text':'SyLg_test'}
 
 # Create EDFA
 edfa_dict = {'type_string':'EDFA',
 			 'version_major':1,
 			 'version_minor':0,
-			 'time':int(946684800000000 + 1e6),
+			 'time':record_time_1,
 			 'duration':1000000,
 			 'annotation':'EDFA_test'}
 
@@ -90,8 +97,8 @@ edfa_dict = {'type_string':'EDFA',
 # Create Seiz
 seiz_chans = []
 seiz_chan_dict_1 = {'name':'msel',
-                    'onset':int(946684800000000 + 1e6),
-                    'offset':int(946684800000000 + 5*1e6)}
+                    'onset':record_time_1,
+                    'offset':record_time_2}
 seiz_chans.append(seiz_chan_dict_1)
 
 seiz_dict = {'type_string':'Seiz',
@@ -111,7 +118,7 @@ seiz_dict = {'type_string':'Seiz',
 csti_dict = {'type_string':'CSti',
              'version_major':1,
              'version_minor':0,
-             'time':int(946684800000000 + 1e6),
+             'time':record_time_1,
              'task_type':'beerdrink',
              'stimulus_duration':1000000,
              'stimulus_type':'pilsner',
@@ -120,7 +127,7 @@ csti_dict = {'type_string':'CSti',
 esti_dict = {'type_string':'ESti',
             'version_major':1,
             'version_minor':0,
-            'time':int(946684800000000 + 1e6),
+            'time':record_time_1,
             'amplitude':1.5,
             'frequency':250.5,
             'pulse_width':100,
@@ -146,8 +153,8 @@ record_list.append(esti_dict)
 pymef3.write_mef_data_records(record_file_path,
                               pass_1,
                               pass_2,
-                              946684800000000,  # midnight, 1 January 2000 from Dan's code
-                              int(946684800000000 + (1e6*secs_to_write)),
+                              start_time,  
+                              end_time,
                               record_list)
 
 print("Records written at segment level")
@@ -156,8 +163,8 @@ record_file_path_channel = test_session_path+'msel_fnusa.mefd/msel.timd/'
 pymef3.write_mef_data_records(record_file_path_channel,
                               pass_1,
                               pass_2,
-                              946684800000000,  # midnight, 1 January 2000 from Dan's code
-                              int(946684800000000 + (1e6*secs_to_write)),
+                              start_time,
+                              end_time,
                               record_list)
 
 print("Records written at channel level")
@@ -166,17 +173,17 @@ record_file_path_channel = test_session_path+'msel_fnusa.mefd/'
 pymef3.write_mef_data_records(record_file_path_channel,
                               pass_1,
                               pass_2,
-                              946684800000000,  # midnight, 1 January 2000 from Dan's code
-                              int(946684800000000 + (1e6*secs_to_write)),
+                              start_time,
+                              end_time,
                               record_list)
 
 print("Records written at segment level")
 
 # %% Write one time series channel metadata file
-section3_dict = {'recording_time_offset':0,
+section3_dict = {'recording_time_offset':start_time,
                  'DST_start_time':0,
 				'DST_end_time': 0,
-				'GMT_offset':0,
+				'GMT_offset':3600,
 				'subject_name_1': 'Olaf',
                  	'subject_name_2': 'Mefson',
                  'subject_ID': '2017',
@@ -213,8 +220,8 @@ time_series_metadata_file_path = record_file_path
 pymef3.write_mef_ts_metadata(time_series_metadata_file_path,
 							 pass_1,
 							 pass_2,
-							 946684800000000,
-							 int(946684800000000 + (1e6*secs_to_write)),
+							 start_time,
+							 end_time,
 							 section2_ts_dict,
 							 section3_dict)
 
@@ -243,8 +250,8 @@ raw_data_to_append = np.random.randint(-200,200,sampling_frequency*secs_to_appen
 pymef3.append_ts_data_and_indices(time_series_data_files_path,
                              		pass_1,
                              		pass_2,
-                             		946684800000000,
-                             		int(946684800000000 + (1e6*secs_to_write) + (1e6*secs_to_append)),
+                             		start_time,
+                             		int(end_time + (1e6*secs_to_append)),
                              		samps_per_mef_block,
                              		raw_data_to_append,
                              		0)
@@ -267,8 +274,8 @@ video_metadata_file_path = test_session_path+'msel_fnusa.mefd/fnusa.vidd/fnusa-0
 pymef3.write_mef_v_metadata(video_metadata_file_path,
 							pass_1,
 							pass_2,
-							946684800000000,
-							int(946684800000000 + (1e6*secs_to_write)),
+							start_time,
+							end_time,
 							section2_v_dict,
 							section3_dict)
 
@@ -277,8 +284,8 @@ print("Video metadata written")
 
 # %% Write video indices file
 
-index_entry = {'start_time':946684800000000,
-               'end_time':int(946684800000000 + (1e6*secs_to_write)),
+index_entry = {'start_time':start_time,
+               'end_time':end_time,
                'start_frame':0,
                'end_frame':300,
                'file_offset':0,
@@ -290,8 +297,8 @@ video_indices_file_path = video_metadata_file_path
 pymef3.write_mef_v_indices(video_indices_file_path,
                            pass_1,
                            pass_2,
-                           946684800000000, # min from index entries
-                           int(946684800000000 + (1e6*secs_to_write)), # max from index entries
+                           start_time, # min from index entries
+                           end_time, # max from index entries
                            index_entries)
 
 print("Video indices written")
