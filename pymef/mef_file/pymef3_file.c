@@ -24,7 +24,7 @@
 
 // For further information about mef_lib.c API see meflib.c or documentation.
 
-#include "pymef3.h"
+#include "pymef3_file.h"
 
 #include <numpy/arrayobject.h>
 
@@ -38,7 +38,7 @@
 /************************************************************************************/
 
 /* Module initialisation */
-PyObject * PyInit_pymef3(void)
+PyObject * PyInit_pymef3_file(void)
 {
     PyObject *m = PyModule_Create(&moduledef);
 
@@ -1505,7 +1505,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     // clean up
     free_channel(channel, MEF_TRUE);
     
-    return ch_metadata_dict;   
+    return ch_metadata_dict;
 }
 
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)

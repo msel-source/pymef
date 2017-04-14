@@ -22,7 +22,9 @@ from distutils.core import setup, Extension
 import numpy
 
 # the c extension module
-extension_mod = Extension("pymef3", ["pymef3.c"])
+mef_file_ext = Extension("pymef.mef_file.pymef3_file", ["pymef/mef_file/pymef3_file.c"])
 
-setup(name = "pymef3", ext_modules=[extension_mod],
+setup(name = "pymef",
+      packages = ["pymef","pymef.mef_file"],
+      ext_modules=[mef_file_ext],
       include_dirs=[numpy.get_include()]) # This line needed for MSEL (+ the import at the beginning)

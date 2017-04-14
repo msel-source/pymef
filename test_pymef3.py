@@ -3,7 +3,7 @@
 """
 Created on Tue Jan  3 16:00:20 2017
 
-Testing script for pymef3
+Testing script for pymef
 
 Ing.,Mgr. (MSc.) Jan Cimbálník
 Biomedical engineering
@@ -18,7 +18,7 @@ Rochester, MN
 United States
 """
 
-import pymef3
+from pymef.mef_file import pymef3_file
 import os
 import numpy as np
 
@@ -32,9 +32,9 @@ import numpy as np
 # %% Presets
 
 # Path to test session
-test_session_path = '/home/jan_cimbalnik/Dropbox/Source/C/Mef3_python/test_session/'
+#test_session_path = '/home/jan_cimbalnik/Dropbox/Source/C/Mef3_python/test_session/'
 #test_session_path = '/Users/jan/Desktop/mef3_test/'
-#test_session_path = '/home/cimba/Dropbox/Source/C/Mef3_python/test_session/'
+test_session_path = '/home/cimba/Dropbox/Source/C/Mef3_python/test_session/'
 
 
 secs_to_write = 10
@@ -150,7 +150,7 @@ record_list.append(esti_dict)
 
 
 
-pymef3.write_mef_data_records(record_file_path,
+pymef3_file.write_mef_data_records(record_file_path,
                               pass_1,
                               pass_2,
                               start_time,  
@@ -160,7 +160,7 @@ pymef3.write_mef_data_records(record_file_path,
 print("Records written at segment level")
 
 record_file_path_channel = test_session_path+'msel_fnusa.mefd/msel.timd/'
-pymef3.write_mef_data_records(record_file_path_channel,
+pymef3_file.write_mef_data_records(record_file_path_channel,
                               pass_1,
                               pass_2,
                               start_time,
@@ -170,7 +170,7 @@ pymef3.write_mef_data_records(record_file_path_channel,
 print("Records written at channel level")
 
 record_file_path_channel = test_session_path+'msel_fnusa.mefd/'
-pymef3.write_mef_data_records(record_file_path_channel,
+pymef3_file.write_mef_data_records(record_file_path_channel,
                               pass_1,
                               pass_2,
                               start_time,
@@ -217,7 +217,7 @@ section2_ts_dict = {'channel_description':'Test_channel',
 
 # Note: the rest of the tmd2 fileds is subject to discussion
 time_series_metadata_file_path = record_file_path
-pymef3.write_mef_ts_metadata(time_series_metadata_file_path,
+pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
 							 pass_1,
 							 pass_2,
 							 start_time,
@@ -234,7 +234,7 @@ print("Time series metadata written")
 raw_data = np.random.randint(-200,200,sampling_frequency*secs_to_write,dtype='int32')
 
 time_series_data_files_path = record_file_path
-pymef3.write_mef_ts_data_and_indices(time_series_data_files_path,
+pymef3_file.write_mef_ts_data_and_indices(time_series_data_files_path,
                              		 pass_1,
                              		 pass_2,
                              		 samps_per_mef_block,
@@ -247,7 +247,7 @@ print("Time series data and indices written")
 
 raw_data_to_append = np.random.randint(-200,200,sampling_frequency*secs_to_append,dtype='int32')
 
-pymef3.append_ts_data_and_indices(time_series_data_files_path,
+pymef3_file.append_ts_data_and_indices(time_series_data_files_path,
                              		pass_1,
                              		pass_2,
                              		start_time,
@@ -271,7 +271,7 @@ section2_v_dict={'channel_description':'Test_channel',
 
 video_metadata_file_path = test_session_path+'c2_2.mefd/movie.vidd/movie-000000.segd'
 video_metadata_file_path = test_session_path+'msel_fnusa.mefd/fnusa.vidd/fnusa-000000.segd'
-pymef3.write_mef_v_metadata(video_metadata_file_path,
+pymef3_file.write_mef_v_metadata(video_metadata_file_path,
 							pass_1,
 							pass_2,
 							start_time,
@@ -294,7 +294,7 @@ index_entry = {'start_time':start_time,
 index_entries=[index_entry]
 
 video_indices_file_path = video_metadata_file_path
-pymef3.write_mef_v_indices(video_indices_file_path,
+pymef3_file.write_mef_v_indices(video_indices_file_path,
                            pass_1,
                            pass_2,
                            start_time, # min from index entries
@@ -312,38 +312,38 @@ print("\n\n---------- Reading mef files ----------\n\n")
 # %% Read time series segment metadata (including records)
 # segment_directory = '/home/jan_cimbalnik/Desktop/edf2mef3/c2_2.mefd/O1.timd/O1-000000.segd'
 segment_directory = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd'
-segment_ts_metadata_dict = pymef3.read_mef_segment_metadata(segment_directory,pass_2)
+segment_ts_metadata_dict = pymef3_file.read_mef_segment_metadata(segment_directory,pass_2)
 
 print("Time series segment read")
 
 # %% Read time series channel metadata
 channel_directory = test_session_path+'msel_fnusa.mefd/msel.timd'
-channel_ts_metadata_dict = pymef3.read_mef_channel_metadata(channel_directory,pass_2)
+channel_ts_metadata_dict = pymef3_file.read_mef_channel_metadata(channel_directory,pass_2)
 
 print("Time series channel read")
 
 # %% Read video segment metadata
 segment_directory = test_session_path+'msel_fnusa.mefd/fnusa.vidd/fnusa-000000.segd'
-segment_v_metadata_dict = pymef3.read_mef_segment_metadata(segment_directory,pass_2)
+segment_v_metadata_dict = pymef3_file.read_mef_segment_metadata(segment_directory,pass_2)
 
 print("Video segment read")
 
 # %% Read video channel metadata
 channel_directory = test_session_path+'msel_fnusa.mefd/fnusa.vidd'
-channel_v_metadata_dict = pymef3.read_mef_channel_metadata(channel_directory,pass_2)
+channel_v_metadata_dict = pymef3_file.read_mef_channel_metadata(channel_directory,pass_2)
 
 print("Video channel read")
 
 # %% Read session
 session_directory = test_session_path+'msel_fnusa.mefd'
-session_metadata_dict = pymef3.read_mef_session_metadata(session_directory,pass_2)
+session_metadata_dict = pymef3_file.read_mef_session_metadata(session_directory,pass_2)
 
 print("Session read")
 
 
 # %% Read time series data
 
-data = pymef3.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, None, None)
+data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, None, None)
 
 print("Time series data read")
 
@@ -528,21 +528,21 @@ print("\n\n---------- Testing helper functions ----------\n\n")
 ts_metadata_file = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd/'+'msel-000000.tmet'
 
 # Test wrong password
-result = pymef3.check_mef_password(ts_metadata_file,'bu')
+result = pymef3_file.check_mef_password(ts_metadata_file,'bu')
 if result == 0:
     print('Wrong password check OK!')
 else:
     print('Wrong password check failed!')
 
 # Test level 1 password
-result = pymef3.check_mef_password(ts_metadata_file,pass_1)
+result = pymef3_file.check_mef_password(ts_metadata_file,pass_1)
 if result == 1:
     print('Level 1 password check OK!')
 else:
     print('Level 1 password check failed!')
 
 # Test level 2 password
-result = pymef3.check_mef_password(ts_metadata_file,pass_2)
+result = pymef3_file.check_mef_password(ts_metadata_file,pass_2)
 if result == 2:
     print('Level 2 password check OK!')
 else:

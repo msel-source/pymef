@@ -10,7 +10,7 @@
 
 /* Python methods definitions and help */
 
-static char pymef3_docstring[] =
+static char pymef3_file_docstring[] =
     "This module provides an interface for reading .mef (v 3.x) files.";
 
 /* Documentation to be read in Python - write functions*/
@@ -82,8 +82,8 @@ static PyMethodDef module_methods[] = {
 /* Definition of struct for python 3 */
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "pymef3",     /* m_name */
-    "This module provides an interface operations with MEF3 format",  /* m_doc */
+    "pymef.mef_file.pymef3_file",     /* m_name */
+    "This module provides an interface operations with MEF3 file format",  /* m_doc */
     -1,                  /* m_size */
     module_methods,    /* m_methods */
     NULL,                /* m_reload */

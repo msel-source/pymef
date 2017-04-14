@@ -51,6 +51,15 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# Opened files
+*~
+
+# Python cache
+__pycache__
+
+# Extension debrie
+build/
+
 # Spyder project files
 .spyproject/
 
