@@ -259,7 +259,7 @@ def read_ts_data_sample(session_md,session_path,
 #    # Checkt that uUTCs are in file
 #    for channel,uutc_ss in zip(channel_map,uutc_map):
 #        channel_path = session_path+'/'+channel+'.timd'
-#        channel_md = session_md['ts_channels'][channel]
+#        channel_md = session_md['time_series_channels'][channel]
 #        
 #        fs = channel_md['section_2']['sampling_frequency']
 #        
@@ -323,16 +323,16 @@ def read_ts_channel_basic_info(mef3_session_path,password):
     
     session_ts_metadata_dict = pymef3_file.read_mef_session_metadata(mef3_session_path,password)
     
-    channel_list = list(session_ts_metadata_dict['ts_channels'].keys())
+    channel_list = list(session_ts_metadata_dict['time_series_channels'].keys())
     channel_list.sort()
     
     channel_infos = []
     for channel in channel_list:
         
-        fsamp = session_ts_metadata_dict['ts_channels'][channel]['section_2']['sampling_frequency']
-        nsamp = session_ts_metadata_dict['ts_channels'][channel]['section_2']['number_of_samples']
-        ufact = session_ts_metadata_dict['ts_channels'][channel]['section_2']['units_conversion_factor']
-        unit = session_ts_metadata_dict['ts_channels'][channel]['section_2']['units_description']
+        fsamp = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['sampling_frequency']
+        nsamp = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['number_of_samples']
+        ufact = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_conversion_factor']
+        unit = session_ts_metadata_dict['ts_chtime_series_channelsannels'][channel]['section_2']['units_description']
         
         channel_infos.append({'name':channel,'fsamp':fsamp,'nsamp':nsamp,
                               'ufact':ufact,'unit':unit})
