@@ -18,7 +18,7 @@ Rochester, MN
 United States
 """
 
-from pymef.mef_file import pymef3_file
+from .mef_file import pymef3_file
 import numpy as np
 
 def uutc_for_sample(sample,channel_info):
