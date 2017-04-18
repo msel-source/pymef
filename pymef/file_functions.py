@@ -185,14 +185,13 @@ def get_discontinuities(channel_md):
         
     return discont_index_list,discont_uutc_list,discont_sample_list
 
-def read_ts_data_sample(session_md,session_path,
+def read_ts_data_sample(session_path,
                         password,channel_map,sample_map):
     """
     Reads desired channels in desired sample segment
     
     Parameters:
     -----------
-    session_md - mef3 session metadata dictionary\n
     session_path - path to mef3 session (.mefd)\n
     password - mef3 data password\n
     channel_map - list of channels to be read\n
@@ -332,7 +331,7 @@ def read_ts_channel_basic_info(mef3_session_path,password):
         fsamp = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['sampling_frequency']
         nsamp = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['number_of_samples']
         ufact = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_conversion_factor']
-        unit = session_ts_metadata_dict['ts_chtime_series_channelsannels'][channel]['section_2']['units_description']
+        unit = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_description']
         
         channel_infos.append({'name':channel,'fsamp':fsamp,'nsamp':nsamp,
                               'ufact':ufact,'unit':unit})
