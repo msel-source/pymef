@@ -3742,8 +3742,8 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
     // Loop over time series channels         
     for (i = 0; i < session->number_of_time_series_channels; ++i){
         if (i == 0){
-            PyDict_SetItemString(metadata_dict, "time series_channels", PyDict_New()); 
-            ts_dict = PyDict_GetItemString(metadata_dict, "time series_channels");
+            PyDict_SetItemString(metadata_dict, "time_series_channels", PyDict_New()); 
+            ts_dict = PyDict_GetItemString(metadata_dict, "time_series_channels");
         }
         // Get the channel pointer
         channel = session->time_series_channels + i;
