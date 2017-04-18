@@ -18,7 +18,7 @@ Rochester, MN
 United States
 """
 
-from pymef.mef_file import pymef3_file
+from pymef import pymef3_file
 import os
 import numpy as np
 
