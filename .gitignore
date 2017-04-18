@@ -64,7 +64,7 @@ build/
 .spyproject/
 
 # Sublime text project files
-pymef3.sublime*
+pymef.sublime*
 
 # Test session
 test_session/
