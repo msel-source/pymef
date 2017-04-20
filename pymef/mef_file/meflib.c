@@ -5154,9 +5154,9 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 			if (strcmp(svmd->session_description, cvmd->session_description))
 				bzero(cvmd->session_description, METADATA_SESSION_DESCRIPTION_BYTES);
 			if (channel->latest_end_time == UUTC_NO_ENTRY || channel->earliest_start_time == UUTC_NO_ENTRY)
-				ctmd->recording_duration = UUTC_NO_ENTRY;
+				cvmd->recording_duration = UUTC_NO_ENTRY;
 			else
-				ctmd->recording_duration = ABS(channel->latest_end_time) - ABS(channel->earliest_start_time) + 1;
+				cvmd->recording_duration = ABS(channel->latest_end_time) - ABS(channel->earliest_start_time) + 1;
                         if (svmd->horizontal_resolution != cvmd->horizontal_resolution)
                                 cvmd->horizontal_resolution = VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY;
                         if (svmd->vertical_resolution != cvmd->vertical_resolution)
@@ -5802,9 +5802,9 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 		if (strcmp(cvmd->session_description, svmd->session_description))
 			bzero(svmd->session_description, METADATA_SESSION_DESCRIPTION_BYTES);
 		if (session->latest_end_time == UUTC_NO_ENTRY || session->earliest_start_time == UUTC_NO_ENTRY)
-			stmd->recording_duration = UUTC_NO_ENTRY;
+			svmd->recording_duration = UUTC_NO_ENTRY;
 		else
-			stmd->recording_duration = ABS(session->latest_end_time) - ABS(session->earliest_start_time) + 1;
+			svmd->recording_duration = ABS(session->latest_end_time) - ABS(session->earliest_start_time) + 1;
 		if (cvmd->horizontal_resolution != svmd->horizontal_resolution)
 			svmd->horizontal_resolution = VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY;
 		if (cvmd->vertical_resolution != svmd->vertical_resolution)
