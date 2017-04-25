@@ -3811,6 +3811,7 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 {
 	si4	i;
 	si1	temp_str[MEF_FULL_FILE_NAME_BYTES + 20];
+	si1 *unique_junk;
 	FILE	*fp;
 	
 	
@@ -3821,10 +3822,13 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 		free(file_list);
 	}
 	
+	// create unique junk file - avoids conflicts when runnig multiple processes which fight for the same file access
+	unique_junk = tmpnam(NULL);
+
 	// count
-	sprintf(temp_str, "ls -1d \"%s\"/*.%s > /tmp/junk 2> /dev/null", enclosing_directory, extension);
+	sprintf(temp_str, "ls -1d \"%s\"/*.%s > %s 2> /dev/null", enclosing_directory, extension, unique_junk);
 	system(temp_str);
-	fp = e_fopen("/tmp/junk", "r", __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
+	fp = e_fopen(unique_junk, "r", __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	
 	*num_files = 0;
 	while ((fscanf(fp, "%s", temp_str)) != EOF)
@@ -3844,9 +3848,8 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 	
 	// clean up
 	fclose(fp);
-	sprintf(temp_str, "rm /tmp/junk");
+	sprintf(temp_str, "rm %s",unique_junk);
 	system(temp_str);
-	
 	
 	return(file_list);
 }
