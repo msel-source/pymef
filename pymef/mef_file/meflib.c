@@ -5050,10 +5050,10 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
                                 ctmd->minimum_native_sample_value = stmd->minimum_native_sample_value;
                         if (stmd->start_sample < ctmd->start_sample)
                         	ctmd->start_sample = stmd->start_sample;
-			if (stmd->number_of_samples > ctmd->number_of_samples)
-				ctmd->number_of_samples = stmd->number_of_samples;
-			if (stmd->number_of_blocks > ctmd->number_of_blocks)
-				stmd->number_of_blocks = ctmd->number_of_blocks;
+			if (i > 0)
+				ctmd->number_of_samples += stmd->number_of_samples;
+			if (i > 0)
+				ctmd->number_of_blocks += stmd->number_of_blocks;
 			if (stmd->maximum_block_bytes > ctmd->maximum_block_bytes)
 				ctmd->maximum_block_bytes = stmd->maximum_block_bytes;
 			if (stmd->maximum_block_samples > ctmd->maximum_block_samples)
@@ -5166,8 +5166,8 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
                                 cvmd->vertical_resolution = VIDEO_METADATA_VERTICAL_RESOLUTION_NO_ENTRY;
                         if (svmd->frame_rate != cvmd->frame_rate)
                                 cvmd->frame_rate = VIDEO_METADATA_FRAME_RATE_NO_ENTRY;
-			if (svmd->number_of_clips > cvmd->number_of_clips)
-				cvmd->number_of_clips = svmd->number_of_clips;
+			if (i > 0)
+				cvmd->number_of_clips += svmd->number_of_clips;
 			if (svmd->maximum_clip_bytes > cvmd->maximum_clip_bytes)
 				cvmd->maximum_clip_bytes = svmd->maximum_clip_bytes;
 			if (strcmp(svmd->video_format, cvmd->video_format))
