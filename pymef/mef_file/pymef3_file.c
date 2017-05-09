@@ -878,11 +878,14 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     samps_remaining = tmd2->number_of_samples;
     block_header = rps->block_header;
     tsi = ts_idx_fps->time_series_indices;
-    start_sample = 0;
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
     block_samps = samps_per_mef_block;
-    file_offset = UNIVERSAL_HEADER_BYTES; 
+    file_offset = UNIVERSAL_HEADER_BYTES;
+
+    if (tmd2->start_sample != TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY){
+        start_sample = tmd2->start_sample;
+    }
 
     // Write the data and update the metadata
     while (samps_remaining) {
@@ -1695,7 +1698,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     for (j = 1; j < chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
         
         block_start_time = chan->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_time;
-        remove_recording_time_offset( &block_start_time); // ASK why this???
+        remove_recording_time_offset( &block_start_time);
         
         if (chan->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_sample + samp_counter_base > start_samp) {
             start_idx = j - 1;
@@ -1916,8 +1919,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     free (rps->difference_buffer);
     free (rps);
     
+    chan->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE; // needed only in first segment - the rest of the segments just point to this memory location
     for (i=0;i<chan->number_of_segments;i++){
-        chan->segments[i].metadata_fps->directives.free_password_data = MEF_TRUE;
         chan->segments[i].metadata_fps->directives.close_file = MEF_TRUE;
         if (chan->segments[i].record_data_fps != NULL)
             chan->segments[i].record_data_fps->directives.close_file = MEF_TRUE;
