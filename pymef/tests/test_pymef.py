@@ -32,15 +32,16 @@ import numpy as np
 # %% Presets
 
 # Path to test session
-#test_session_path = '/home/jan_cimbalnik/Dropbox/Source/C/Mef3_python/test_session/'
+test_session_path = '/home/jan_cimbalnik/Dropbox/Source/C/pymef/test_session/'
 #test_session_path = '/Users/jan/Desktop/mef3_test/'
-test_session_path = '/home/cimba/Dropbox/Source/C/Mef3_python/test_session/'
+#test_session_path = '/home/cimba/Dropbox/Source/C/pymef/test_session/'
 
 
 secs_to_write = 10
 samps_per_mef_block = 5000
 sampling_frequency = 5000
 secs_to_append = 5
+secs_to_seg2 = 5
 pass_1 = 'chair'
 pass_2 = 'table'
 # pass_1 = None
@@ -59,7 +60,7 @@ print("\n\n---------- Writing mef files ----------\n\n")
 
 # %% Write one data record file (with indices file)
 #record_file_path = test_session_path+'c2_2.mefd/O1.timd/O1-000000.segd'
-record_file_path = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd/'
+record_file_path_segment = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd/'
 
 record_list = []
 
@@ -150,7 +151,7 @@ record_list.append(esti_dict)
 
 
 
-pymef3_file.write_mef_data_records(record_file_path,
+pymef3_file.write_mef_data_records(record_file_path_segment,
                               pass_1,
                               pass_2,
                               start_time,  
@@ -169,8 +170,8 @@ pymef3_file.write_mef_data_records(record_file_path_channel,
 
 print("Records written at channel level")
 
-record_file_path_channel = test_session_path+'msel_fnusa.mefd/'
-pymef3_file.write_mef_data_records(record_file_path_channel,
+record_file_path_session = test_session_path+'msel_fnusa.mefd/'
+pymef3_file.write_mef_data_records(record_file_path_session,
                               pass_1,
                               pass_2,
                               start_time,
@@ -216,7 +217,7 @@ section2_ts_dict = {'channel_description':'Test_channel',
                     'number_of_samples':0}
 
 # Note: the rest of the tmd2 fileds is subject to discussion
-time_series_metadata_file_path = record_file_path
+time_series_metadata_file_path = record_file_path_segment
 pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
 							 pass_1,
 							 pass_2,
@@ -225,15 +226,27 @@ pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
 							 section2_ts_dict,
 							 section3_dict)
 
+# Write second segment (1 second discontinuity, 1 sec length)
+time_series_metadata_file_path = record_file_path_channel+'msel-000001.segd/'
+section2_ts_dict['start_sample'] = sampling_frequency*(secs_to_write+secs_to_append)
+section3_dict['recording_time_offset'] = int(end_time + (1e6*secs_to_append) + int(1e6))
+pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
+							 pass_1,
+							 pass_2,
+							 int(end_time + (1e6*secs_to_append) + int(1e6)),
+							 int(end_time + (1e6*secs_to_append) + int(1e6) + int(secs_to_seg2 * 1e6)),
+							 section2_ts_dict,
+							 section3_dict)
+
 print("Time series metadata written")
 
-# %% Write time series data with indices file
-
+# %% Write time series data with indices file, test append and write second segment
 
 # Generate data
 raw_data = np.random.randint(-200,200,sampling_frequency*secs_to_write,dtype='int32')
 
-time_series_data_files_path = record_file_path
+# Write first segment
+time_series_data_files_path = record_file_path_segment
 pymef3_file.write_mef_ts_data_and_indices(time_series_data_files_path,
                              		 pass_1,
                              		 pass_2,
@@ -241,9 +254,7 @@ pymef3_file.write_mef_ts_data_and_indices(time_series_data_files_path,
                              		 raw_data,
                              		 0)
 
-print("Time series data and indices written")
-
-# %% Append time series data and modify files accordinglly, but update metadata first
+# Append time series data and modify files accordinglly, but update metadata first
 
 raw_data_to_append = np.random.randint(-200,200,sampling_frequency*secs_to_append,dtype='int32')
 
@@ -256,6 +267,21 @@ pymef3_file.append_ts_data_and_indices(time_series_data_files_path,
                              		raw_data_to_append,
                              		0)
 raw_data = np.concatenate([raw_data,raw_data_to_append])
+
+# Write second segment
+raw_data_seg_2 = np.random.randint(-200,200,sampling_frequency * secs_to_seg2,dtype='int32')
+
+time_series_data_files_path = record_file_path_channel+'msel-000001.segd/'
+pymef3_file.write_mef_ts_data_and_indices(time_series_data_files_path,
+                             		 pass_1,
+                             		 pass_2,
+                             		 samps_per_mef_block,
+                             		 raw_data_seg_2,
+                             		 0)
+
+raw_data = np.concatenate([raw_data,raw_data_seg_2])
+
+print("Time series data and indices written")
 
 # %% Write one video channel metadata file
 section2_v_dict={'channel_description':'Test_channel',
@@ -527,6 +553,8 @@ print("\n\n---------- Testing helper functions ----------\n\n")
 
 ts_metadata_file = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd/'+'msel-000000.tmet'
 
+# Password chekcs
+
 # Test wrong password
 result = pymef3_file.check_mef_password(ts_metadata_file,'bu')
 if result == 0:
@@ -547,3 +575,6 @@ if result == 2:
     print('Level 2 password check OK!')
 else:
     print('Level 2 password check failed!')
+    
+# Discontinuity checks
+
