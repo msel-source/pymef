@@ -5220,10 +5220,15 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
             (void) read_MEF_file(channel->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
             if (channel->record_data_fps == NULL)
                     UTF8_fprintf(stderr, "%s() Warning: Channel record indices file, but no channel record data file (\"%s\") in channel directory\n\n", __FUNCTION__, full_file_name);
-			channel->maximum_number_of_records = channel->record_data_fps->universal_header->number_of_entries;
-			channel->maximum_record_bytes = channel->record_data_fps->universal_header->maximum_entry_size;
-			channel->earliest_start_time = channel->record_data_fps->universal_header->start_time;
-			channel->latest_end_time = channel->record_data_fps->universal_header->end_time;
+			
+			if (channel->maximum_number_of_records < channel->record_data_fps->universal_header->number_of_entries)
+				channel->maximum_number_of_records = channel->record_data_fps->universal_header->number_of_entries;
+			if (channel->maximum_record_bytes < channel->record_data_fps->universal_header->maximum_entry_size)
+				channel->maximum_record_bytes = channel->record_data_fps->universal_header->maximum_entry_size;
+			if (ABS(channel->record_data_fps->universal_header->start_time) < ABS(channel->earliest_start_time))
+				channel->earliest_start_time = channel->record_data_fps->universal_header->start_time;
+			if (ABS(channel->record_data_fps->universal_header->end_time) > ABS(channel->latest_end_time))
+				channel->latest_end_time = channel->record_data_fps->universal_header->end_time;
 			MEF_strncpy(channel->anonymized_name, channel->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
 		}
 
@@ -5867,10 +5872,15 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
         (void) read_MEF_file(session->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
         if (session->record_data_fps == NULL)
                 UTF8_fprintf(stderr, "%s() Warning: Session record indices file, but no session records data file (\"%s\") in session directory\n\n", __FUNCTION__, full_file_name);
-		session->maximum_number_of_records = session->record_data_fps->universal_header->number_of_entries;
-		session->maximum_record_bytes = session->record_data_fps->universal_header->maximum_entry_size;
-		session->earliest_start_time = session->record_data_fps->universal_header->start_time;
-		session->latest_end_time = session->record_data_fps->universal_header->end_time;
+		
+		if (session->record_data_fps->universal_header->number_of_entries > session->maximum_number_of_records)
+			session->maximum_number_of_records = session->record_data_fps->universal_header->number_of_entries;
+		if (session->maximum_record_bytes < session->record_data_fps->universal_header->maximum_entry_size)
+			session->maximum_record_bytes = session->record_data_fps->universal_header->maximum_entry_size;
+		if (ABS(session->record_data_fps->universal_header->start_time) < ABS(session->earliest_start_time))
+			session->earliest_start_time = session->record_data_fps->universal_header->start_time;
+		if (ABS(session->latest_end_time) < session->record_data_fps->universal_header->end_time)
+			session->latest_end_time = session->record_data_fps->universal_header->end_time;
 		MEF_strncpy(session->anonymized_name, session->record_data_fps->universal_header->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
 	}
 	
