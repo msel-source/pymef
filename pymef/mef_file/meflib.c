@@ -5368,6 +5368,7 @@ FILE_PROCESSING_STRUCT	*read_MEF_file(FILE_PROCESSING_STRUCT *fps, si1 *file_nam
         if (fps->directives.io_bytes == UNIVERSAL_HEADER_BYTES) {
         	if (MEF_globals->verbose == MEF_TRUE)
 			show_file_processing_struct(fps);
+		offset_universal_header_times(fps, RTO_INPUT_ACTION);
 		return(fps);
 	}
 
