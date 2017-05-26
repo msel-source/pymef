@@ -55,6 +55,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - read functions*/
 static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
+
 static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
@@ -145,3 +146,7 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
 
 // Helper functions
 si4 extract_segment_number(si1 *segment_name);
+si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel);
+void memset_int(si4 *ptr, si4 value, size_t num);
+si8 uutc_for_sample_c(si8 sample, CHANNEL *channel);
+

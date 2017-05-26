@@ -27,6 +27,7 @@
 #include "pymef3_file.h"
 
 #include <numpy/arrayobject.h>
+#include <numpy/npy_math.h>
 
 #include "meflib.c"
 #include "mefrec.c"
@@ -62,7 +63,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     si1    *level_2_password;
     si1    *temp_str_bytes;
     
-    si8     recording_start_uutc_time, recording_stop_uutc_time;
+    si8     recording_start_uutc_time, recording_stop_uutc_time, recording_time_offset;
     
     PyObject    *py_record_list, *py_record_dict, *py_seiz_chan_list, *py_pass_1_obj, *py_pass_2_obj;
     PyObject    *temp_o, *temp_UTF_str;
@@ -87,12 +88,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     MEFREC_Seiz_1_0         *seiz_type;
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOllO!",
+    if (!PyArg_ParseTuple(args,"sOOlllO!",
                           &py_file_path,
                           &py_pass_1_obj,
                           &py_pass_2_obj,
                           &recording_start_uutc_time,
                           &recording_stop_uutc_time,
+                          &recording_time_offset,
                           &PyList_Type, &py_record_list)){
         return NULL;
     }
@@ -101,8 +103,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     (void) initialize_meflib();  
 
     // Apply recording offset
-    MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
+    MEF_globals->recording_time_offset = recording_time_offset;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -425,7 +426,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
     
-    si8     recording_start_uutc_time, recording_stop_uutc_time;
+    si8     recording_start_uutc_time, recording_stop_uutc_time, recording_time_offset;
     
     PyObject    *py_tmd2_dict, *py_md3_dict, *temp_o, *temp_UTF_str;
     Py_ssize_t  li;
@@ -464,8 +465,12 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // Apply recording offset
-    MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
+    temp_o = PyDict_GetItemString(py_md3_dict,"recording_time_offset");
+    if (temp_o != NULL)
+        recording_time_offset = PyLong_AsLong(temp_o);
+    else
+        recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
+    MEF_globals->recording_time_offset = recording_time_offset;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -607,7 +612,6 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -734,7 +738,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
     si4     max_samp, min_samp, *np_array_ptr;
     si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset;
-    sf8     curr_time, time_inc;
+    si8     curr_time, time_inc;
 
 
     // --- Parse the input --- 
@@ -750,9 +754,6 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-
-    // Apply recording offset
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -1010,7 +1011,6 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_start_uutc_time;
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
     // tak care of password entries
@@ -1160,9 +1160,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // initialize MEF library
     (void) initialize_meflib();
-
-    // Apply recording offset
-    MEF_globals->recording_time_offset_mode = RTO_APPLY;
 
     // tak care of password entries
     if (PyUnicode_Check(py_pass_1_obj)){
@@ -1437,7 +1434,6 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1487,7 +1483,6 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1536,7 +1531,6 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
 
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
@@ -1563,67 +1557,75 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // Specified by user
     si1    *py_channel_path;
     PyObject    *py_password_obj;
-    si8    start_samp;
-    si8    end_samp;
+    PyObject    *ostart, *oend;
+    si8     start_time, end_time;
+    si8     start_samp, end_samp;
+    si4     times_specified;
  
     // Python variables
     PyObject    *py_array_out;
-    PyObject    *ostart_samp, *oend_samp;
-    
-    
+
     // Method specific variables
-    si1             *compressed_data_buffer, *cdp;
-    si1             *in_file_name, *out_file_name;
-    si1             channel_path[MEF_FULL_FILE_NAME_BYTES];
-    ui4             n_segments, max_samps;
-    si4             start_segment, end_segment, sample_counter;
-    si4             n_blocks_in_segment, offset_to_start_samp;
-    si4             order, pass_order, stop_order;
-    si4             *raw_data_buffer, *idp;
-    si4             *temp_data_buf;
-    ui8             n_samples, total_data_bytes, bytes_to_read;
-    ui8             start_idx, end_idx, num_blocks, data_len, n_read;
-    si8             i, j;
-    si8             segment_start_sample, segment_end_sample;
-    si8             total_samps, samp_counter_base;
-    si8             block_start_time;
-    sf8             *filt_data;
+    unsigned int          kept_samples, skipped_samples, tot_samples;
+    si4     i, j;
+    si4     offset_to_start_samp;
+    ui8     data_len;
+    ui4 n_segments;
+    CHANNEL    *channel;
+    si4 start_segment, end_segment;
+    
+    si1  channel_path[MEF_FULL_FILE_NAME_BYTES];
+    si8  total_samps, samp_counter_base;
+    ui8  total_data_bytes;
+    ui8 start_idx, end_idx, num_blocks;
+    si4 *raw_data_buffer, *idp;
+    si1 *compressed_data_buffer, *cdp;
+    si8  segment_start_sample, segment_end_sample;
+    si8  segment_start_time, segment_end_time;
+    si8  block_start_time;
+    si4 num_block_in_segment;
+    si4 pass_order, stop_order;
+    si4 order;
+    FILE *fp;
+    ui8 n_read, bytes_to_read;
+    RED_PROCESSING_STRUCT   *rps;
+    sf8 *filt_data;
+    si4 sample_counter;
+    ui4 max_samps;
+    int *temp_data_buf;
+    int *dcdp;
+    si4 num_samps;
+
+    si4 *decomp_data;
+    sf8 *numpy_arr_data;
+    
+    si4 offset_into_output_buffer;
+    si8 block_start_time_offset;
 
     si1     password_arr[PASSWORD_BYTES] = {0};
     si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
-
-    // RED decompression
-    ui4             kept_samples, skipped_samples, tot_samples;
-    ui4             *dcdp;
-
-    extern MEF_GLOBALS      *MEF_globals;
-    FILE                *out_fp, *in_fp, *fp;
-    RED_PROCESSING_STRUCT       *rps;
-    PASSWORD_DATA           *pwd;
-    CHANNEL             *chan;
-    SEGMENT             *seg;
-    TIME_SERIES_METADATA_SECTION_2  *md2;
-    TIME_SERIES_INDEX       *tsi;
-
     
+    // Optional arguments
+    times_specified = 0; // default behavior - read samples
+
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOO",
+    if (!PyArg_ParseTuple(args,"sOOO|p",
                           &py_channel_path,
                           &py_password_obj,
-                          &ostart_samp,
-                          &oend_samp)){
+                          &ostart,
+                          &oend,
+                          &times_specified)){
         return NULL;
     }
         
     // check inputs
 
-
-    // initialize MEF library
+    // set up mef 3 library
     (void) initialize_meflib();
-    MEF_globals->recording_time_offset_mode = RTO_REMOVE;
-
+    MEF_globals->behavior_on_fail = RETURN_ON_FAIL;
+    
     // tak care of password entries
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
@@ -1634,73 +1636,138 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     }
 
     MEF_strncpy(channel_path, py_channel_path, MEF_FULL_FILE_NAME_BYTES); // might be unnecesasry
-    chan = read_MEF_channel(NULL, channel_path, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_FALSE);  
-    // else pass NULL instead of NULL
+    channel = read_MEF_channel(NULL, channel_path, TIME_SERIES_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_FALSE);
     
-    if (chan->channel_type != TIME_SERIES_CHANNEL_TYPE) {
+    if (channel->channel_type != TIME_SERIES_CHANNEL_TYPE) {
         PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
         PyErr_Occurred();
         return NULL;
     }
 
-    // Take care of the input
-    if (ostart_samp == Py_None)
-        start_samp = 0;
-    else
-        start_samp = PyLong_AsLong(ostart_samp);
-
-    if (oend_samp == Py_None)
-        end_samp = chan->metadata.time_series_section_2->number_of_samples;
-    else
-        end_samp = PyLong_AsLong(oend_samp);
-
-    // Fire a warning if the stop samp is larger than number of samples
-    if (end_samp > chan->metadata.time_series_section_2->number_of_samples){
-        PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Will append zeros", 1);
+    // If None was passed as one of the arguments move to the start or end of the recording
+    if (ostart == Py_None){
+        if (times_specified)
+            start_time = channel->earliest_start_time;
+        else
+            start_samp = 0;
+    }
+    else{
+        start_samp = start_time = PyLong_AsLong(ostart);
     }
 
-    // Number of samples to be read
-    n_samples = end_samp - start_samp;
+    if (oend == Py_None){
+        if (times_specified)
+            end_time = channel->latest_end_time;
+        else
+            end_samp = channel->metadata.time_series_section_2->number_of_samples;
+    }
+    else{
+        end_samp = end_time = PyLong_AsLong(oend);
+    }
 
-    if (n_samples == 0){
-        PyErr_SetString(PyExc_RuntimeError, "Number of samples to be read is 0. The end sample is not inclusive!");
+    // check if valid data range
+    if (times_specified && start_time >= end_time)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Start time later than end time, exiting...");
+        PyErr_Occurred();
+        return NULL;
+    }
+    if (!times_specified && start_samp >= end_samp)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Start sample larger than end sample, exiting...");
         PyErr_Occurred();
         return NULL;
     }
 
+    // Fire a warnings if start or stop are out of file
+    if (times_specified){
+        if (end_time > channel->latest_end_time)
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Stop uutc later than latest end time. Will insert NaNs", 1);
+        
+        if (start_time < channel->earliest_start_time)
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Start uutc earlier than earliest start time. Will insert NaNs", 1);
+    }else{
+        if (end_samp > channel->metadata.time_series_section_2->number_of_samples)
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Will append zeros", 1);
+    }
+    // Determine the number of samples
+    num_samps = 0;
+    if (times_specified)
+        num_samps = (si4)(((end_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency);
+    else
+        num_samps = end_samp - start_samp;
+        
     // Allocate numpy array
-    npy_intp dims[1] = {n_samples};
+    npy_intp dims[1] = {num_samps};
     import_array();
-    py_array_out = PyArray_SimpleNew(1, dims, NPY_INT);
+    // Integers represent the "real" data but cannot use NaNs. this way can put data directly into numpy array
+    // when decompressing - cannot do this with floats - have to be copied
+    //py_array_out = PyArray_SimpleNew(1, dims, NPY_INT); // Integers for now but might have to convert to floats
 
-    // Iterate through segments, looking for data that matches our criteria 
-    n_segments = chan->number_of_segments;
-    start_segment = end_segment = -1; // ASK - this shouldn't be unnecessary - taken care of at the beginnig
-
-    // With samples, it's a little easier, since there are no sample number gaps between segments.
-    // so just iterate through segments and see which segments the start and end are in.
+    // Usnig doubles so we can use NaN values for discontinuities
+    py_array_out = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    numpy_arr_data = (sf8 *) PyArray_GETPTR1(py_array_out, 0);
+    
+    // Iterate through segments, looking for data that matches our criteria
+    n_segments = channel->number_of_segments;
+    start_segment = end_segment = -1;
+    
+    if (times_specified) {
+        start_samp = sample_for_uutc_c(start_time, channel);
+        end_samp = sample_for_uutc_c(end_time, channel);
+    }else{
+        start_time = uutc_for_sample_c(start_samp, channel);
+        end_time = uutc_for_sample_c(end_samp, channel);
+    }
+ 
+    // Find start and stop segments by uutc time
+    // find start segment by finding first segment whose ending is past the start time.
+    // then find stop segment by using the previous segment of the (first segment whose start is past the end time)
     for (i = 0; i < n_segments; ++i) {
         
-        segment_start_sample = chan->segments[i].metadata_fps->metadata.time_series_section_2->start_sample;
-        segment_end_sample   = chan->segments[i].metadata_fps->metadata.time_series_section_2->start_sample +
-        chan->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
-        
-        if ((start_samp >= segment_start_sample) &&
-            (start_samp <= segment_end_sample))
-            start_segment = i;
-        if ((end_samp >= segment_start_sample) &&
-            (end_samp <= segment_end_sample))
-            end_segment = i;
+        if (times_specified){
+            segment_start_time = channel->segments[i].time_series_data_fps->universal_header->start_time;
+            segment_end_time   = channel->segments[i].time_series_data_fps->universal_header->end_time;
+            remove_recording_time_offset( &segment_start_time);
+            remove_recording_time_offset( &segment_end_time);
+                        
+            if ((segment_end_time >= start_time) && (start_segment == -1)) {
+                start_segment = i;
+                end_segment = i;
+            }
+            if ((end_segment != -1) && (segment_start_time <= end_time))
+                end_segment = i;
+            
+        }else{
+            segment_start_sample = channel->segments[i].metadata_fps->metadata.time_series_section_2->start_sample;
+            segment_end_sample   = channel->segments[i].metadata_fps->metadata.time_series_section_2->start_sample +
+            channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
+            
+            if ((start_samp >= segment_start_sample) && (start_samp <= segment_end_sample))
+                start_segment = i;
+            if ((end_samp >= segment_start_sample) && (end_samp <= segment_end_sample))
+                end_segment = i;
+            
+        }
     }
     
-    // find start block in start segment
-    samp_counter_base = chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample;
-    for (j = 1; j < chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
+    // DAN_CONSULT - no need to do this? - the array will be filled with NaNs, warning will be fired
+    // TBD should this be re-done to include a partial page if partial data is available?
+    // if ((start_segment == -1) || (end_segment == -1)) //hit the end of the file, fill out data with zeros
+    // {
+    //     // TBD do something here?
         
-        block_start_time = chan->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_time;
+    //     return DECOMP_MEF3_ERROR_NOT_ENOUGH_SAMPLES_IN_CHANNEL;
+    // }
+    
+    // find start block in start segment
+    samp_counter_base = channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample;
+    for (j = 1; j < channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
+        
+        block_start_time = channel->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_time;
         remove_recording_time_offset( &block_start_time);
         
-        if (chan->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_sample + samp_counter_base > start_samp) {
+        if (block_start_time > start_time) {
             start_idx = j - 1;
             break;
         }
@@ -1709,39 +1776,43 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     }
     
     // find stop block in stop segment
-    samp_counter_base = chan->segments[end_segment].metadata_fps->metadata.time_series_section_2->start_sample;
-    for (j = 1; j < chan->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
+    samp_counter_base = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->start_sample;
+    for (j = 1; j < channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
         
-        block_start_time = chan->segments[end_segment].time_series_indices_fps->time_series_indices[j].start_time;
+        block_start_time = channel->segments[end_segment].time_series_indices_fps->time_series_indices[j].start_time;
         remove_recording_time_offset( &block_start_time);
         
-        if (chan->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_sample + samp_counter_base > end_samp) {
+        if (block_start_time > end_time) {
             end_idx = j - 1;
             break;
         }
         // ending point is in last block in segment
         end_idx = j;
     }
-
+    
     // find total_samps and total_data_bytes, so we can allocate buffers
     total_samps = 0;
     total_data_bytes = 0;
-
+    
+    // TBD do we care about this?
+    //chan->max_sample_value = RED_MINIMUM_SAMPLE_VALUE;
+    //chan->min_sample_value = RED_MAXIMUM_SAMPLE_VALUE;
+    
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
-        if (end_idx < (chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
-            total_samps += chan->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
-            chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
+        if (end_idx < (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+            total_samps += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
+            channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
             //fprintf(stderr, "total_samps = %d\n", total_samps);
-            total_data_bytes += chan->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
-            chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+            total_data_bytes += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
+            channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         }
         else {
             // case where end_idx is last block in segment
-            total_samps += chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
-            chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
-            total_data_bytes += chan->segments[start_segment].time_series_data_fps->file_length -
-            chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+            total_samps += channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
+            channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
+            total_data_bytes += channel->segments[start_segment].time_series_data_fps->file_length -
+            channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         }
         num_blocks = end_idx - start_idx + 1;
         // TBD do we car about this?
@@ -1758,104 +1829,102 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // spans across segments
     else {
         // start with first segment
-        n_blocks_in_segment = chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
-        total_samps += chan->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
-        chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
-        total_data_bytes +=  chan->segments[start_segment].time_series_data_fps->file_length -
-        chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
-        num_blocks = n_blocks_in_segment - start_idx;
+        num_block_in_segment = channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+        total_samps += channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
+        channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
+        total_data_bytes +=  channel->segments[start_segment].time_series_data_fps->file_length -
+        channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+        num_blocks = num_block_in_segment - start_idx;
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
-            n_blocks_in_segment = chan->segments[i].metadata_fps->metadata.time_series_section_2->number_of_blocks;
-            total_samps += chan->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
-            total_data_bytes += chan->segments[i].time_series_data_fps->file_length -
-            chan->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
-            num_blocks += n_blocks_in_segment;
+            num_block_in_segment = channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+            total_samps += channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
+            total_data_bytes += channel->segments[i].time_series_data_fps->file_length -
+            channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
+            num_blocks += num_block_in_segment;
         }
         
         // then last segment
-        n_blocks_in_segment = chan->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
-        if (end_idx < (chan->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
-            total_samps += chan->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
-            chan->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
-            total_data_bytes += chan->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
-            chan->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
+        num_block_in_segment = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+        if (end_idx < (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+            total_samps += channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
+            total_data_bytes += channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             num_blocks += end_idx + 1;
         }
         else {
             // case where end_idx is last block in segment
-            total_samps += chan->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
-            chan->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
-            total_data_bytes += chan->segments[end_segment].time_series_data_fps->file_length -
-            chan->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
+            total_samps += channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
+            total_data_bytes += channel->segments[end_segment].time_series_data_fps->file_length -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             num_blocks += end_idx + 1;
         }
     }
-
+    
     // allocate buffers
     data_len = total_samps;
-    order = (pass_order > stop_order) ? pass_order : stop_order;
-    filt_data = (sf8 *) calloc((size_t) data_len + (6 * order), sizeof(sf8));
     compressed_data_buffer = (si1 *) malloc((size_t) total_data_bytes);
-    raw_data_buffer = (si4 *) malloc((size_t) (total_samps * sizeof(si4)));
     cdp = compressed_data_buffer;
-    idp = PyArray_GETPTR1(py_array_out, 0);
+    decomp_data = (si4 *) malloc((size_t) (num_samps * sizeof(si4)));
+    memset_int(decomp_data, RED_NAN, num_samps);
+    // decomp_data = PyArray_GETPTR1(py_array_out, 0);
+    // memset(decomp_data,NPY_NAN,sizeof(NPY_FLOAT)*num_samps);
     
     // read in RED data
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
-        fp = chan->segments[start_segment].time_series_data_fps->fp;
-        fseek(fp, chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        fp = channel->segments[start_segment].time_series_data_fps->fp;
+        fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
     }
     // spans across segments
     else {
         // start with first segment
-        fp = chan->segments[start_segment].time_series_data_fps->fp;
-        fseek(fp, chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
-        bytes_to_read = chan->segments[start_segment].time_series_data_fps->file_length -
-        chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+        fp = channel->segments[start_segment].time_series_data_fps->fp;
+        fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        bytes_to_read = channel->segments[start_segment].time_series_data_fps->file_length -
+        channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
         cdp += bytes_to_read;
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
-            fp = chan->segments[i].time_series_data_fps->fp;
+            fp = channel->segments[i].time_series_data_fps->fp;
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
-            bytes_to_read = chan->segments[i].time_series_data_fps->file_length;
+            bytes_to_read = channel->segments[i].time_series_data_fps->file_length;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
             cdp += bytes_to_read;
         }
         
         // then last segment
-        fp = chan->segments[end_segment].time_series_data_fps->fp;
+        fp = channel->segments[end_segment].time_series_data_fps->fp;
         fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
-        bytes_to_read = chan->segments[end_segment].time_series_data_fps->file_length -
-        chan->segments[end_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+        bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
+        channel->segments[end_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
         cdp += bytes_to_read;
     }
-
+        
     // set up RED processing struct
     cdp = compressed_data_buffer;
-    max_samps = chan->metadata.time_series_section_2->maximum_block_samples;
+    max_samps = channel->metadata.time_series_section_2->maximum_block_samples;
     
     // create RED processing struct
     rps = (RED_PROCESSING_STRUCT *) calloc((size_t) 1, sizeof(RED_PROCESSING_STRUCT));
     rps->compression.mode = RED_DECOMPRESSION;
     //rps->directives.return_block_extrema = MEF_TRUE;
-    rps->decompressed_ptr = rps->decompressed_data = idp;
+    rps->decompressed_ptr = rps->decompressed_data = decomp_data;
     rps->difference_buffer = (si1 *) e_calloc((size_t) RED_MAX_DIFFERENCE_BYTES(max_samps), sizeof(ui1), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
     
-    offset_to_start_samp = start_samp - chan->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
+    offset_to_start_samp = start_samp - channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
     
-    //thread_info->number_of_discontinuities = 0;
     sample_counter = 0;
     
-    // decode first block to temp array
-    cdp = compressed_data_buffer;  
-
+    cdp = compressed_data_buffer;
+    
     // TBD use real max block length
     temp_data_buf = (int *) malloc(33000 * 4);
     rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
@@ -1863,73 +1932,121 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
     RED_decode(rps);
     cdp += rps->block_header->block_bytes;
+    
+
+    if (times_specified)
+        offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+    else
+        offset_into_output_buffer = channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
 
     // copy requested samples from first block to output buffer
-    skipped_samples = offset_to_start_samp;
-    if (skipped_samples > rps->block_header->number_of_samples) {
-        //this is bad- likely means idx data is corrupt 
-        printf("[decomp_mef] block indexing error: decoded %d samples, attempting to skip %lu samples\n", rps->block_header->number_of_samples, skipped_samples);
-        free (temp_data_buf);
-        free (compressed_data_buffer);
-        free (rps->difference_buffer);
-        free (rps);
-        PyErr_SetString(PyExc_RuntimeError, "Oh no, data are likely corrupt...");
-        PyErr_Occurred();
-        return NULL;
+    // TBD this loop could be optimized
+    for (i=0;i<rps->block_header->number_of_samples;i++)
+    {
+        if (offset_into_output_buffer < 0)
+        {
+            offset_into_output_buffer++;
+            continue;
+        }
+        
+        if (offset_into_output_buffer >= num_samps)
+            break;
+        
+        *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
+        
+        offset_into_output_buffer++;
     }
-    kept_samples = rps->block_header->number_of_samples - skipped_samples;
-    tot_samples = (unsigned int) (end_samp - start_samp + 1);
-    if (kept_samples >= tot_samples) { // start and end indices in same block => already done
-        memcpy((void *) idp, (void *) (temp_data_buf + skipped_samples), tot_samples * sizeof(int));
-        free (temp_data_buf);
-        free (compressed_data_buffer);
-        free (rps->difference_buffer);
-        free (rps);
-        return py_array_out;
-    }
-    memcpy((void *) idp, (void *) (temp_data_buf + skipped_samples), kept_samples * sizeof(int));
-    dcdp = idp + kept_samples;
-    
-    rps->decompressed_ptr = rps->decompressed_data = dcdp;
-    
+
+
     // decode bytes to samples
+    sample_counter = offset_into_output_buffer;
     for (i=1;i<num_blocks-1;i++) {
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
+        // check that block fits fully within output array
+        // this should be true, but it's possible a stray block exists out-of-order, or with a bad timestamp
+        
+        // we need to manually remove offset, since we are using the time value of the block bevore decoding the block
+        // (normally the offset is removed during the decoding process)
+
+        if (times_specified){
+
+            block_start_time_offset = rps->block_header->start_time;
+            remove_recording_time_offset( &block_start_time_offset );
+            
+            if (block_start_time_offset < start_time)
+                continue;
+            if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time)
+                continue;
+            rps->decompressed_ptr = rps->decompressed_data = decomp_data + (int)((((block_start_time_offset - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        
+        }else{
+            rps->decompressed_ptr = rps->decompressed_data = decomp_data + sample_counter;
+        }
+
         RED_decode(rps);
         cdp += rps->block_header->block_bytes;
-        dcdp += rps->block_header->number_of_samples;
-        rps->decompressed_ptr = rps->decompressed_data = dcdp;
         sample_counter += rps->block_header->number_of_samples;
     }
     
+    if (num_blocks > 1)
+    {
         // decode last block to temp array
-            rps->compressed_data = cdp;
+        rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
         RED_decode(rps);
+        
+        offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        
+        if (times_specified)
+            offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        else
+            offset_into_output_buffer = sample_counter;
+        
+        // copy requested samples from last block to output buffer
+        // TBD this loop could be optimized
+        for (i=0;i<rps->block_header->number_of_samples;i++)
+        {
+            if (offset_into_output_buffer < 0)
+            {
+                offset_into_output_buffer++;
+                continue;
+            }
+            
+            if (offset_into_output_buffer >= num_samps)
+                break;
+            
+            *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
+            
+            offset_into_output_buffer++;
+        }
+    }
     
+    // Numpy double type specific - no need to do this if we use numpy integer array and
+    // put the data directly into it
+    // DAN_CONSULT - is this efficient enough? I am basically reading the data into si4 array and copying it here
+    // it i the NaN causing trouble. Let me know if you can think of anything to make it mor efficient.
+    for (i=0;i<num_samps;i++){
+        if (*(decomp_data + i) == RED_NAN)
+            *(numpy_arr_data + i) = NPY_NAN;
+        else
+            *(numpy_arr_data + i) = (sf8) *(decomp_data + i);
+    }
+    free(decomp_data);
+
+
     // copy requested samples from last block to output buffer
-    kept_samples = (unsigned int) (end_samp - chan->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx].start_sample + 1);
-    memcpy((void *) dcdp, (void *) temp_data_buf, kept_samples * sizeof(int));
-    
     // we're done with the compressed data, get rid of it
     free (temp_data_buf);
     free (compressed_data_buffer);
     free (rps->difference_buffer);
     free (rps);
     
-    chan->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE; // needed only in first segment - the rest of the segments just point to this memory location
-    for (i=0;i<chan->number_of_segments;i++){
-        chan->segments[i].metadata_fps->directives.close_file = MEF_TRUE;
-        if (chan->segments[i].record_data_fps != NULL)
-            chan->segments[i].record_data_fps->directives.close_file = MEF_TRUE;
-        if (chan->segments[i].record_indices_fps != NULL)
-            chan->segments[i].record_indices_fps->directives.close_file = MEF_TRUE;
-        chan->segments[i].time_series_data_fps->directives.close_file = MEF_TRUE;
-        chan->segments[i].time_series_indices_fps->directives.close_file = MEF_TRUE;
-    }
-    free_channel(chan, MEF_TRUE);
+    if (channel->number_of_segments > 0)
+        channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+    free_channel(channel, MEF_TRUE);
+
 
     return py_array_out;
 }
@@ -4376,6 +4493,76 @@ si4 extract_segment_number(si1 *segment_name)
     segment_number = (si4) strtol(c, NULL, 10);
 
     return segment_number;
+}
+
+si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
+{
+    ui8 i, j, sample;
+    sf8 native_samp_freq;
+    ui8 prev_sample_number;
+    si8 prev_time;
+    
+    native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
+    prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
+    prev_time = channel->segments[0].time_series_indices_fps->time_series_indices[0].start_time;
+    
+    for (j = 0; j < channel->number_of_segments; j++)
+    {
+        for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
+            if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time > uutc)
+                goto done;
+            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample;
+            prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
+        }
+    }
+    
+    done:
+        sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+    
+    return(sample);
+}
+
+si8 uutc_for_sample_c(si8 sample, CHANNEL *channel)
+{
+    ui8 i, j, uutc;
+    sf8 native_samp_freq;
+    ui8 prev_sample_number; 
+    si8 prev_time;
+
+    native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
+    prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
+    prev_time = channel->segments[0].time_series_indices_fps->time_series_indices[0].start_time;
+
+    for (j = 0; j < channel->number_of_segments; j++)
+    {
+        for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i){
+            if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample > sample)
+                goto done;
+            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample;
+            prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
+        }
+    }
+
+    done:
+        uutc = prev_time + (ui8) ((((sf8) (sample - prev_sample_number) / native_samp_freq) * 1000000.0) + 0.5);
+    
+    return(uutc);
+}
+
+void memset_int(si4 *ptr, si4 value, size_t num)
+{
+    si4 *temp_ptr;
+    int i;
+    
+    if (num < 1)
+        return;
+    
+    temp_ptr = ptr;
+    for (i=0;i<num;i++)
+    {
+        memcpy(temp_ptr, &value, sizeof(si4));
+        temp_ptr++;
+    }
 }
 
 static PyObject *check_mef_password(PyObject *self, PyObject *args)
