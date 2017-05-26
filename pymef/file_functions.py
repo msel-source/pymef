@@ -177,8 +177,7 @@ def get_discontinuities(channel_md):
         
     return discont_index_list,discont_uutc_list,discont_sample_list,discont_sample_span_list
 
-def read_ts_channels_data_sample(session_path,
-                                 password,channel_map,sample_map):
+def read_ts_channels_sample(session_path,password,channel_map,sample_map):
     """
     Reads desired channels in desired sample segment
     
@@ -214,8 +213,7 @@ def read_ts_channels_data_sample(session_path,
         
     return data_list
 
-def read_ts_data_channel_uutc(session_md,session_path,
-                              password,channel_map,uutc_map):
+def read_ts_channels_uutc(session_path,password,channel_map,uutc_map):
     """
     Reads desired channels in desired time segment. Missing data at
     discontinuities are filled with NaNs.
@@ -331,8 +329,10 @@ def read_ts_channel_basic_info(session_path,password):
         nsamp = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['number_of_samples']
         ufact = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_conversion_factor']
         unit = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_description']
+        start_time = session_ts_metadata_dict['time_series_channels'][channel]['channel_specific_metadata']['earliest_start_time']
         
         channel_infos.append({'name':channel,'fsamp':fsamp,'nsamp':nsamp,
-                              'ufact':ufact,'unit':unit})
+                              'ufact':ufact,'unit':unit,
+                              'start_time':start_time})
     
     return channel_infos
