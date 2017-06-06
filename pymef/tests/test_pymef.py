@@ -18,6 +18,7 @@ Rochester, MN
 United States
 """
 
+import pymef
 from pymef import pymef3_file
 import os
 import numpy as np
@@ -41,6 +42,7 @@ secs_to_write = 10
 samps_per_mef_block = 5000
 sampling_frequency = 5000
 secs_to_append = 5
+discont_length = 2
 secs_to_seg2 = 5
 pass_1 = 'chair'
 pass_2 = 'table'
@@ -54,6 +56,9 @@ start_time = 946684800000000 # midnight, 1 January 2000 from Dan's code
 end_time = int(start_time + 1e6*secs_to_write)
 record_time_1 = int(start_time + 1e6)
 record_time_2 = int(start_time + 2*1e6)
+
+rec_offset = int(start_time - 1e6)
+
 
 # %% ---------- Mef write test ----------
 print("\n\n---------- Writing mef files ----------\n\n")
@@ -156,6 +161,7 @@ pymef3_file.write_mef_data_records(record_file_path_segment,
                               pass_2,
                               start_time,  
                               end_time,
+                              rec_offset,
                               record_list)
 
 print("Records written at segment level")
@@ -166,6 +172,7 @@ pymef3_file.write_mef_data_records(record_file_path_channel,
                               pass_2,
                               start_time,
                               end_time,
+                              rec_offset,
                               record_list)
 
 print("Records written at channel level")
@@ -176,12 +183,13 @@ pymef3_file.write_mef_data_records(record_file_path_session,
                               pass_2,
                               start_time,
                               end_time,
+                              rec_offset,
                               record_list)
 
 print("Records written at segment level")
 
 # %% Write one time series channel metadata file
-section3_dict = {'recording_time_offset':start_time,
+section3_dict = {'recording_time_offset':rec_offset,
                  'DST_start_time':0,
 				'DST_end_time': 0,
 				'GMT_offset':3600,
@@ -192,7 +200,7 @@ section3_dict = {'recording_time_offset':start_time,
 
 section2_ts_dict = {'channel_description':'Test_channel',
                     'session_description':'Test_session',
-                    'recording_duration':1,# Test None here
+                    'recording_duration':0,# Test None here
                     'reference_description':'wine',
                     'acquisition_channel_number': 5,
                     'sampling_frequency': sampling_frequency,
@@ -226,15 +234,15 @@ pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
 							 section2_ts_dict,
 							 section3_dict)
 
-# Write second segment (1 second discontinuity, 1 sec length)
+# Write second segment 
 time_series_metadata_file_path = record_file_path_channel+'msel-000001.segd/'
 section2_ts_dict['start_sample'] = sampling_frequency*(secs_to_write+secs_to_append)
-section3_dict['recording_time_offset'] = int(end_time + (1e6*secs_to_append) + int(1e6))
+section3_dict['recording_time_offset'] = rec_offset
 pymef3_file.write_mef_ts_metadata(time_series_metadata_file_path,
 							 pass_1,
 							 pass_2,
-							 int(end_time + (1e6*secs_to_append) + int(1e6)),
-							 int(end_time + (1e6*secs_to_append) + int(1e6) + int(secs_to_seg2 * 1e6)),
+							 int(end_time + (1e6*secs_to_append) + int(1e6*discont_length)),
+							 int(end_time + (1e6*secs_to_append) + int(1e6*discont_length) + int(secs_to_seg2 * 1e6)),
 							 section2_ts_dict,
 							 section3_dict)
 
@@ -261,8 +269,8 @@ raw_data_to_append = np.random.randint(-200,200,sampling_frequency*secs_to_appen
 pymef3_file.append_ts_data_and_indices(time_series_data_files_path,
                              		pass_1,
                              		pass_2,
-                             		start_time,
-                             		int(end_time + (1e6*secs_to_append)),
+                             		int(end_time),
+                             		int(end_time + secs_to_append*1e6),
                              		samps_per_mef_block,
                              		raw_data_to_append,
                              		0)
@@ -342,7 +350,7 @@ segment_ts_metadata_dict = pymef3_file.read_mef_segment_metadata(segment_directo
 
 print("Time series segment read")
 
-# %% Read time series channel metadata
+## %% Read time series channel metadata
 channel_directory = test_session_path+'msel_fnusa.mefd/msel.timd'
 channel_ts_metadata_dict = pymef3_file.read_mef_channel_metadata(channel_directory,pass_2)
 
@@ -370,6 +378,8 @@ print("Session read")
 # %% Read time series data
 
 data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, None, None)
+
+uutc_data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(start_time-2e6), int(start_time-1e6),True)#int(946684822000000+1e6)
 
 print("Time series data read")
 
@@ -577,4 +587,33 @@ else:
     print('Level 2 password check failed!')
     
 # Discontinuity checks
+
+discont_time = int(end_time + (1e6*secs_to_append) + int(1e6*discont_length))
+discont_sample = sampling_frequency * (secs_to_write+secs_to_append)
+
+# Get disconts
+disconts = pymef.get_discontinuities(channel_ts_metadata_dict)
+
+# Sample for uUTC
+if discont_sample == pymef.sample_for_uutc(discont_time, channel_ts_metadata_dict):
+    print('sample for uUTC OK')
+else:
+    print('MISMATCH!!!! sample for uUTC')
+
+# uUTC for sample
+if discont_time == pymef.uutc_for_sample(discont_sample, channel_ts_metadata_dict):
+    print('uUTC for sample OK')
+else:
+    print('MISMATCH!!!! uUTC for sample')
+
+# put the uUTC in discontinuity to check warning functionality
+pymef.sample_for_uutc(discont_time-50000, channel_ts_metadata_dict,True)
+
+
+
+
+
+
+
+
 
