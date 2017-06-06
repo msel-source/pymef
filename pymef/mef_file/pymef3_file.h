@@ -79,19 +79,42 @@ static PyMethodDef module_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+//  Fork for python 3 and python 2
+#if PY_MAJOR_VERSION >= 3
 
-/* Definition of struct for python 3 */
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "pymef.mef_file.pymef3_file",     /* m_name */
-    "This module provides an interface operations with MEF3 file format",  /* m_doc */
-    -1,                  /* m_size */
-    module_methods,    /* m_methods */
-    NULL,                /* m_reload */
-    NULL,                /* m_traverse */
-    NULL,                /* m_clear */
-    NULL,                /* m_free */
-};
+    /* Definition of struct for python 3 */
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "pymef.mef_file.pymef3_file",     /* m_name */
+        "This module provides an interface operations with MEF3 file format",  /* m_doc */
+        -1,                  /* m_size */
+        module_methods,    /* m_methods */
+        NULL,                /* m_reload */
+        NULL,                /* m_traverse */
+        NULL,                /* m_clear */
+        NULL,                /* m_free */
+    };
+
+    /* Module initialisation */
+    PyObject * PyInit_pymef3_file(void)
+    {
+        PyObject *m = PyModule_Create(&moduledef);
+
+        if (m == NULL)
+            return NULL;
+
+        return m;
+    }
+#else
+    /* Module initialisation */
+    PyMODINIT_FUNC initpymef3_file(void)
+    {
+        PyObject *m = Py_InitModule3("pymef3_file", module_methods, pymef3_file_docstring);
+        if (m == NULL)
+            return;
+
+    }
+#endif
 
 /* Function declarations */
 

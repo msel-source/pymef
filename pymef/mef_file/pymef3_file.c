@@ -35,21 +35,6 @@
 
 
 /************************************************************************************/
-/*********************************  Python stuff  ***********************************/
-/************************************************************************************/
-
-/* Module initialisation */
-PyObject * PyInit_pymef3_file(void)
-{
-    PyObject *m = PyModule_Create(&moduledef);
-
-    if (m == NULL)
-        return NULL;
-
-    return m;
-}
-
-/************************************************************************************/
 /******************************  MEF write functions  *******************************/
 /************************************************************************************/
 
@@ -106,21 +91,41 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     MEF_globals->recording_time_offset = recording_time_offset;
 
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -183,8 +188,12 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
         py_record_dict = PyList_GetItem(py_record_list, li);
         temp_o = PyDict_GetItemString(py_record_dict,"type_string");
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         type_code = *((ui4 *) temp_str_bytes);
 
         // Fork for different record types
@@ -194,8 +203,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rb_bytes = MEFREC_EDFA_1_0_BYTES;
                 temp_o = PyDict_GetItemString(py_record_dict,"annotation");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rb_bytes += (si8) annot_bytes + 1; // strncpy copies the null termination as well
                 }
                 rb_bytes += 16 - (rb_bytes % 16);
@@ -210,8 +224,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rb_bytes = 0;
                 temp_o = PyDict_GetItemString(py_record_dict,"note");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rb_bytes += (si8) annot_bytes + 1;
                 }
                 rb_bytes += 16 - (rb_bytes % 16);
@@ -239,8 +258,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rb_bytes = 0;
                 temp_o = PyDict_GetItemString(py_record_dict,"text");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rb_bytes += (si8) annot_bytes + 1;
                 }
                 rb_bytes += 16 - (rb_bytes % 16);
@@ -305,7 +329,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
         switch (type_code) {
             case MEFREC_EDFA_TYPE_CODE:
-
                 // ASK should there by types created by this function and passed to subfunctinos?
                 map_python_EDFA_type(py_record_dict, (si1 *) rd);
 
@@ -317,8 +340,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 // Annotation
                 temp_o = PyDict_GetItemString(py_record_dict,"annotation");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rh->bytes += MEF_strcpy((si1 *) rd + MEFREC_EDFA_1_0_BYTES, temp_str_bytes);
                 }
 
@@ -354,8 +382,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_Note_TYPE_STRING, TYPE_BYTES);
                 temp_o = PyDict_GetItemString(py_record_dict,"note");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
                 rh->bytes = MEF_pad(rd, rh->bytes, 16);
@@ -383,8 +416,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_SyLg_TYPE_STRING, TYPE_BYTES);
                 temp_o = PyDict_GetItemString(py_record_dict,"text");
                 if (temp_o != NULL){
-                    temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-                    temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char
+                    #if PY_MAJOR_VERSION >= 3
+                        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
+                    #else
+                        temp_str_bytes = PyString_AS_STRING(temp_o);
+                        annot_bytes = PyString_GET_SIZE(temp_o);
+                    #endif
                     rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
                 rh->bytes = MEF_pad(rd, rh->bytes, 16);
@@ -473,21 +511,41 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     MEF_globals->recording_time_offset = recording_time_offset;
 
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -538,7 +596,6 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
         PyErr_Occurred();
         return NULL;
     }
-
 
     // generate level UUID into generic universal_header
     generate_UUID(gen_fps->universal_header->level_UUID);
@@ -614,21 +671,41 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     MEF_globals->recording_time_offset = recording_start_uutc_time;
 
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -756,21 +833,41 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -1014,21 +1111,41 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -1162,19 +1279,41 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict");
-        level_1_password = PyBytes_AS_STRING(temp_UTF_str);
-    }else{
-        level_1_password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_pass_1_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict");
-        level_2_password = PyBytes_AS_STRING(temp_UTF_str);
-    }else{
-        level_2_password = NULL;
-    }
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyUnicode_Check(py_pass_2_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #else
+        if (PyString_Check(py_pass_1_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        }else{
+            level_1_password = NULL;
+        }
+
+        if (PyString_Check(py_pass_2_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
+
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        }else{
+            level_2_password = NULL;
+        }
+    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -1436,13 +1575,24 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
-    }else{
-        password = NULL;
-    }  
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_password_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #else
+        if (PyString_Check(py_password_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_password_obj);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #endif
 
     MEF_strncpy(session_path, py_session_path, MEF_FULL_FILE_NAME_BYTES);
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
@@ -1485,13 +1635,24 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
-    }else{
-        password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_password_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #else
+        if (PyString_Check(py_password_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_password_obj);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #endif
 
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
@@ -1533,13 +1694,24 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
-    }else{
-        password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_password_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #else
+        if (PyString_Check(py_password_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_password_obj);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #endif
 
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
@@ -1611,7 +1783,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     times_specified = 0; // default behavior - read samples
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOO|p",
+    if (!PyArg_ParseTuple(args,"sOOO|i",
                           &py_channel_path,
                           &py_password_obj,
                           &ostart,
@@ -1620,6 +1792,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         return NULL;
     }
         
+
     // check inputs
 
     // set up mef 3 library
@@ -1627,13 +1800,24 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     MEF_globals->behavior_on_fail = RETURN_ON_FAIL;
     
     // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
-    }else{
-        password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_password_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #else
+        if (PyString_Check(py_password_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_password_obj);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #endif
 
     MEF_strncpy(channel_path, py_channel_path, MEF_FULL_FILE_NAME_BYTES); // might be unnecesasry
     channel = read_MEF_channel(NULL, channel_path, TIME_SERIES_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_FALSE);
@@ -2105,15 +2289,23 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     // Type independent fields
     temp_o = PyDict_GetItemString(tmd2_dict,"channel_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(tmd2->channel_description, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(tmd2_dict,"session_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(tmd2->session_description, temp_str_bytes);
     }
 
@@ -2124,8 +2316,12 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     // Time series specific fields
     temp_o = PyDict_GetItemString(tmd2_dict,"reference_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(tmd2->reference_description, temp_str_bytes);
     }
 
@@ -2159,8 +2355,12 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
 
     temp_o = PyDict_GetItemString(tmd2_dict,"units_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(tmd2->units_description, temp_str_bytes);
     }
 
@@ -2236,15 +2436,23 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     // Type independent fields
     temp_o = PyDict_GetItemString(vmd2_dict,"channel_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(vmd2->channel_description, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(vmd2_dict,"session_description");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(vmd2->session_description, temp_str_bytes);
     }
 
@@ -2275,8 +2483,12 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
 
     temp_o = PyDict_GetItemString(vmd2_dict,"video_format");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(vmd2->video_format, temp_str_bytes);
     }
 
@@ -2356,29 +2568,45 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_name_1");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(md3->subject_name_1, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_name_2");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(md3->subject_name_2, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_ID");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(md3->subject_ID, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"recording_location");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(md3->recording_location, temp_str_bytes);
     }
 
@@ -2401,8 +2629,12 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(rh_dict,"type_string");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(rh->type_string, temp_str_bytes);
     }
 
@@ -2486,22 +2718,34 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"marker_name_1");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->marker_name_1, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"marker_name_2");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->marker_name_2, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"annotation");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->annotation, temp_str_bytes);
     }
 
@@ -2517,8 +2761,12 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
 
     // Assign from dict to struct
     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->name, temp_str_bytes);
 
     if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset"))
@@ -2540,8 +2788,12 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(CSti_type_dict,"task_type");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->task_type, temp_str_bytes);
     }
 
@@ -2551,15 +2803,23 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_type");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->stimulus_type, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"patient_response");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->patient_response, temp_str_bytes);
     }
 
@@ -2592,22 +2852,34 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"waveform");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->waveform, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"anode");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->anode, temp_str_bytes);
     }
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"catode");
     if (temp_o != NULL){
-        temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #if PY_MAJOR_VERSION >= 3
+            temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        #else
+            temp_str_bytes = PyString_AS_STRING(temp_o);
+        #endif
         MEF_strcpy(r_type->catode, temp_str_bytes);
     }
 
@@ -3445,7 +3717,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
     else
         PyDict_SetItemString(spec_dict, "segment_name",
             Py_BuildValue("s", temp_str));
-                             
+                            
     // Read segment records if present and add it to metadata
     if (segment->record_indices_fps != NULL & segment->record_data_fps != NULL){
         records_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
@@ -3522,6 +3794,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
             PyErr_Occurred();
             return NULL;
     }
+
     PyDict_SetItemString(metadata_dict, "indices", idx_list);
 
     // Get universal headers
@@ -4263,6 +4536,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
                 PyDict_SetItemString(dict_out,"seizure_type",Py_BuildValue("s", "unrecognized"));
                 break;
         }
+
         if (strlen(seizure->marker_name_1))
                 mn1 = MEF_TRUE;
         if (strlen(seizure->marker_name_2))
@@ -4289,6 +4563,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
         channels = (MEFREC_Seiz_1_0_CHANNEL *) ((ui1 *) rh + MEFREC_Seiz_1_0_CHANNELS_OFFSET);            
         
         channel_list = PyList_New(seizure->number_of_channels);
+
         for (i = 0; i < seizure->number_of_channels; ++i) {
 
             dict_channel = PyDict_New();
@@ -4598,13 +4873,23 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
-    }else{
-        password = NULL;
-    }
+    #if PY_MAJOR_VERSION >= 3
+        if (PyUnicode_Check(py_password_obj)){
+            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #else
+        if (PyString_Check(py_password_obj)){
+            temp_str_bytes = PyString_AS_STRING(py_password_obj);
+
+            password = strcpy(password_arr,temp_str_bytes);
+        }else{
+            password = NULL;
+        }
+    #endif
 
     // Allocate universal header
     uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
