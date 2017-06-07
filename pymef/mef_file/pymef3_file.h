@@ -170,6 +170,8 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
 // Helper functions
 si4 extract_segment_number(si1 *segment_name);
 si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel);
-void memset_int(si4 *ptr, si4 value, size_t num);
 si8 uutc_for_sample_c(si8 sample, CHANNEL *channel);
+void memset_int(si4 *ptr, si4 value, size_t num);
+void init_numpy();
+
 

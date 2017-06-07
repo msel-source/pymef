@@ -1792,13 +1792,17 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         return NULL;
     }
         
-
-    // check inputs
-
     // set up mef 3 library
     (void) initialize_meflib();
     MEF_globals->behavior_on_fail = RETURN_ON_FAIL;
     
+    // initialize Numpy
+    #if PY_MAJOR_VERSION >= 3
+        import_array();
+    #else
+        init_numpy();
+    #endif
+
     // tak care of password entries
     #if PY_MAJOR_VERSION >= 3
         if (PyUnicode_Check(py_password_obj)){
@@ -1827,6 +1831,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         PyErr_Occurred();
         return NULL;
     }
+
+    //TODO - take care of situation when user passes times but does not raise the flag times_specified
 
     // If None was passed as one of the arguments move to the start or end of the recording
     if (ostart == Py_None){
@@ -1883,7 +1889,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         
     // Allocate numpy array
     npy_intp dims[1] = {num_samps};
-    import_array();
+
     // Integers represent the "real" data but cannot use NaNs. this way can put data directly into numpy array
     // when decompressing - cannot do this with floats - have to be copied
     //py_array_out = PyArray_SimpleNew(1, dims, NPY_INT); // Integers for now but might have to convert to floats
@@ -4838,6 +4844,17 @@ void memset_int(si4 *ptr, si4 value, size_t num)
         memcpy(temp_ptr, &value, sizeof(si4));
         temp_ptr++;
     }
+}
+
+void init_numpy()
+{
+    Py_Initialize;
+    #if PY_MAJOR_VERSION >= 3
+        return;
+    #else
+        import_array();
+        return;
+    #endif
 }
 
 static PyObject *check_mef_password(PyObject *self, PyObject *args)
