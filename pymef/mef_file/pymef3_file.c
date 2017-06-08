@@ -1867,18 +1867,34 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_RuntimeError, "Start sample larger than end sample, exiting...");
         PyErr_Occurred();
         return NULL;
-    }
+    }    
 
-    // Fire a warnings if start or stop are out of file
+    // Fire a warnings if start or stop or both are out of file
     if (times_specified){
+        if ((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time) |
+            (start_time > channel->latest_end_time) & (end_time > channel->latest_end_time)){
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
+            return Py_None; 
+        }
         if (end_time > channel->latest_end_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop uutc later than latest end time. Will insert NaNs", 1);
         
         if (start_time < channel->earliest_start_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start uutc earlier than earliest start time. Will insert NaNs", 1);
     }else{
-        if (end_samp > channel->metadata.time_series_section_2->number_of_samples)
-            PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Will append zeros", 1);
+        if ((start_samp < 0) & (end_samp < 0) |
+            (start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples)){
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
+            return Py_None; 
+        }
+        if (end_samp > channel->metadata.time_series_section_2->number_of_samples){
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Setting end sample to number of samples in channel", 1);
+            end_samp = channel->metadata.time_series_section_2->number_of_samples;
+        }
+        if (start_samp < 0){
+            PyErr_WarnEx(PyExc_RuntimeWarning, "Start sample smaller than 0. Setting start sample to 0", 1);
+            start_samp = 0;
+        }
     }
     // Determine the number of samples
     num_samps = 0;
