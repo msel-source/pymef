@@ -57,6 +57,9 @@ dkms.conf
 # Python cache
 __pycache__
 
+# Cythonized files
+*.pyc
+
 # Extension debrie
 build/
 
