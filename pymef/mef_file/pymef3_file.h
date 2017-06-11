@@ -11,37 +11,134 @@
 /* Python methods definitions and help */
 
 static char pymef3_file_docstring[] =
-    "This module provides an interface for reading .mef (v 3.x) files.";
+    "This submodule provides a wrapper around Mayo Electrophysiology Format (MEF) version 3.0 library.";
 
 /* Documentation to be read in Python - write functions*/
 static char write_mef_data_records_docstring[] =
-    "Writes .mefd session directory + data and indices files.\n write_mef_session(path_to_session, session_name, level_1_password, level_2_password, uutc_rec_start, uutc_rec_stop, recording_note)";
+    "Function for writing MEF3 records at any level specified by path parameter.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path where record files will be written (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     start_time - uUTC start time for universal header (int)\n \
+     end_time - uUTC end time for universal header (int)\n \
+     recording_offset - offset for uUTC times (int)\n \
+     record_list - list of record dictionaries (list)\n";
+
 static char write_mef_ts_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
+    "Function to write MEF3 time series metadata file.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to segment being written (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     start_time - uUTC recording start time - also used as recording time offset (int)\n \
+     end_time - uUTC recording end time (int)\n \
+     section_2_dictionary - dictionary with section 2 metadata values (dictionary)\n \
+     section_3_dictionary - dictionary with section 3 metadata values (dictionary)\n";
+
 static char write_mef_v_metadata_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
+    "Function to write MEF3 video metadata file.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to segment being written (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     start_time - uUTC recording start time - also used as recording time offset (int)\n \
+     end_time - uUTC recording end time (int)\n \
+     section_2_dictionary - dictionary with section 2 metadata values (dictionary)\n \
+     section_3_dictionary - dictionary with section 3 metadata values (dictionary)\n";
+
 static char write_mef_ts_data_and_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
+    "Function to write MEF3 time series data and indices file.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to segment being written (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     samples_per_mef_block - number of samples in one MEF RED block (int)\n \
+     raw_data - numpy 1D array with raw data (numpy.array, int32)\n \
+     lossy_flag (optional) - flag for optional lossy compression (bool, default=False)\n";
+
 static char write_mef_v_indices_docstring[] =
-    "Writes .timd time series directory and .segd segment directory along with the data and indices files. Help to be written";
-    
+    "Function to write MEF3 video indices file.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to segment being written (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     start_time - uUTC recording start time - minimum value of index entries (int)\n \
+     end_time - uUTC recording end time - maximum valu of index entries (int)\n \
+     index_entries - list of dictionaries with index entries (list)\n";
+
 /* Documentation to be read in Python - append functions*/
 static char append_ts_data_and_indices_docstring[] =
-    "Appends ts data";
+    "Function to append MEF3 time series data and indices to existing segment files.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to segment being appended (str)\n \
+     password_1 - level 1 password (str)\n \
+     password_2 - level 2 password (str)\n \
+     samples_per_mef_block - number of samples in one MEF RED block (int)\n \
+     raw_data - numpy 1D array with raw data (numpy.array, int32)\n \
+     discontinuity_flag (optional) - flag to mark discontinuity at the start of appended data (bool, default=True)\n \
+     lossy_flag (optional) - flag for optional lossy compression (bool, default=False)\n";
 
 /* Documentation to be read in Python - read functions*/
 static char read_mef_ts_data_docstring[] =
-    "Reads .timd time series directory";
+    "Function to read MEF3 time series data.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to time series channel being read (str)\n \
+     password - level 1 or level 2 password (str)\n \
+     start_sample(time) - start sample or uUTC time to be read (int)\n \
+     end_sample(time) - end sample or uUTC time to be read (int)\n \
+     time_flag (optional) - flag to indicate if user is reading by samples or uUTC times (bool, default=False - reading by samples)\n\n \
+     Returns:\n \
+     --------\n \
+     data - 1D numpy array (float) with data. If the data is read by uUTC and a gap is present the missing values are filled with NaNs\n";
+
 static char read_mef_session_metadata_docstring[] =
-    "Reads metadata of a mef session";
+    "Function to read MEF3 session metadata.\n\n \
+     Parameters: \
+     ----------- \
+     target_path - path to MEF3 session being read (str)\n \
+     password - level 1 or level 2 password (str)\n \
+     Returns:\n \
+     --------\n \
+     session_metadata - dictionary with session metadata and all channels and segments metadata and records\n";
+
 static char read_mef_channel_metadata_docstring[] =
-    "Reads metadata of a mef channel";
+    "Function to read MEF3 channel metadata.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to MEF3 channel being read (str)\n \
+     password - level 1 or level 2 password (str)\n \
+     Returns:\n \
+     --------\n \
+     channel_metadata - dictionary with channel metadata and all segments metadata and records\n";
+
 static char read_mef_segment_metadata_docstring[] =
-    "Reads metadata of a mef segment";
+    "Function to read MEF3 segment metadata.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to MEF3 segment being read (str)\n \
+     password - level 1 or level 2 password (str)\n \
+     Returns:\n \
+     --------\n \
+     segment_metadata - dictionary with segment metadata and records\n";
 
 /* Documentation to be read in Python - helper functions*/
 static char check_mef_password_docstring[] =
-    "Checks the the mef password";
+    "Function to check MEF3 password validity.\n\n \
+     Parameters:\n \
+     -----------\n \
+     target_path - path to MEF3 metadata file (str)\n \
+     password - level 1 or level 2 password (str)\n \
+     Returns:\n \
+     --------\n \
+     password_type - 0 - incorrect password, 1 - level 1 password, 2 - level 2 password\n";
 
 /* Pyhon object declaration - write functions*/
 static PyObject *write_mef_data_records(PyObject *self, PyObject *args);
