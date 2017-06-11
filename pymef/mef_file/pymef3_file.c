@@ -1411,7 +1411,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     time_inc = ((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6;
     samps_remaining = (si8) PyArray_SHAPE(raw_data)[0];
     block_header = rps->block_header;
-    start_sample = tmd2->number_of_samples + 1;
+    start_sample = tmd2->number_of_samples;
     tmd2->number_of_samples = tmd2->number_of_samples + (si8) PyArray_SHAPE(raw_data)[0];
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
@@ -1419,7 +1419,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     np_array_ptr = (si4 *) PyArray_DATA(raw_data);
 
     //Move file_offset to the end of RED blocks
-    file_offset = UNIVERSAL_HEADER_BYTES + ts_data_fps->raw_data_bytes;
+    file_offset = ts_data_fps->raw_data_bytes;
 
     // fseek to the end of data and indices file
     e_fseek(ts_data_fps->fp, 0, SEEK_END, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
@@ -1435,7 +1435,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         if (samps_remaining < block_samps)
             block_samps = samps_remaining;
         block_header->number_of_samples = block_samps;
-        block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
+        block_header->start_time = (si8) (curr_time + 0.5);
         curr_time += time_inc;
 
         rps->original_data = rps->original_ptr = (si4 *) PyArray_DATA(raw_data) + ((si8) PyArray_SHAPE(raw_data)[0] - samps_remaining);
