@@ -18,17 +18,19 @@ Rochester, MN
 United States
 """
 
+import os, sys
+
+import numpy as np
+
 import pymef
 from pymef import pymef3_file
-import os
-import numpy as np
+
 
 # TODO - remember to try things for different password settings
 # TODO - tests for memory leaks
 # TODO - test the LNTP record where consulted with Matt
 # DONE - test CSti record
 # DONE - CRC checks - meflib takes care of this when reading!!!
-
 
 # %% Presets
 
@@ -350,7 +352,7 @@ segment_ts_metadata_dict = pymef3_file.read_mef_segment_metadata(segment_directo
 
 print("Time series segment read")
 
-## %% Read time series channel metadata
+# %% Read time series channel metadata
 channel_directory = test_session_path+'msel_fnusa.mefd/msel.timd'
 channel_ts_metadata_dict = pymef3_file.read_mef_channel_metadata(channel_directory,pass_2)
 
@@ -379,9 +381,69 @@ print("Session read")
 
 data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, None, None)
 
-uutc_data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(start_time-2e6), int(start_time-1e6),True)#int(946684822000000+1e6)
+uutc_data = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, None, None,True)#int(946684822000000+1e6)
 
 print("Time series data read")
+
+# %% Test reading
+
+print("\n\n---------- Testing ts data reading ----------\n\n")
+
+# --- samples ---
+
+original_start_sample = 0
+original_end_sample = channel_ts_metadata_dict['section_2']['number_of_samples']
+
+# Start sample out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, -5000, 5000)
+
+# End sample out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, original_end_sample-5000, original_end_sample+5000)
+
+# Start sample and end sample out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, original_end_sample+5000, original_end_sample+10000)
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, -10000, -5000)
+
+# Start sample > end sample - this returns error
+try:
+    x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, 10000, 5000)
+except RuntimeError as e:
+    print(e)
+
+
+# --- uutc ---
+
+original_start_time = channel_ts_metadata_dict['channel_specific_metadata']['earliest_start_time']
+original_end_time = channel_ts_metadata_dict['channel_specific_metadata']['latest_end_time']
+discont_start_time = int(end_time + (1e6*secs_to_append))
+discont_end_time = int(end_time + (1e6*secs_to_append) + int(1e6*discont_length))
+
+
+
+# Start uutc out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(original_start_time - 1e6), int(original_start_time + 1e6), True)
+
+# End uutc out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(original_end_time - 1e6), int(original_end_time + 1e6), True)
+
+# Start uutc and end uutc out of file
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(original_start_time - 2e6), int(original_start_time - 1e6), True)
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(original_end_time + 1e6), int(original_end_time + 2e6), True)
+
+# Start uutc in discontinuity
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(discont_end_time - 5e5), int(discont_end_time + 5e5), True)
+
+# End uutc in discontinuity
+x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(discont_start_time - secs_to_append*1e6), int(discont_start_time - secs_to_append*1e6 + 1e6), True)
+
+
+
+# Start uutc > end uutc
+try:
+    x = pymef3_file.read_mef_ts_data(test_session_path+'msel_fnusa.mefd/msel.timd',pass_2, int(original_start_time + 2e6), int(original_start_time + 1e6), True)
+except RuntimeError as e:
+    print(e)
+
 
 # %% ---------- Mef read/write comparison ----------
 
