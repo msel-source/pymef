@@ -791,7 +791,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     PyObject    *raw_data;
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
-    ui1    lossy_flag;
+    si4    lossy_flag;
     
     PyObject *temp_UTF_str;
     si8    samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
@@ -817,9 +817,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset;
     si8     curr_time, time_inc;
 
+    // Optional arguments
+    lossy_flag = 0; // default - no lossy compression
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOlOb",
+    if (!PyArg_ParseTuple(args,"sOOlO|i",
                           &py_file_path, // full path including segment
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -1235,7 +1237,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     PyObject    *raw_data;
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
-    ui1    lossy_flag;
+    si4    lossy_flag, discontinuity_flag;
     
     PyObject *temp_UTF_str;
     si8    samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
@@ -1262,8 +1264,12 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset, orig_number_of_blocks;
     sf8     curr_time, time_inc;
 
+    // Optional arguments
+    discontinuity_flag = 1; // default - appended samples are discontinuity
+    lossy_flag = 0; // default - no lossy compression
+
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOlllOb",
+    if (!PyArg_ParseTuple(args,"sOOlllO|ii",
                           &py_file_path, // full path including segment
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -1271,6 +1277,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
                           &recording_stop_uutc_time,
                           &samps_per_mef_block,
                           &raw_data,
+                          &discontinuity_flag,
                           &lossy_flag)){
         return NULL;
     }
@@ -1411,6 +1418,8 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     time_inc = ((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6;
     samps_remaining = (si8) PyArray_SHAPE(raw_data)[0];
     block_header = rps->block_header;
+    if (discontinuity_flag != 1)
+        block_header->flags = 0;
     start_sample = tmd2->number_of_samples;
     tmd2->number_of_samples = tmd2->number_of_samples + (si8) PyArray_SHAPE(raw_data)[0];
     min_samp = RED_POSITIVE_INFINITY;
