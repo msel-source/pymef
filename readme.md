@@ -6,7 +6,7 @@ Pymef is a wrapper library for Mayo Electrophysiology Format developed by
 
 Currently available for linux and Mac OS X.
 
-Mef v 3.0 basci features
+Mef v 3.0 basic features
 ------------------------
 -   Support for parallelisation of signal processing
 -   Data compression
