@@ -30,17 +30,17 @@ To install please use:
 ```bash
 python setup.py install
 ```
-(Note: Will be available through pip in the future)
+(Note: Will be available through pip in the future.)
 
 Documentation
 -------------
 
-Documentation of mef library can be found [here](http://msel.mayo.edu/research.html)
+Documentation of mef library can be found [here](http://msel.mayo.edu/codes.html).
 
 Support
 -------
 
-Please report problems to cimbalnik.jan@mayo.edu
+Please report problems to cimbalnik.jan@mayo.edu.
 
 License
 -------
