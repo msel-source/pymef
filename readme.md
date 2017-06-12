@@ -8,6 +8,7 @@ Currently available for linux and Mac OS X.
 
 Mef v 3.0 basic features
 ------------------------
+
 -   Support for parallelisation of signal processing
 -   Data compression
 -   Data encryption
@@ -31,6 +32,10 @@ python setup.py install
 ```
 (Note: Will be available through pip in the future)
 
+Documentation
+-------------
+
+Documentation of mef library can be found [here](http://msel.mayo.edu/research.html)
 
 Support
 -------
