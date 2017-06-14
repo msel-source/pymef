@@ -4,7 +4,7 @@ Pymef
 Pymef is a wrapper library for Mayo Electrophysiology Format developed by 
 [MSEL laboratory](http://msel.mayo.edu/).
 
-Currently available for linux and Mac OS X.
+Currently available for linux and Mac OS X. Both python 2 and python 3 are supported.
 
 Mef v 3.0 basic features
 ------------------------
@@ -45,4 +45,4 @@ Please report problems to cimbalnik.jan@mayo.edu.
 License
 -------
 
-Glue is licensed under the Apache software license. See [LICENSE.txt](./LICENSE.txt) for details.
+Pymef is licensed under the Apache software license. See [LICENSE.txt](./LICENSE.txt) for details.
