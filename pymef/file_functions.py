@@ -76,7 +76,7 @@ def sample_for_uutc(uutc,channel_md,return_discont_distance=False):
             if index_start_time > uutc:
                 # Check for discontinuity
                 if ((index_start_time - prev_time) / 1e6)*fs > prev_N_samples:
-                    print('uUTC time at discontinuity, returning the closest point in the future')
+                    print('uUTC time at discontinuity, returning the first sample after dicontinuity (not inclusive while reading)')
                     if return_discont_distance:
                         return int(index_start_sample),((index_start_time-uutc) / 1000000) * fs
                     else:
