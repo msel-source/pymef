@@ -18,7 +18,7 @@ Rochester, MN
 United States
 """
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import numpy
 
 # the c extension module
