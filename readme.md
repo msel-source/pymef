@@ -1,7 +1,7 @@
 Pymef
 ====
 
-Pymef is a wrapper library for Mayo Electrophysiology Format developed by 
+Pymef is a wrapper library for Multiscale Electrophysiology Format developed by 
 [MSEL laboratory](http://msel.mayo.edu/).
 
 Currently available for linux and Mac OS X. Both python 2 and python 3 are supported.
