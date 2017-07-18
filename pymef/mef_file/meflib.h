@@ -56,7 +56,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <pthread.h>
+//#include <pthread.h>
 
 
 

@@ -86,7 +86,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
     /// initialize MEF library
     (void) initialize_meflib();  
-
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_time_offset;
 
@@ -342,6 +341,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 if (temp_o != NULL){
                     #if PY_MAJOR_VERSION >= 3
                         temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
                         annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
                     #else
                         temp_str_bytes = PyString_AS_STRING(temp_o);
@@ -384,6 +384,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 if (temp_o != NULL){
                     #if PY_MAJOR_VERSION >= 3
                         temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
                         annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
                     #else
                         temp_str_bytes = PyString_AS_STRING(temp_o);
@@ -418,6 +419,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 if (temp_o != NULL){
                     #if PY_MAJOR_VERSION >= 3
                         temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
+                        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
                         annot_bytes = PyBytes_GET_SIZE(temp_UTF_str);
                     #else
                         temp_str_bytes = PyString_AS_STRING(temp_o);
@@ -3377,7 +3379,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (vmd->recording_duration)
         PyDict_SetItemString(s2_dict, "recording_duration",
-            Py_BuildValue("k", vmd->recording_duration));
+            Py_BuildValue("l", vmd->recording_duration));
     else
         PyDict_SetItemString(s2_dict, "recording_duration",
             Py_BuildValue("s", temp_str));
@@ -4206,7 +4208,7 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
     PyObject    *uhs_dict;
     PyObject    *uh_dict;
 
-    void    *rd;
+    si1    *rd;
     si4     i;
     si8     number_of_records;
 

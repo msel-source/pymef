@@ -624,7 +624,7 @@ FILE_PROCESSING_STRUCT	*allocate_file_processing_struct(si8 raw_data_bytes, ui4 
 	}
         
         // set appropriate pointers
-        data_ptr = (void *) fps->raw_data + UNIVERSAL_HEADER_BYTES;
+        data_ptr = (ui1 *) fps->raw_data + UNIVERSAL_HEADER_BYTES;
         switch (file_type_code) {
                 case NO_TYPE_CODE:
                         break;
