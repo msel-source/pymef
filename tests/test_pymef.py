@@ -18,7 +18,7 @@ Rochester, MN
 United States
 """
 
-import os, sys
+import os, sys, shutil
 
 import numpy as np
 
@@ -52,7 +52,8 @@ pass_2 = 'table'
 # pass_2 = None
 
 # Clean up the session_path
-os.system('rm -rf '+test_session_path)
+if os.path.isdir(test_session_path):
+    shutil.rmtree(test_session_path)
 
 start_time = 946684800000000 # midnight, 1 January 2000 from Dan's code
 end_time = int(start_time + 1e6*secs_to_write)
@@ -188,7 +189,7 @@ pymef3_file.write_mef_data_records(record_file_path_session,
                               rec_offset,
                               record_list)
 
-print("Records written at segment level")
+print("Records written at session level")
 
 # %% Write one time series channel metadata file
 section3_dict = {'recording_time_offset':rec_offset,
