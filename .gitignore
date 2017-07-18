@@ -71,3 +71,9 @@ pymef.sublime*
 
 # Test session
 test_session/
+
+# Windows wheel files
+*.whl
+
+# My notes
+my_notes.txt
