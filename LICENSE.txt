@@ -3,7 +3,7 @@ MEF 3.0 Library Python Wrapper
 
 Python wrapper for Multiscale Electrophysiology Format (MEF) version 3.0 library
 Copyright 2017, Mayo Foundation, Rochester MN. All rights reserved.
-Written by Matt Stead, Ben Brinkmann, Dan Crepeau, and Ja Cimbalnik.
+Written by Matt Stead, Ben Brinkmann, Dan Crepeau, and Jan Cimbalnik.
 
 Usage and modification of this source code is governed by the Apache 2.0 license.
 You may not use this file except in compliance with this License.
