@@ -456,7 +456,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_idx_fps);
 
-    //Py_INCREF(Py_None);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -622,7 +622,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     write_MEF_file(metadata_fps);
     free_file_processing_struct(metadata_fps); // TODO Commented for now because it is likly to close Python objects - solve later
 
-    //Py_INCREF(Py_None);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -783,7 +783,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     free_file_processing_struct(metadata_fps);
 
-    //Py_INCREF(Py_None);
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -1064,6 +1064,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     rps->original_ptr = NULL;
     RED_free_processing_struct(rps);
 
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -1226,6 +1227,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     // clean up
     free_file_processing_struct(v_idx_fps);
 
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -1533,6 +1535,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     rps->original_data = NULL;
     RED_free_processing_struct(rps);
 
+    Py_INCREF(Py_None);
     return Py_None;
 }
 
@@ -1885,7 +1888,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if ((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time) |
             (start_time > channel->latest_end_time) & (end_time > channel->latest_end_time)){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
-            return Py_None; 
+            Py_INCREF(Py_None);
+            return Py_None;
         }
         if (end_time > channel->latest_end_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop uutc later than latest end time. Will insert NaNs", 1);
@@ -1896,7 +1900,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if ((start_samp < 0) & (end_samp < 0) |
             (start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples)){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
-            return Py_None; 
+            Py_INCREF(Py_None);
+            return Py_None;
         }
         if (end_samp > channel->metadata.time_series_section_2->number_of_samples){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Setting end sample to number of samples in channel", 1);
