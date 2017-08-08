@@ -4905,6 +4905,7 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
 
     si1         password_bytes[PASSWORD_BYTES];
     ui1         sha[SHA256_OUTPUT_SIZE];
+    si1         level_1_cumsum,level_2_cumsum;
     si1         putative_level_1_password_bytes[PASSWORD_BYTES];
     si4         i;
 
@@ -4954,9 +4955,12 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     // check for level 1 access
     sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);  // generate SHA-256 hash of password bytes
     
-    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i)  // compare with stored level 1 hash
+    level_1_cumsum = 0;
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+        level_1_cumsum += uh->level_1_password_validation_field[i];
         if (sha[i] != uh->level_1_password_validation_field[i])
             break;
+    }
     if (i == PASSWORD_BYTES) {  // Level 1 password valid - cannot be level 2 password
         // Clean up
         free(uh);
@@ -4969,9 +4973,12 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     
     sha256((ui1 *) putative_level_1_password_bytes, PASSWORD_BYTES, sha); // generate SHA-256 hash of putative level 1 password
     
-    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i)  // compare with stored level 1 hash
+    level_2_cumsum = 0;
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+        level_2_cumsum += uh->level_1_password_validation_field[i];
         if (sha[i] != uh->level_1_password_validation_field[i])
             break;
+    }
     if (i == PASSWORD_VALIDATION_FIELD_BYTES){ // Level 2 password valid
         // Clean up
         free(uh);
@@ -4981,5 +4988,11 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     // Clean up
     free(uh);
     
-    return PyLong_FromLong(0);  
+    if (level_1_cumsum | level_2_cumsum){
+        return PyLong_FromLong(-1); // Wrong password
+    }else{
+        return PyLong_FromLong(0); // Data not encrypted
+    }
+
+      
 }
