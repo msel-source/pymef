@@ -108,8 +108,9 @@ def uutc_check(uUTC,channel_md):
         return True
     else:
         return False
-        
-def get_discontinuities(channel_md):
+    
+def get_TOC(channel_md):
+    
     """
     Processes indices and returns discontinuities accross segments
     
@@ -119,63 +120,32 @@ def get_discontinuities(channel_md):
     
     Returns:
     --------
-    discont_index_list - list of lists discontinuity start indices for individual segments
-    discont_uutc_list - list of lists discontinuity start uutc times for individual segments
-    discont_sample_list - list of lists discontinuity start samples for individual segments
-    discont_sample_span_list - list of lists discontinuity span in samples for individual segments
+    TOC - array with
+          - [0,:] = discontinuity flags
+          - [1,:] = discont lengths
+          - [2,:] = start samples
+          - [2,:] = start uutc times
     """
     
-    discont_index_list = []
-    discont_uutc_list = []
-    discont_sample_list = []
-    discont_sample_span_list = []
-    
-    # Sampling freq
-    fs = channel_md['section_2']['sampling_frequency']
-        
-    seg_list = list(channel_md['segments'])
-    seg_list.sort()
-    
-    prev_N_samples = channel_md['segments'][seg_list[0]]['indices'][0]['number_of_samples']
-    prev_time = channel_md['segments'][seg_list[0]]['indices'][0]['start_time']
-    prev_block_span = (prev_N_samples / fs) * 1e6
-    prev_block_span += (1/fs) * 1e6
-    
-    for si,segment in enumerate(seg_list): 
-        indices = channel_md['segments'][segment]['indices']
-        
-        # First block in segment is a discontinuity by definition
-        seg_discont_index_list = [0]
-        seg_discont_uutc_list = [indices[0]['start_time']]
-        seg_discont_sample_list = [indices[0]['start_sample']]
-        if si == 0:
-            seg_discont_sample_span_list = [0]
-        else:
-            seg_discont_sample_span_list = [int(((indices[0]['start_time'] - (prev_time + prev_block_span)) / 1e6) * fs)]
-        
-        if len(indices) > 1:
-
-            for ii,index in enumerate(indices):
-                index_start_time = index['start_time']
-                index_N_samples = index['number_of_samples']
-                
-                # Check for discontinuity
-                if (index_start_time - 1/fs * 1e6 > prev_time+prev_block_span) and ii > 0:
-                    seg_discont_index_list.append(ii)
-                    seg_discont_uutc_list.append(index_start_time)
-                    seg_discont_sample_list.append(index['start_sample'])
-                    seg_discont_sample_span_list.append(int(((index_start_time - (prev_time + prev_block_span)) / 1e6 ) * fs))
-                                        
-                prev_time = index_start_time
-                prev_N_samples = index_N_samples
-                prev_block_span = (prev_N_samples / fs) * 1e6
+    TOC = np.empty([4,0])
+    for segment in channel_md['segments']:
+        N_indices = len(channel_md['segments'][segment]['indices'])
+        seg_TOC = np.empty([4,N_indices])
+        for i,idx in enumerate(channel_md['segments'][segment]['indices']):
+            seg_TOC[2,i] = idx['start_sample']
+            seg_TOC[3,i] = idx['start_time']
             
-        discont_index_list.append(seg_discont_index_list)
-        discont_uutc_list.append(seg_discont_uutc_list)
-        discont_sample_list.append(seg_discont_sample_list)
-        discont_sample_span_list.append(seg_discont_sample_span_list)
+        # Get discontinuities
+        seg_TOC[0,0] = True
+        seg_TOC[0,1:] = (np.diff(seg_TOC[2,:]) / 5000) - (np.diff(seg_TOC[3,:]) / 1e6) != 0
         
-    return discont_index_list,discont_uutc_list,discont_sample_list,discont_sample_span_list
+        TOC = np.concatenate([TOC,seg_TOC],axis=1)
+        
+        # Once we have all segments get lenghts
+
+    TOC[1,1::] = ((np.diff(TOC[2,:]) / 5000) - (np.diff(TOC[3,:]) / 1e6)) * 1e6
+        
+    return TOC
 
 def read_ts_channels_sample(session_path,password,channel_map,sample_map):
     """
