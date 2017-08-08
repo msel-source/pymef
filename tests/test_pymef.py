@@ -37,7 +37,7 @@ from pymef import pymef3_file
 # Path to test session
 test_session_path = '/home/jan_cimbalnik/Dropbox/Source/C/pymef/test_session/'
 #test_session_path = '/Users/jan/Desktop/mef3_test/'
-#test_session_path = '/home/cimba/Dropbox/Source/C/pymef/test_session/'
+# test_session_path = '/home/cimba/Dropbox/Source/C/pymef/test_session/'
 
 
 secs_to_write = 10
@@ -630,24 +630,25 @@ ts_metadata_file = test_session_path+'msel_fnusa.mefd/msel.timd/msel-000000.segd
 
 # Test wrong password
 result = pymef3_file.check_mef_password(ts_metadata_file,'bu')
-if result == 0:
-    print('Wrong password check OK!')
+if result < 0:
+    print('Wrong password check OK! Value='+str(result))
 else:
-    print('Wrong password check failed!')
+    print('Wrong password check failed! Value='+str(result))
+
 
 # Test level 1 password
 result = pymef3_file.check_mef_password(ts_metadata_file,pass_1)
 if result == 1:
-    print('Level 1 password check OK!')
+    print('Level 1 password check OK! Value='+str(result))
 else:
-    print('Level 1 password check failed!')
+    print('Level 1 password check failed! Value='+str(result))
 
 # Test level 2 password
 result = pymef3_file.check_mef_password(ts_metadata_file,pass_2)
 if result == 2:
-    print('Level 2 password check OK!')
+    print('Level 2 password check OK! Value='+str(result))
 else:
-    print('Level 2 password check failed!')
+    print('Level 2 password check failed! Value='+str(result))
     
 # Discontinuity checks
 
@@ -655,7 +656,8 @@ discont_time = int(end_time + (1e6*secs_to_append) + int(1e6*discont_length))
 discont_sample = sampling_frequency * (secs_to_write+secs_to_append)
 
 # Get disconts
-disconts = pymef.get_discontinuities(channel_ts_metadata_dict)
+TOC = pymef.get_TOC(channel_ts_metadata_dict)
+disconts = TOC[:,np.where(TOC[0,:])[0]]
 
 # Sample for uUTC
 if discont_sample == pymef.sample_for_uutc(discont_time, channel_ts_metadata_dict):
