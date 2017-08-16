@@ -245,10 +245,11 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3);
 
 PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti);
 PyObject *map_mef3_vi(VIDEO_INDEX *vi);
+PyObject *create_mef3_TOC(SEGMENT *segment);
 
-PyObject *map_mef3_segment(SEGMENT *segment);
-PyObject *map_mef3_channel(CHANNEL *channel);
-PyObject *map_mef3_session(SESSION *session);
+PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag);
+PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag);
+PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag);
 
 // Mef record structures
 PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps);

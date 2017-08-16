@@ -127,23 +127,16 @@ def get_TOC(channel_md):
           - [2,:] = start uutc times
     """
     
-    TOC = np.empty([4,0])
-    for segment in channel_md['segments']:
-        N_indices = len(channel_md['segments'][segment]['indices'])
-        seg_TOC = np.empty([4,N_indices])
-        for i,idx in enumerate(channel_md['segments'][segment]['indices']):
-            seg_TOC[2,i] = idx['start_sample']
-            seg_TOC[3,i] = idx['start_time']
+    TOC = np.empty([4,0],dtype='int64')
+    for segment_name in channel_md['segments']:
+        seg_TOC = channel_md['segments'][segment_name]['TOC']
             
-        # Get discontinuities
-        seg_TOC[0,0] = True
-        seg_TOC[0,1:] = (np.diff(seg_TOC[2,:]) / 5000) - (np.diff(seg_TOC[3,:]) / 1e6) != 0
-        
+        # Join into channel TOC
         TOC = np.concatenate([TOC,seg_TOC],axis=1)
         
-        # Once we have all segments get lenghts
-
-    TOC[1,1::] = ((np.diff(TOC[2,:]) / 5000) - (np.diff(TOC[3,:]) / 1e6)) * 1e6
+        
+    # Once we have all segments get lenghts (this will get differnces between segments)
+    TOC[1,1::] = ((np.diff(TOC[3,:]) / 1e6) - (np.diff(TOC[2,:]) / 5000)) * 1e6
         
     return TOC
 
@@ -169,7 +162,7 @@ def read_ts_channels_sample(session_path,password,channel_map,sample_map):
     
     if type(sample_map[0]) != list:
         sample_map = [sample_map]
-    
+
     if len(sample_map) == 1:
         sample_map = sample_map*len(channel_map)
         

@@ -1577,11 +1577,15 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
+
+    // Read indices flag
+    si1 map_indices_flag = 1;
  
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sO",
+    if (!PyArg_ParseTuple(args,"sO|b",
                           &py_session_path,
-                          &py_password_obj)){
+                          &py_password_obj,
+                          &map_indices_flag)){
         return NULL;
     }
     
@@ -1614,7 +1618,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Session info
-    ses_metadata_dict = map_mef3_session(session);
+    ses_metadata_dict = map_mef3_session(session, map_indices_flag);
 
     // clean up
     free_session(session, MEF_TRUE); 
@@ -1638,10 +1642,14 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     si1     *password;
     PyObject    *temp_UTF_str;
  
+    // Read indices flag
+    si1 map_indices_flag = 1;
+
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sO",
+    if (!PyArg_ParseTuple(args,"sO|b",
                           &py_channel_dir,
-                          &py_password_obj)){
+                          &py_password_obj,
+                          &map_indices_flag)){
         return NULL;
     }
     
@@ -1673,7 +1681,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
     // map the channel info
-    ch_metadata_dict = map_mef3_channel(channel);
+    ch_metadata_dict = map_mef3_channel(channel, map_indices_flag);
 
     // clean up
     free_channel(channel, MEF_TRUE);
@@ -1696,11 +1704,15 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
+
+    // Read indices flag
+    si1 map_indices_flag = 1;
   
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sO",
+    if (!PyArg_ParseTuple(args,"sO|b",
                           &py_segment_dir,
-                          &py_password_obj)){
+                          &py_password_obj,
+                          &map_indices_flag)){
         return NULL;
     }
     
@@ -1730,7 +1742,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
     // map the segment info
-    seg_metadata_dict = map_mef3_segment(segment);
+    seg_metadata_dict = map_mef3_segment(segment,map_indices_flag);
 
     // clean up
     free_segment(segment, MEF_TRUE);
@@ -3708,7 +3720,79 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
     return vi_dict;
 }
 
-PyObject *map_mef3_segment(SEGMENT *segment)
+PyObject *create_mef3_TOC(SEGMENT *segment)
+{
+    // Numpy TOC
+    PyObject *py_array_out;
+
+    // Helpers
+    TIME_SERIES_INDEX     *tsi;
+
+    si8     number_of_entries;
+    si8     prev_time, prev_sample, start_time, start_sample;
+    sf8     fs, samp_time_diff;
+    si8     *numpy_arr_data;
+
+    si4     i;
+    
+ 
+    // initialize Numpy
+    #if PY_MAJOR_VERSION >= 3
+        import_array();
+    #else
+        init_numpy();
+    #endif
+
+    
+
+    number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
+    tsi = segment->time_series_indices_fps->time_series_indices;
+    fs = segment->metadata_fps->metadata.time_series_section_2->sampling_frequency;
+    prev_time = tsi->start_time;
+    prev_sample = tsi->start_sample;
+
+    // Create NumPy array and get pointer to data
+    npy_intp dims[2] = {4,number_of_entries};
+    
+    py_array_out = PyArray_SimpleNew(2, dims, NPY_INT64);
+    numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, 0);
+
+    for(i = 0; i < number_of_entries; i++){
+
+
+        start_time = tsi->start_time;
+        start_sample = tsi->start_sample;
+
+        // Have we found a discontinuity?
+        numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, i);
+        samp_time_diff = (((start_time - prev_time) / 1e6 - (start_sample - prev_sample) / fs));
+        if  ((samp_time_diff != 0) | (i == 0)) // First entry is dicontinuity by definition
+            *numpy_arr_data = 1;
+        else
+            *numpy_arr_data = 0;
+
+        // Discontinuity duration
+        numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 1, i);
+        *numpy_arr_data = (si8) samp_time_diff;
+
+        // Start sample
+        numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 2, i);
+        *numpy_arr_data = (si8) start_sample;
+
+        // Start time
+        numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 3, i);
+        *numpy_arr_data = (si8) start_time;
+
+        prev_time = start_time;
+        prev_sample = start_sample;
+        
+        tsi++;
+    }
+
+    return py_array_out;
+}
+
+PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
 {
     // Dictionaries
     PyObject *metadata_dict;
@@ -3721,6 +3805,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
     PyObject *s3_dict;
     PyObject *sdi_dict;
     PyObject *idx_list;
+    PyObject *TOC;
     
     // Helper variables
     si1   *time_str, temp_str[256];
@@ -3811,11 +3896,18 @@ PyObject *map_mef3_segment(SEGMENT *segment)
             number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
             tsi = segment->time_series_indices_fps->time_series_indices;
             idx_list = PyList_New(number_of_entries);
-            for(i = 0; i < number_of_entries; i++){
-                sdi_dict = map_mef3_ti(tsi);
-                PyList_SET_ITEM(idx_list, i, sdi_dict);
-                tsi++;
+
+            // Map time series indices - this takes long if indices are many
+            if (map_indices_flag != 0){
+                for(i = 0; i < number_of_entries; i++){
+                    sdi_dict = map_mef3_ti(tsi);
+                    PyList_SET_ITEM(idx_list, i, sdi_dict);
+                    tsi++;
+                }
+                PyDict_SetItemString(metadata_dict, "indices", idx_list);
             }
+            // Create TOC
+            TOC = create_mef3_TOC(segment);
             break;
         case VIDEO_CHANNEL_TYPE:
             number_of_entries = segment->video_indices_fps->universal_header->number_of_entries;
@@ -3826,6 +3918,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
                 PyList_SET_ITEM(idx_list, i, sdi_dict);
                 vi++;
             }
+            PyDict_SetItemString(metadata_dict, "indices", idx_list);
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -3833,7 +3926,9 @@ PyObject *map_mef3_segment(SEGMENT *segment)
             return NULL;
     }
 
-    PyDict_SetItemString(metadata_dict, "indices", idx_list);
+    
+    if (TOC != NULL)
+        PyDict_SetItemString(metadata_dict, "TOC", TOC);
 
     // Get universal headers
     uhs_dict = PyDict_New();
@@ -3865,7 +3960,7 @@ PyObject *map_mef3_segment(SEGMENT *segment)
     return metadata_dict;
 }
 
-PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through segments
+PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funtion also loops through segments
 {
     // Dictionaries
     PyObject *metadata_dict;
@@ -4001,7 +4096,7 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
         // Get the channel pointer
         segment = channel->segments + i;
         // Map the channel
-        segment_dict = map_mef3_segment(segment);
+        segment_dict = map_mef3_segment(segment,map_indices_flag);
         // Put into ditionary
         PyDict_SetItemString(segments_dict, segment->name, segment_dict); 
     }
@@ -4009,7 +4104,7 @@ PyObject *map_mef3_channel(CHANNEL *channel) // This funtion also loops through 
     return metadata_dict;
 }
 
-PyObject *map_mef3_session(SESSION *session) // This funtion also loops through channels
+PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funtion also loops through channels
 {
     // Dictionaries
     PyObject *metadata_dict;
@@ -4179,7 +4274,7 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
         // Get the channel pointer
         channel = session->time_series_channels + i;
         // Map the channel
-        channel_dict = map_mef3_channel(channel);
+        channel_dict = map_mef3_channel(channel, map_indices_flag);
         // Put into ditionary
         PyDict_SetItemString(ts_dict, channel->name, channel_dict); 
 
@@ -4193,7 +4288,7 @@ PyObject *map_mef3_session(SESSION *session) // This funtion also loops through 
         // Get the channel pointer
         channel = session->video_channels + i;
         // Map the channel
-        channel_dict = map_mef3_channel(channel);
+        channel_dict = map_mef3_channel(channel, map_indices_flag);
         // Put into ditionary
         PyDict_SetItemString(v_dict, channel->name, channel_dict); 
     }
