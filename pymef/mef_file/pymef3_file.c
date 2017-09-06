@@ -4044,7 +4044,7 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
     // Read channel records if present and add it to metadata
     if (channel->record_indices_fps != NULL & channel->record_data_fps != NULL){
         records_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
-        PyDict_SetItemString(metadata_dict, "records", records_dict);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
     }
 
     // Assign pointers for reading metadata
@@ -4212,7 +4212,7 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     // Read session records if present and add it to metadata
     if (session->record_indices_fps != NULL & session->record_data_fps != NULL){
         records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
-        PyDict_SetItemString(metadata_dict, "records", records_dict);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
     }
 
     // Get time series metadata
