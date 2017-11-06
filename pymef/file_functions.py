@@ -160,7 +160,7 @@ def read_ts_channels_sample(session_path,password,channel_map,sample_map):
     
     data_list = [] # Creating a list since sampling frequency is not garanteed to be the same in all channels
     
-    if type(sample_map[0]) != list:
+    if type(sample_map[0]) != list and type(sample_map[0]) != np.ndarray:
         sample_map = [sample_map]
 
     if len(sample_map) == 1:
@@ -201,7 +201,7 @@ def read_ts_channels_uutc(session_path,password,channel_map,uutc_map):
    
     data_list = [] # Creating a list since sampling frequency is not garanteed to be the same in all channels
     
-    if type(uutc_map[0]) != list:
+    if type(uutc_map[0]) != list and type(uutc_map[0]) != np.ndarray:
         uutc_map = [uutc_map]
 
     if len(uutc_map) == 1:
