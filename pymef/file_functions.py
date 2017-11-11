@@ -128,6 +128,7 @@ def get_TOC(channel_md):
     """
     
     TOC = np.empty([4,0],dtype='int64')
+    fs = channel_md['section_2']['sampling_frequency']
     for segment_name in channel_md['segments']:
         seg_TOC = channel_md['segments'][segment_name]['TOC']
             
@@ -136,7 +137,7 @@ def get_TOC(channel_md):
         
         
     # Once we have all segments get lenghts (this will get differnces between segments)
-    TOC[1,1::] = ((np.diff(TOC[3,:]) / 1e6) - (np.diff(TOC[2,:]) / 5000)) * 1e6
+    TOC[1,1::] = ((np.diff(TOC[3,:]) / 1e6) - (np.diff(TOC[2,:]) / fs)) * 1e6
         
     return TOC
 
