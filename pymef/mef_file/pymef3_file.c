@@ -3729,8 +3729,8 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     TIME_SERIES_INDEX     *tsi;
 
     si8     number_of_entries;
-    si8     prev_time, prev_sample, start_time, start_sample;
-    sf8     fs, samp_time_diff;
+    si8     prev_time, prev_sample, start_time, start_sample, samp_time_diff;
+    sf8     fs;
     si8     *numpy_arr_data;
 
     si4     i;
@@ -3765,7 +3765,9 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
 
         // Have we found a discontinuity?
         numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, i);
-        samp_time_diff = (((start_time - prev_time) / 1e6 - (start_sample - prev_sample) / fs));
+        samp_time_diff = (si8) (((start_time - prev_time) - (1e6 * (start_sample - prev_sample)) / fs));
+        if (samp_time_diff < (si8) (1e6/fs))
+            samp_time_diff = 0;
         if  ((samp_time_diff != 0) | (i == 0)) // First entry is dicontinuity by definition
             *numpy_arr_data = 1;
         else
