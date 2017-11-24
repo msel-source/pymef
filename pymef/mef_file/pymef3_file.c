@@ -3891,6 +3891,9 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
 
     // TODO - this should be a list - there is more indices in indices file!!!!
 
+    // Set the TOC to NULL so that the logic works
+    TOC = NULL;
+
     // Create indices dictionary
     
     switch (segment->channel_type){
