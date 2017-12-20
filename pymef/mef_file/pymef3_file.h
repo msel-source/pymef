@@ -6,6 +6,7 @@
 
 #define EPSILON 0.0001
 #define FLOAT_EQUAL(x,y) ( ((y - EPSILON) < x) && (x <( y + EPSILON)) )
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 
 /* Python methods definitions and help */
@@ -183,7 +184,7 @@ static PyMethodDef module_methods[] = {
     static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
         "pymef.mef_file.pymef3_file",     /* m_name */
-        "This module provides an interface operations with MEF3 file format",  /* m_doc */
+        pymef3_file_docstring,  /* m_doc */
         -1,                  /* m_size */
         module_methods,    /* m_methods */
         NULL,                /* m_reload */
@@ -270,6 +271,6 @@ si4 extract_segment_number(si1 *segment_name);
 si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel);
 si8 uutc_for_sample_c(si8 sample, CHANNEL *channel);
 void memset_int(si4 *ptr, si4 value, size_t num);
-void init_numpy();
+void init_numpy(void);
 
 

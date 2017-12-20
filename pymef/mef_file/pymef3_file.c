@@ -57,7 +57,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     // Method specific
     FILE_PROCESSING_STRUCT *gen_fps, *rec_data_fps, *rec_idx_fps;
     si8     bytes, rb_bytes, max_rec_bytes, file_offset;
-    ui4     type_code, n_records, li, lj;
+    ui4     type_code, *type_str_int, n_records, li, lj;
     ui1     *rd;
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], record_file_name[MEF_BASE_FILE_NAME_BYTES];
@@ -66,11 +66,6 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     UNIVERSAL_HEADER        *uh;
     RECORD_HEADER           *rh;
     RECORD_INDEX            *ri;
-    PASSWORD_DATA           *pwd;
-
-    MEFREC_EDFA_1_0         *edfa_type;
-    MEFREC_LNTP_1_0         *lntp_type;
-    MEFREC_Seiz_1_0         *seiz_type;
 
     // --- Parse the input --- 
     if (!PyArg_ParseTuple(args,"sOOlllO!",
@@ -140,7 +135,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     uh->end_time = recording_stop_uutc_time;
 
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
@@ -150,7 +145,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name);
+        uh->segment_number = extract_segment_number(&name[0]);
         if (!path_processed)
             MEF_strncpy(record_file_name, name, MEF_BASE_FILE_NAME_BYTES);
         path_processed = 1;
@@ -193,7 +188,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         #else
             temp_str_bytes = PyString_AS_STRING(temp_o);
         #endif
-        type_code = *((ui4 *) temp_str_bytes);
+        type_str_int = (ui4 *) temp_str_bytes;
+        type_code = *type_str_int;
 
         // Fork for different record types
         switch (type_code) {
@@ -310,11 +306,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
         ri->time = rh->time;
 
-        if (rh->version_major == NULL)
+        if (rh->version_major == 0)
             rh->version_major = ri->version_major = 1;
         else
             ri->version_major = rh->version_major;
-        if (rh->version_minor == NULL)
+        if (rh->version_minor == 0)
             rh->version_minor = ri->version_minor = 0;
         else
             ri->version_minor = rh->version_minor;
@@ -324,12 +320,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
         // Fork for different record types
         rh->bytes = 0;
-        type_code = *((ui4 *) rh->type_string);
+        type_str_int = (ui4 *) rh->type_string;
+        type_code = *type_str_int;
 
         switch (type_code) {
             case MEFREC_EDFA_TYPE_CODE:
                 // ASK should there by types created by this function and passed to subfunctinos?
-                map_python_EDFA_type(py_record_dict, (si1 *) rd);
+                map_python_EDFA_type(py_record_dict, (MEFREC_EDFA_1_0 *) rd);
 
                 // Type strings
                 rh->bytes = MEFREC_EDFA_1_0_BYTES;
@@ -355,7 +352,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
 
             case MEFREC_LNTP_TYPE_CODE:
-                map_python_LNTP_type(py_record_dict, (si1 *) rd);
+                map_python_LNTP_type(py_record_dict, (MEFREC_LNTP_1_0 *) rd);
                 rh->bytes = MEFREC_LNTP_1_0_BYTES;
                 MEF_strncpy(ri->type_string, MEFREC_LNTP_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_LNTP_TYPE_STRING, TYPE_BYTES);
@@ -363,7 +360,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
 
             case MEFREC_Seiz_TYPE_CODE:
-                map_python_Siez_type(py_record_dict, (si1 *) rd);
+                map_python_Siez_type(py_record_dict, (MEFREC_Seiz_1_0 *) rd);
                 rh->bytes = MEFREC_Seiz_1_0_BYTES;
                 MEF_strncpy(ri->type_string, MEFREC_Seiz_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_Seiz_TYPE_STRING, TYPE_BYTES);
@@ -371,7 +368,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 py_seiz_chan_list = PyDict_GetItemString(py_record_dict,"channels");
                 for (lj = 0; lj < PyList_Size(py_seiz_chan_list); lj++){
                     py_record_dict = PyList_GetItem(py_seiz_chan_list, lj);
-                    map_python_Siez_type_channel(py_record_dict, (si1 *) (rd+MEFREC_Seiz_1_0_BYTES+(lj*MEFREC_Seiz_1_0_CHANNEL_BYTES)));
+                    map_python_Siez_type_channel(py_record_dict, (MEFREC_Seiz_1_0_CHANNEL *) (rd+MEFREC_Seiz_1_0_BYTES+(lj*MEFREC_Seiz_1_0_CHANNEL_BYTES)));
                     rh->bytes += MEFREC_Seiz_1_0_CHANNEL_BYTES;
                 }
                 // No need to pad, seizure structs are 16 safe
@@ -396,7 +393,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
 
             case MEFREC_CSti_TYPE_CODE:
-                map_python_CSti_type(py_record_dict, (si1 *) rd);
+                map_python_CSti_type(py_record_dict, (MEFREC_CSti_1_0 *) rd);
                 MEF_strncpy(ri->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_CSti_1_0_BYTES;
@@ -404,7 +401,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 break;
 
             case MEFREC_ESti_TYPE_CODE:
-                map_python_ESti_type(py_record_dict, (si1 *) rd);
+                map_python_ESti_type(py_record_dict, (MEFREC_ESti_1_0 *) rd);
                 MEF_strncpy(ri->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_ESti_1_0_BYTES;
@@ -469,15 +466,10 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     si8     recording_start_uutc_time, recording_stop_uutc_time, recording_time_offset;
     
     PyObject    *py_tmd2_dict, *py_md3_dict, *temp_o, *temp_UTF_str;
-    Py_ssize_t  li;
 
     // Method specific
     FILE_PROCESSING_STRUCT *gen_fps, *metadata_fps;
-    TIME_SERIES_INDEX               *tsi;
     UNIVERSAL_HEADER        *uh;
-    PASSWORD_DATA           *pwd;
-    TIME_SERIES_METADATA_SECTION_2  *tmd2;
-    METADATA_SECTION_3  *md3;
 
     si1     level_1_password_arr[PASSWORD_BYTES] = {0};
     si1     level_2_password_arr[PASSWORD_BYTES] = {0};
@@ -487,7 +479,6 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
-    si8     bytes, max_rec_bytes, file_offset;
 
     // --- Parse the input --- 
     if (!PyArg_ParseTuple(args,"sOOllO!O!",
@@ -563,7 +554,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     uh->end_time = recording_stop_uutc_time;
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
@@ -571,7 +562,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name);
+        uh->segment_number = extract_segment_number(&name[0]);
 
         // Copy the segment name for file name construction
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -634,15 +625,11 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     
     si8     recording_start_uutc_time, recording_stop_uutc_time;
     
-    PyObject    *py_vmd2_dict, *py_md3_dict, *temp_o, *temp_UTF_str;
-    Py_ssize_t  li;
+    PyObject    *py_vmd2_dict, *py_md3_dict, *temp_UTF_str;
 
     // Method specific
     FILE_PROCESSING_STRUCT *gen_fps, *metadata_fps;
     UNIVERSAL_HEADER        *uh;
-    PASSWORD_DATA           *pwd;
-    VIDEO_METADATA_SECTION_2  *vmd2;
-    METADATA_SECTION_3  *md3;
 
     si1     level_1_password_arr[PASSWORD_BYTES] = {0};
     si1     level_2_password_arr[PASSWORD_BYTES] = {0};
@@ -652,7 +639,6 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
-    si8     bytes, max_rec_bytes, file_offset;
 
     // --- Parse the input --- 
     if (!PyArg_ParseTuple(args,"sOOllO!O!",
@@ -723,7 +709,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     uh->end_time = recording_stop_uutc_time;
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
@@ -731,7 +717,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name);
+        uh->segment_number = extract_segment_number(&name[0]);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -790,13 +776,13 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
 static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 {
     // Specified by user
-    PyObject    *raw_data;
+    PyArrayObject    *raw_data;
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
     si4    lossy_flag;
     
     PyObject *temp_UTF_str;
-    si8    samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
+    si8    samps_per_mef_block;
 
     // Method specific
     PASSWORD_DATA           *pwd;
@@ -815,8 +801,8 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
-    si4     max_samp, min_samp, *np_array_ptr;
-    si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset;
+    si4     max_samp, min_samp;
+    si8     start_sample, ts_indices_file_bytes, samps_remaining, block_samps, file_offset;
     si8     curr_time, time_inc;
 
     // Optional arguments
@@ -895,7 +881,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name);
+        uh->segment_number = extract_segment_number(&name[0]);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -985,8 +971,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     block_samps = samps_per_mef_block;
     file_offset = UNIVERSAL_HEADER_BYTES;
 
+    start_sample = 0;
     if (tmd2->start_sample != TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY){
         start_sample = tmd2->start_sample;
+    }else{
+        PyErr_WarnEx(PyExc_RuntimeWarning, "Start sample not specified. Will use 0", 1);
     }
 
     // Write the data and update the metadata
@@ -1076,14 +1065,11 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
     
     PyObject *temp_UTF_str;
-    si8     samps_per_mef_block, recording_start_uutc_time, recording_stop_uutc_time;
+    si8     recording_start_uutc_time, recording_stop_uutc_time;
 
     // Method specific
-    SEGMENT    *seg;
-    PASSWORD_DATA           *pwd;
     UNIVERSAL_HEADER    *uh;
     FILE_PROCESSING_STRUCT  *gen_fps, *v_idx_fps;
-    VIDEO_METADATA_SECTION_2  *vmd2;
     VIDEO_INDEX   *vi;
 
     si1     level_1_password_arr[PASSWORD_BYTES] = {0};
@@ -1093,7 +1079,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     si1    *temp_str_bytes;
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
-    si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
+    si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
     si4     li;
     si8     v_indices_file_bytes;
 
@@ -1164,7 +1150,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     uh = gen_fps->universal_header;
 
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
@@ -1172,7 +1158,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
         // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name);
+        uh->segment_number = extract_segment_number((si1 *) &name);
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -1205,6 +1191,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     uh->end_time = recording_stop_uutc_time;
 
     // Set up mef3 video indices file
+    li = 0;
     v_indices_file_bytes = (PyList_Size(vi_list) * VIDEO_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
     v_idx_fps = allocate_file_processing_struct(v_indices_file_bytes, VIDEO_INDICES_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(v_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, VIDEO_INDICES_FILE_TYPE_STRING);
@@ -1238,7 +1225,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 {
     // Specified by user
-    PyObject    *raw_data;
+    PyArrayObject    *raw_data;
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
     si4    lossy_flag, discontinuity_flag;
@@ -1264,8 +1251,8 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
-    si4     i, max_samp, min_samp, *np_array_ptr;
-    si8     start_sample, ts_indices_file_bytes, n_read, samps_remaining, block_samps, file_offset, orig_number_of_blocks;
+    si4     max_samp, min_samp;
+    si8     start_sample, samps_remaining, block_samps, file_offset;
     sf8     curr_time, time_inc;
 
     // Optional arguments
@@ -1384,8 +1371,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
 
-
-    orig_number_of_blocks = tmd2->number_of_blocks;
     tmd2->number_of_blocks +=  (si8) ceil((sf8) PyArray_SHAPE(raw_data)[0] / (sf8) samps_per_mef_block);
     if (samps_per_mef_block > tmd2->maximum_block_samples)
         tmd2->maximum_block_samples = samps_per_mef_block;
@@ -1429,7 +1414,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
     block_samps = samps_per_mef_block; 
-    np_array_ptr = (si4 *) PyArray_DATA(raw_data);
 
     //Move file_offset to the end of RED blocks
     file_offset = ts_data_fps->raw_data_bytes;
@@ -1761,37 +1745,31 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     si4     times_specified;
  
     // Python variables
-    PyObject    *py_array_out;
+    PyArrayObject    *py_array_out;
 
     // Method specific variables
-    unsigned int          kept_samples, skipped_samples, tot_samples;
     si4     i, j;
-    si4     offset_to_start_samp;
-    ui8     data_len;
+    // si4     offset_to_start_samp;
+    //ui8     data_len;
     ui4 n_segments;
     CHANNEL    *channel;
     si4 start_segment, end_segment;
     
     si1  channel_path[MEF_FULL_FILE_NAME_BYTES];
-    si8  total_samps, samp_counter_base;
+    si8  total_samps;//, samp_counter_base;
     ui8  total_data_bytes;
     ui8 start_idx, end_idx, num_blocks;
-    si4 *raw_data_buffer, *idp;
-    si1 *compressed_data_buffer, *cdp;
+    ui1 *compressed_data_buffer, *cdp;
     si8  segment_start_sample, segment_end_sample;
     si8  segment_start_time, segment_end_time;
     si8  block_start_time;
     si4 num_block_in_segment;
-    si4 pass_order, stop_order;
-    si4 order;
     FILE *fp;
     ui8 n_read, bytes_to_read;
     RED_PROCESSING_STRUCT   *rps;
-    sf8 *filt_data;
     si4 sample_counter;
     ui4 max_samps;
-    int *temp_data_buf;
-    int *dcdp;
+    si4 *temp_data_buf;
     si4 num_samps;
 
     si4 *decomp_data;
@@ -1861,25 +1839,15 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     //TODO - take care of situation when user passes times but does not raise the flag times_specified
 
     // If None was passed as one of the arguments move to the start or end of the recording
-    if (ostart == Py_None){
-        if (times_specified)
-            start_time = channel->earliest_start_time;
-        else
-            start_samp = 0;
-    }
-    else{
+    start_samp = 0;
+    start_time = channel->earliest_start_time;
+    end_samp = channel->metadata.time_series_section_2->number_of_samples;
+    end_time = channel->latest_end_time;
+    if (ostart != Py_None)
         start_samp = start_time = PyLong_AsLong(ostart);
-    }
-
-    if (oend == Py_None){
-        if (times_specified)
-            end_time = channel->latest_end_time;
-        else
-            end_samp = channel->metadata.time_series_section_2->number_of_samples;
-    }
-    else{
+    
+    if (oend != Py_None)
         end_samp = end_time = PyLong_AsLong(oend);
-    }
 
     // check if valid data range
     if (times_specified && start_time >= end_time)
@@ -1897,8 +1865,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     // Fire a warnings if start or stop or both are out of file
     if (times_specified){
-        if ((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time) |
-            (start_time > channel->latest_end_time) & (end_time > channel->latest_end_time)){
+        if (((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time)) |
+            ((start_time > channel->latest_end_time) & (end_time > channel->latest_end_time))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
             Py_INCREF(Py_None);
             return Py_None;
@@ -1909,8 +1877,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (start_time < channel->earliest_start_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start uutc earlier than earliest start time. Will insert NaNs", 1);
     }else{
-        if ((start_samp < 0) & (end_samp < 0) |
-            (start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples)){
+        if (((start_samp < 0) & (end_samp < 0)) |
+            ((start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
             Py_INCREF(Py_None);
             return Py_None;
@@ -1939,7 +1907,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     //py_array_out = PyArray_SimpleNew(1, dims, NPY_INT); // Integers for now but might have to convert to floats
 
     // Usnig doubles so we can use NaN values for discontinuities
-    py_array_out = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    py_array_out = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);
     numpy_arr_data = (sf8 *) PyArray_GETPTR1(py_array_out, 0);
     
     // Iterate through segments, looking for data that matches our criteria
@@ -1995,7 +1963,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // }
     
     // find start block in start segment
-    samp_counter_base = channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample;
+    start_idx = end_idx = 0;
+    //samp_counter_base = channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample;
     for (j = 1; j < channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
         
         block_start_time = channel->segments[start_segment].time_series_indices_fps->time_series_indices[j].start_time;
@@ -2010,7 +1979,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     }
     
     // find stop block in stop segment
-    samp_counter_base = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->start_sample;
+    //samp_counter_base = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->start_sample;
     for (j = 1; j < channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks; j++) {
         
         block_start_time = channel->segments[end_segment].time_series_indices_fps->time_series_indices[j].start_time;
@@ -2099,8 +2068,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     }
     
     // allocate buffers
-    data_len = total_samps;
-    compressed_data_buffer = (si1 *) malloc((size_t) total_data_bytes);
+    //data_len = total_samps;
+    compressed_data_buffer = (ui1 *) malloc((size_t) total_data_bytes);
     cdp = compressed_data_buffer;
     decomp_data = (si4 *) malloc((size_t) (num_samps * sizeof(si4)));
     memset_int(decomp_data, RED_NAN, num_samps);
@@ -2113,6 +2082,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         fp = channel->segments[start_segment].time_series_data_fps->fp;
         fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
+        if (n_read != total_data_bytes)
+            printf("Error reading file");
     }
     // spans across segments
     else {
@@ -2122,6 +2093,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         bytes_to_read = channel->segments[start_segment].time_series_data_fps->file_length -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+        if (n_read != bytes_to_read)
+            printf("Error reading file");
         cdp += bytes_to_read;
         
         // this loop will only run if there are segments in between the start and stop segments
@@ -2130,6 +2103,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
             bytes_to_read = channel->segments[i].time_series_data_fps->file_length;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+            if (n_read != bytes_to_read)
+                printf("Error reading file");
             cdp += bytes_to_read;
         }
         
@@ -2139,6 +2114,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
         channel->segments[end_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+        if (n_read != bytes_to_read)
+            printf("Error reading file");
         cdp += bytes_to_read;
     }
         
@@ -2153,7 +2130,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->decompressed_ptr = rps->decompressed_data = decomp_data;
     rps->difference_buffer = (si1 *) e_calloc((size_t) RED_MAX_DIFFERENCE_BYTES(max_samps), sizeof(ui1), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
     
-    offset_to_start_samp = start_samp - channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
+    // offset_to_start_samp = start_samp - channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
     
     sample_counter = 0;
     
@@ -2282,7 +2259,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     free_channel(channel, MEF_TRUE);
 
 
-    return py_array_out;
+    return (PyObject *) py_array_out;
 }
  
 /************************************************************************************/
@@ -2552,8 +2529,7 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
 void    map_python_vi(PyObject *vi_dict, VIDEO_INDEX *vi)
 {
     // Helpers
-    PyObject    *temp_o, *temp_UTF_str;
-    si1     *temp_str_bytes;
+    PyObject    *temp_o;
 
     temp_o = PyDict_GetItemString(vi_dict,"start_time");
     if (temp_o != NULL)
@@ -2674,7 +2650,6 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
     PyObject    *temp_UTF_str;
 
     si1     *temp_str_bytes;
-    si8     temp_time;
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(rh_dict,"type_string");
@@ -2810,7 +2785,8 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
     si1     *temp_str_bytes;
 
     // Assign from dict to struct
-    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))
+    temp_UTF_str = NULL;
+    if ((temp_o = PyDict_GetItemString(Siez_ch_type_dict,"name"))){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
             temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
@@ -2818,11 +2794,12 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
             temp_str_bytes = PyString_AS_STRING(temp_o);
         #endif
         MEF_strcpy(r_type->name, temp_str_bytes);
+    }
 
-    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset"))
+    if ((temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset")))
         r_type->onset = PyLong_AsLong(temp_o);
 
-    if (temp_o = PyDict_GetItemString(Siez_ch_type_dict,"offset"))
+    if ((temp_o = PyDict_GetItemString(Siez_ch_type_dict,"offset")))
         r_type->offset = PyLong_AsLong(temp_o);
 
     return;
@@ -2836,6 +2813,7 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     si1     *temp_str_bytes;
 
     // Assign from dict to struct
+    temp_UTF_str = NULL;
     temp_o = PyDict_GetItemString(CSti_type_dict,"task_type");
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
@@ -2884,6 +2862,7 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
     si1     *temp_str_bytes;
 
     // Assign from dict to struct
+    temp_UTF_str = NULL;
     temp_o = PyDict_GetItemString(ESti_type_dict,"amplitude");
     if (temp_o != NULL)
         r_type->amplitude = PyFloat_AsDouble(temp_o);
@@ -2945,7 +2924,6 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
     
     // Helper variables
     si1   temp_str[256];
-    si8   long_file_time;
  
     /* UNIVERSAL HEADER */
     
@@ -3115,8 +3093,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     PyObject *s2_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
-    si8   long_file_time;
+    si1   temp_str[256];
  
     /* SECTION 2 */
     
@@ -3366,8 +3343,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
     PyObject *s2_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
-    si8   long_file_time;
+    si1   temp_str[256];
  
     /* SECTION 2 */
     
@@ -3481,8 +3457,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
     PyObject *s3_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
-    si8   long_file_time;
+    si1   temp_str[256];
     
     /* SECTION 3 */
 
@@ -3723,7 +3698,7 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
 PyObject *create_mef3_TOC(SEGMENT *segment)
 {
     // Numpy TOC
-    PyObject *py_array_out;
+    PyArrayObject *py_array_out;
 
     // Helpers
     TIME_SERIES_INDEX     *tsi;
@@ -3754,7 +3729,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     // Create NumPy array and get pointer to data
     npy_intp dims[2] = {4,number_of_entries};
     
-    py_array_out = PyArray_SimpleNew(2, dims, NPY_INT64);
+    py_array_out = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_INT64);
     numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, 0);
 
     for(i = 0; i < number_of_entries; i++){
@@ -3791,7 +3766,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
         tsi++;
     }
 
-    return py_array_out;
+    return (PyObject *) py_array_out;
 }
 
 PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
@@ -3810,9 +3785,9 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
     PyObject *TOC;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
+    si1   temp_str[256];
     ui4   i;
-    si8   long_file_time, number_of_entries;
+    si8   number_of_entries;
     
     METADATA_SECTION_1      *md1;
         TIME_SERIES_METADATA_SECTION_2  *tmd2;
@@ -3844,13 +3819,15 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
             Py_BuildValue("s", temp_str));
                             
     // Read segment records if present and add it to metadata
-    if (segment->record_indices_fps != NULL & segment->record_data_fps != NULL){
+    if ((segment->record_indices_fps != NULL) & (segment->record_data_fps != NULL)){
         records_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
     }
 
     // Assign pointers for reading metadata and read universal headers
     md1 = segment->metadata_fps->metadata.section_1;
+    tmd2 = NULL;
+    vmd2 = NULL;
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
             tmd2 = segment->metadata_fps->metadata.time_series_section_2;
@@ -3984,10 +3961,10 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
     // Method
     SEGMENT *segment;
     
-    METADATA_SECTION_1		*md1;
-        TIME_SERIES_METADATA_SECTION_2	*tmd2;
-        VIDEO_METADATA_SECTION_2	*vmd2;
-    METADATA_SECTION_3		*md3;
+    METADATA_SECTION_1      *md1;
+        TIME_SERIES_METADATA_SECTION_2  *tmd2;
+        VIDEO_METADATA_SECTION_2    *vmd2;
+    METADATA_SECTION_3      *md3;
 
     // Create python output dictionary
     metadata_dict = PyDict_New();
@@ -4047,13 +4024,15 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
             Py_BuildValue("s", temp_str));
     
     // Read channel records if present and add it to metadata
-    if (channel->record_indices_fps != NULL & channel->record_data_fps != NULL){
+    if ((channel->record_indices_fps != NULL) & (channel->record_data_fps != NULL)){
         records_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
     }
 
     // Assign pointers for reading metadata
     md1 = channel->metadata.section_1;
+    tmd2 = NULL;
+    vmd2 = NULL;
     switch (channel->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
             tmd2 = channel->metadata.time_series_section_2;
@@ -4131,9 +4110,8 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     PyObject *channel_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
+    si1   temp_str[256];
     si4   i;
-    si8   long_file_time;
     
     // Method 
     CHANNEL *channel;
@@ -4215,7 +4193,7 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
             Py_BuildValue("i", 0));                    
 
     // Read session records if present and add it to metadata
-    if (session->record_indices_fps != NULL & session->record_data_fps != NULL){
+    if ((session->record_indices_fps != NULL) & (session->record_data_fps != NULL)){
         records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
     }
@@ -4313,12 +4291,12 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
     PyObject    *uhs_dict;
     PyObject    *uh_dict;
 
-    si1    *rd;
+    ui1    *rd;
     si4     i;
     si8     number_of_records;
 
     RECORD_HEADER   *rh;
-    RECORD_INDEX    *ri;
+    //RECORD_INDEX    *ri;
  
     // Set up output dictionary
     record_info_dict = PyDict_New();
@@ -4336,7 +4314,7 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
     all_record_list = PyList_New(number_of_records);
 
     // First entry
-    ri = ri_fps->record_indices; // This is unneccesary now but can be used to filter read records. Will be done in python now.
+    //ri = ri_fps->record_indices; // This is unneccesary now but can be used to filter read records. Will be done in python now.
     rd = rd_fps->raw_data + UNIVERSAL_HEADER_BYTES;
     
 
@@ -4363,10 +4341,9 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
     PyObject *type_dict;
 
     // Helper variables
-    si1   *time_str, temp_str[256];
-    si8   long_file_time;
-    ui4   type_code;
- 
+    si1   temp_str[256];
+    ui4   type_code, *type_str_int;
+
     /* RECORD HEADER */
     
     // Create output dictionary   
@@ -4404,7 +4381,7 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         PyDict_SetItemString(rh_dict, "version_minor",
             Py_BuildValue("s", temp_str));
 
-    if (rh->encryption != NULL)
+    if (rh->encryption != ENCRYPTION_LEVEL_NO_ENTRY)
         PyDict_SetItemString(rh_dict, "encryption",
             Py_BuildValue("b", rh->encryption));
     else
@@ -4426,7 +4403,8 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         PyDict_SetItemString(rh_dict, "time",
             Py_BuildValue("s", temp_str));
 
-    type_code = *((ui4 *) rh->type_string);
+    type_str_int = (ui4 *) rh->type_string;
+    type_code = *type_str_int;
 
     switch (type_code) {
         case MEFREC_Note_TYPE_CODE:
@@ -4475,8 +4453,8 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
     PyObject *ri_dict;
     
     // Helper variables
-    si1   *time_str, temp_str[256];
-    si8   long_file_time;
+    si1   temp_str[256];
+    // si8   long_file_time;
  
     /* RECORD HEADER */
     
@@ -4508,7 +4486,7 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
         PyDict_SetItemString(ri_dict, "version_minor",
             Py_BuildValue("s", temp_str));
 
-    if (ri->encryption != NULL)
+    if (ri->encryption != ENCRYPTION_LEVEL_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "encryption",
             Py_BuildValue("b", ri->encryption));
     else
@@ -4523,9 +4501,11 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
             Py_BuildValue("s", temp_str));
 
     if (ri->time != RECORD_INDEX_TIME_NO_ENTRY){
-        long_file_time = Py_BuildValue("l", ri->time);
+        // long_file_time = Py_BuildValue("l", ri->time);
+        // PyDict_SetItemString(ri_dict, "time",
+        //     ABS(long_file_time));
         PyDict_SetItemString(ri_dict, "time",
-            ABS(long_file_time));
+            Py_BuildValue("l", ri->time));
     }
     else
         PyDict_SetItemString(ri_dict, "time",
@@ -4736,9 +4716,7 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
     // Dictionary
     PyObject *dict_out;
 
-    si4         i, mn1 = MEF_FALSE, mn2 = MEF_FALSE;
     MEFREC_CSti_1_0     *cog_stim;
-    si1         time_str[32];
         
     // Dict definition
     dict_out = PyDict_New();        
@@ -4779,9 +4757,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
     // Dictionary
     PyObject *dict_out;
 
-    si4         i, mn1 = MEF_FALSE, mn2 = MEF_FALSE;
     MEFREC_ESti_1_0     *el_stim;
-    si1         time_str[32];
         
     // Dict definition
     dict_out = PyDict_New();        
@@ -4888,7 +4864,6 @@ si4 extract_segment_number(si1 *segment_name)
 {
     si1     *c;
     si4     segment_number;
-    ui4     i;
 
     // move pointer to the end of the string
     c = segment_name + strlen(segment_name) - 1;
@@ -4898,7 +4873,7 @@ si4 extract_segment_number(si1 *segment_name)
         if (*c == '/'){
             PyErr_SetString(PyExc_RuntimeError, "Segment name not in valid form XXX-000000");
             PyErr_Occurred();
-            return NULL;
+            return -1;
         }
     }
     c++;
@@ -4978,9 +4953,9 @@ void memset_int(si4 *ptr, si4 value, size_t num)
     }
 }
 
-void init_numpy()
+void init_numpy(void)
 {
-    Py_Initialize;
+    //Py_Initialize;
     #if PY_MAJOR_VERSION >= 3
         return;
     #else
@@ -5008,6 +4983,8 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     si1         level_1_cumsum,level_2_cumsum;
     si1         putative_level_1_password_bytes[PASSWORD_BYTES];
     si4         i;
+
+    size_t      nb;
 
     FILE *fp;
     UNIVERSAL_HEADER *uh;
@@ -5046,7 +5023,9 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     
     // Read file universal header
     fp = fopen(py_mef_file_path,"r");
-    fread((void *) uh, sizeof(UNIVERSAL_HEADER), 1, fp);
+    nb = fread((void *) uh, sizeof(UNIVERSAL_HEADER), 1, fp);
+    if (nb != 1)
+        printf("Error reading file");
     fclose(fp);
 
     // Check the password - extracted from process_pasword_data
@@ -5092,7 +5071,5 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
         return PyLong_FromLong(-1); // Wrong password
     }else{
         return PyLong_FromLong(0); // Data not encrypted
-    }
-
-      
+    } 
 }
