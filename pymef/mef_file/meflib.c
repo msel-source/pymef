@@ -4971,8 +4971,8 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 	channel->maximum_number_of_records = 0;
 	channel->maximum_record_bytes = 0;
 	bzero(channel->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	channel->earliest_start_time = INT_MIN; // Max si8, could be put in mef_lib.h
-	channel->latest_end_time = INT_MAX; // Min si8, could be put in mef_lib.h
+	channel->earliest_start_time = LONG_MAX;
+	channel->latest_end_time = LONG_MIN;
 	
 	// loop over segments
 	segment_names = generate_file_list(NULL, &n_segments, chan_path, SEGMENT_DIRECTORY_TYPE_STRING);
@@ -5615,8 +5615,8 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 	session->maximum_number_of_records = 0;
 	session->maximum_record_bytes = 0;
 	bzero(session->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	session->earliest_start_time = INT_MAX; // Max si8, could be put in mef_lib.h
-	session->latest_end_time = INT_MIN; // Min si8, could be put in mef_lib.h
+	session->earliest_start_time = LONG_MAX;
+	session->latest_end_time = LONG_MIN;
         
 	// loop over time series channels
 	channel_names = generate_file_list(NULL, &n_channels, sess_path, TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING);
