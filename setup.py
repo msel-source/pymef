@@ -20,9 +20,12 @@ United States
 
 from setuptools import setup, Extension
 import numpy
+import sysconfig
 
 # the c extension module
-mef_file_ext = Extension("pymef.mef_file.pymef3_file", ["pymef/mef_file/pymef3_file.c"])
+mef_file_ext = Extension("pymef.mef_file.pymef3_file",
+						 ["pymef/mef_file/pymef3_file.c"],
+						 extra_compile_args = ['-O3'])
 
 setup(name = "pymef",
       packages = ["pymef","pymef.mef_file"],
