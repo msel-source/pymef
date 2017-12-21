@@ -8,7 +8,7 @@
 void	show_record(RECORD_HEADER *record_header, ui4 record_number, PASSWORD_DATA *pwd)
 {
         si4	i, decryption_blocks;
-	ui4	type_code;
+	ui4	type_code, *type_string_int;
         ui1	*ui1_p, *decryption_key;
 	si1	time_str[TIME_STRING_BYTES], hex_str[HEX_STRING_BYTES(CRC_BYTES)];
         
@@ -23,7 +23,8 @@ void	show_record(RECORD_HEADER *record_header, ui4 record_number, PASSWORD_DATA 
 		printf("Record CRC: %s\n", hex_str);
         }
 	if (strlen(record_header->type_string)) {
-		type_code = *((ui4 *) record_header->type_string);
+		type_string_int = (ui4 *) record_header->type_string;
+		type_code = *type_string_int;
                 generate_hex_string((ui1 *) record_header->type_string, CRC_BYTES, hex_str);
 		printf("Record Type String: %s (%s)\n", record_header->type_string, hex_str);
 	} else {
@@ -531,7 +532,6 @@ si4	check_mefrec_SyLg_type_alignment(ui1 *bytes)
 void	show_mefrec_CSti_type(RECORD_HEADER *record_header)
 {
         MEFREC_CSti_1_0	*cog_stim;
-        si1			time_str[32];
         
         // Version 1.0
         if (record_header->version_major == 1 && record_header->version_minor == 0) {
@@ -578,7 +578,7 @@ si4	check_mefrec_CSti_type_alignment(ui1 *bytes)
 		free_flag = MEF_TRUE;
 	}
 	cog_stim = (MEFREC_CSti_1_0 *) (bytes + MEFREC_CSti_1_0_OFFSET);
-	if (&cog_stim->task_type != (si1 *) (bytes + MEFREC_CSti_1_0_TASK_TYPE_OFFSET))
+	if (cog_stim->task_type != (si1 *) (bytes + MEFREC_CSti_1_0_TASK_TYPE_OFFSET))
 		goto MEFREC_CSti_1_0_NOT_ALIGNED;
 	if (&cog_stim->stimulus_duration != (si8 *) (bytes + MEFREC_CSti_1_0_STIMULUS_DURATION_OFFSET))
 		goto MEFREC_CSti_1_0_NOT_ALIGNED;
@@ -617,7 +617,6 @@ si4	check_mefrec_CSti_type_alignment(ui1 *bytes)
 void	show_mefrec_ESti_type(RECORD_HEADER *record_header)
 {
         MEFREC_ESti_1_0	*el_stim;
-        si1			time_str[32];
         
         // Version 1.0
         if (record_header->version_major == 1 && record_header->version_minor == 0) {
@@ -702,15 +701,15 @@ si4	check_mefrec_ESti_type_alignment(ui1 *bytes)
 		free_flag = MEF_TRUE;
 	}
 	el_stim = (MEFREC_ESti_1_0 *) (bytes + MEFREC_ESti_1_0_OFFSET);
-	if (&el_stim->amplitude != (si1 *) (bytes + MEFREC_ESti_1_0_AMPLITUDE_OFFSET))
+	if (&el_stim->amplitude != (sf8 *) (bytes + MEFREC_ESti_1_0_AMPLITUDE_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
-	if (&el_stim->frequency != (si8 *) (bytes + MEFREC_ESti_1_0_FREQUENCY_OFFSET))
+	if (&el_stim->frequency != (sf8 *) (bytes + MEFREC_ESti_1_0_FREQUENCY_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
-	if (el_stim->pulse_width != (si1 *) (bytes + MEFREC_ESti_1_0_PULSE_WIDTH_OFFSET))
+	if (&el_stim->pulse_width != (si8 *) (bytes + MEFREC_ESti_1_0_PULSE_WIDTH_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
-	if (el_stim->ampunit_code != (si1 *) (bytes + MEFREC_ESti_1_0_AMPUNIT_CODE_OFFSET))
+	if (&el_stim->ampunit_code != (si4 *) (bytes + MEFREC_ESti_1_0_AMPUNIT_CODE_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
-	if (el_stim->mode_code != (si1 *) (bytes + MEFREC_ESti_1_0_MODE_CODE_OFFSET))
+	if (&el_stim->mode_code != (si4 *) (bytes + MEFREC_ESti_1_0_MODE_CODE_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
 	if (el_stim->waveform != (si1 *) (bytes + MEFREC_ESti_1_0_WAVEFORM_OFFSET))
 		goto MEFREC_ESti_1_0_NOT_ALIGNED;
