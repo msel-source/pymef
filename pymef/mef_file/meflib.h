@@ -56,6 +56,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 //#include <pthread.h>
 
 
@@ -144,6 +145,7 @@ typedef struct {
 #define SUPPRESS_ERROR_OUTPUT	8
 
 // Function Prototypes
+si4 	e_system(const char *command, const si1 *function, si4 line, ui4 behavior_on_fail);
 void	*e_calloc(size_t n_members, size_t size, const si1 *function, si4 line, ui4 behavior_on_fail);
 FILE	*e_fopen(si1 *path, si1 *mode, const si1 *function, si4 line, ui4 behavior_on_fail);
 size_t	e_fread(void *ptr, size_t size, size_t n_members, FILE *stream, si1 *path, const si1 *function, si4 line, ui4 behavior_on_fail);
@@ -829,7 +831,7 @@ FILE_PROCESSING_STRUCT	*allocate_file_processing_struct(si8 raw_data_bytes, ui4 
 void			apply_recording_time_offset(si8 *time);
 si4			check_password(si1 *password, const si1 *function, si4 line);
 si4                     compare_sf8(const void *a, const void * b);
-ui1			cpu_endianness();
+ui1			cpu_endianness(void);
 si4			decrypt_metadata(FILE_PROCESSING_STRUCT *fps);
 si4			decrypt_records(FILE_PROCESSING_STRUCT *fps);
 si4			encrypt_metadata(FILE_PROCESSING_STRUCT *fps);
@@ -856,8 +858,8 @@ si8			generate_recording_time_offset(si8 recording_start_time_uutc, si4 GMT_offs
 si1			*generate_segment_name(FILE_PROCESSING_STRUCT *fps, si1 *segment_name);
 ui1			*generate_UUID(ui1 *uuid);
 FILE_PROCESSING_DIRECTIVES *initialize_file_processing_directives(FILE_PROCESSING_DIRECTIVES *directives);
-void			initialize_MEF_globals();
-si4			initialize_meflib();
+void			initialize_MEF_globals(void);
+si4			initialize_meflib(void);
 si4			initialize_metadata(FILE_PROCESSING_STRUCT *fps);
 si4			initialize_universal_header(FILE_PROCESSING_STRUCT *fps, si1 generate_level_UUID, si1 generate_file_UUID, si1 originating_file);
 si1			*local_date_time_string(si8 uutc_time, si1 *time_str);

@@ -1839,6 +1839,31 @@ si4	decrypt_records(FILE_PROCESSING_STRUCT *fps)
 /******************  ERROR CHECKING STANDARD FUNCTIONS  ******************/
 /*************************************************************************/
 
+si4 	e_system(const char *command, const si1 *function, si4 line, ui4 behavior_on_fail)
+{
+	si4 sys_res;
+
+	if (behavior_on_fail == USE_GLOBAL_BEHAVIOR)
+		behavior_on_fail = MEF_globals->behavior_on_fail;
+
+	if ((sys_res = system(command)) != 0) {
+		if (!(behavior_on_fail & SUPPRESS_ERROR_OUTPUT)) {
+			(void) fprintf(stderr, "\tsystem error number %d (%s)\n", errno, strerror(errno));
+			if (function != NULL)
+				(void) fprintf(stderr, "\tcalled from function \"%s\", line %d\n", function, line);
+			if (behavior_on_fail & RETURN_ON_FAIL)
+				(void) fprintf(stderr, "\t=> returning -1\n\n");
+			else if (behavior_on_fail & EXIT_ON_FAIL)
+				(void) fprintf(stderr, "\t=> exiting program\n\n");
+		}
+		if (behavior_on_fail & RETURN_ON_FAIL)
+			return(-1);
+		else if (behavior_on_fail & EXIT_ON_FAIL)
+			exit(1);
+	}
+
+	return(sys_res);
+}
 
 void	*e_calloc(size_t n_members, size_t size, const si1 *function, si4 line, ui4 behavior_on_fail)
 {
@@ -2392,6 +2417,8 @@ si4	FILT_butter(FILT_PROCESSING_STRUCT *filtps)
         sf16            	**a, **inv_a, **ta1, **ta2, *b, *bt, *c, d, t;
 	FILT_LONG_COMPLEX	csum_num, csum_den, cratio, *ckern;
 	FILT_LONG_COMPLEX	*p, tc, *eigs, *cden, *rc, *cnum;
+
+	w = wn = bw = 0;
 
         
 	// check input
@@ -3020,6 +3047,8 @@ void	FILT_hqr(sf16 **a, si4 poles, FILT_LONG_COMPLEX *eigs)
         
         anorm = FILT_ZERO;
         eps = (sf16) FILT_EPS_SF16;
+
+        p = q = r = 0;
         
         for (i = 0; i < poles; i++) {
                 max = ((i - 1) > 0) ? (i - 1) : 0;
@@ -3228,7 +3257,9 @@ void	FILT_invert_matrix(sf16 **a, sf16 **inv_a, si4 order)  // done in place if 
 	si4	i, icol, irow, j, k, l, ll;
 	sf16	big, dum, pivinv, temp;
         
-        
+    icol = irow = 0;
+
+
 	indxc = (si4 *) e_calloc((size_t) order, sizeof(si4), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	indxr = (si4 *) e_calloc((size_t) order, sizeof(si4), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	ipiv = (si4 *) e_calloc((size_t) order, sizeof(si4), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
@@ -3533,7 +3564,8 @@ si4	fps_open(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 beh
 		// A component of the required directory tree does not exist - build it & try again
 		extract_path_parts(fps->full_file_name, path, name, extension);
 		sprintf(command, "mkdir -p \"%s\"", path);
-		system(command);
+		(void) e_system(command, __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
+		// system(command);
 		fps->fp = e_fopen(fps->full_file_name, mode, function, line, behavior_on_fail);
 	}
 	if (fps->fp == NULL) {
@@ -3594,7 +3626,7 @@ si4	fps_open(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 beh
 
 si4	fps_read(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 behavior_on_fail)
 {
-	si8		i_bytes, nr;
+	si8		i_bytes;
 	
 	
 	if (behavior_on_fail == USE_GLOBAL_BEHAVIOR)
@@ -3609,7 +3641,7 @@ si4	fps_read(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 beh
 		i_bytes = fps->file_length;
 	else
 		i_bytes = fps->directives.io_bytes;
-	nr = e_fread(fps->raw_data, sizeof(ui1), (size_t) i_bytes, fps->fp, fps->full_file_name, __FUNCTION__, __LINE__, behavior_on_fail);
+	(void) e_fread(fps->raw_data, sizeof(ui1), (size_t) i_bytes, fps->fp, fps->full_file_name, __FUNCTION__, __LINE__, behavior_on_fail);
 	
 	// unlock
 	if (fps->directives.lock_mode & FPS_READ_LOCK_ON_READ)
@@ -3657,7 +3689,7 @@ si4	fps_unlock(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 b
 
 si4	fps_write(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 behavior_on_fail)
 {
-	si8		o_bytes, nw;
+	si8		o_bytes;
 	struct stat	sb;
 	
         
@@ -3673,7 +3705,7 @@ si4	fps_write(FILE_PROCESSING_STRUCT *fps, const si1 *function, si4 line, ui4 be
 		o_bytes = fps->raw_data_bytes;
 	else
 		o_bytes = fps->directives.io_bytes;
-	nw = e_fwrite(fps->raw_data, sizeof(ui1), (size_t) o_bytes, fps->fp, fps->full_file_name, __FUNCTION__, __LINE__, behavior_on_fail);
+	(void) e_fwrite(fps->raw_data, sizeof(ui1), (size_t) o_bytes, fps->fp, fps->full_file_name, __FUNCTION__, __LINE__, behavior_on_fail);
 	
 	// unlock
 	if (fps->directives.lock_mode & FPS_WRITE_LOCK_ON_WRITE)
@@ -3809,7 +3841,7 @@ void	free_session(SESSION *session, si4 free_session_structure)
 
 si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directory, si1 *extension)  // can be used to get a directory list also
 {
-	si4	i;
+	si4	i, nf;
 	si1	temp_str[MEF_FULL_FILE_NAME_BYTES + 20];
 	si1 *unique_junk;
 	FILE	*fp;
@@ -3827,7 +3859,7 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 
 	// count
 	sprintf(temp_str, "ls -1d \"%s\"/*.%s > %s 2> /dev/null", enclosing_directory, extension, unique_junk);
-	system(temp_str);
+	(void) e_system(temp_str, __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	fp = e_fopen(unique_junk, "r", __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	
 	*num_files = 0;
@@ -3843,13 +3875,16 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 	
 	// build file list
 	rewind(fp);
+	nf = 0;
 	for (i = 0; i < *num_files; ++i)
-		fscanf(fp, "%s", file_list[i]);
+		nf = fscanf(fp, "%s", file_list[i]);
+		if (nf == 0)
+			return 0;
 	
 	// clean up
 	fclose(fp);
 	sprintf(temp_str, "rm %s",unique_junk);
-	system(temp_str);
+	(void) e_system(temp_str, __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
 	
 	return(file_list);
 }
@@ -4936,8 +4971,8 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 	channel->maximum_number_of_records = 0;
 	channel->maximum_record_bytes = 0;
 	bzero(channel->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	channel->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
-	channel->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
+	channel->earliest_start_time = INT_MIN; // Max si8, could be put in mef_lib.h
+	channel->latest_end_time = INT_MAX; // Min si8, could be put in mef_lib.h
 	
 	// loop over segments
 	segment_names = generate_file_list(NULL, &n_segments, chan_path, SEGMENT_DIRECTORY_TYPE_STRING);
@@ -5258,6 +5293,7 @@ CHANNEL	*read_MEF_channel(CHANNEL *channel, si1 *chan_path, si4 channel_type, si
 FILE_PROCESSING_STRUCT	*read_MEF_file(FILE_PROCESSING_STRUCT *fps, si1 *file_name, si1 *password, PASSWORD_DATA *password_data, FILE_PROCESSING_DIRECTIVES *directives, ui4 behavior_on_fail)
 {
 	si8	i_bytes;
+	ui4 *file_type_string_int;
 	si4	allocated_fps, CRC_result;
         void	*data_ptr;
 	
@@ -5338,7 +5374,8 @@ FILE_PROCESSING_STRUCT	*read_MEF_file(FILE_PROCESSING_STRUCT *fps, si1 *file_nam
 	fps->universal_header = (UNIVERSAL_HEADER *) fps->raw_data;
 	
 	// set file type code
-	fps->file_type_code = *((ui4 *) fps->universal_header->file_type_string);
+	file_type_string_int = (ui4 *) fps->universal_header->file_type_string;
+	fps->file_type_code = *file_type_string_int;
 	
 	// process password data
        if (fps->password_data == NULL) {
@@ -5578,8 +5615,8 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 	session->maximum_number_of_records = 0;
 	session->maximum_record_bytes = 0;
 	bzero(session->anonymized_name, UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES);
-	session->earliest_start_time = 9223372036854775807; // Max si8, could be put in mef_lib.h
-	session->latest_end_time = -9223372036854775808; // Min si8, could be put in mef_lib.h
+	session->earliest_start_time = INT_MAX; // Max si8, could be put in mef_lib.h
+	session->latest_end_time = INT_MIN; // Min si8, could be put in mef_lib.h
         
 	// loop over time series channels
 	channel_names = generate_file_list(NULL, &n_channels, sess_path, TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING);
@@ -5743,7 +5780,6 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
 			bzero(smd3->discretionary_region, METADATA_SECTION_3_DISCRETIONARY_REGION_BYTES);
 		
 	}
-	ctmd->recording_duration = session->latest_end_time - session->earliest_start_time;
 
 	// fill in session metadata: video channels
 	if (session->number_of_video_channels > 0) {
@@ -6578,7 +6614,9 @@ void 	RED_encode_lossy(RED_PROCESSING_STRUCT *rps)
 	sf4			new_scale_factor;
 	RED_BLOCK_HEADER	*block_header;
 	
-	
+	mrr = 0;
+
+
 	// RED compress from original_ptr to block_header pointer (compressed data array)
 	input_buffer = rps->original_ptr;
 	block_header = rps->block_header;
@@ -6759,15 +6797,11 @@ void	RED_free_processing_struct(RED_PROCESSING_STRUCT *rps)
 
 
 void	RED_generate_lossy_data(RED_PROCESSING_STRUCT *rps, si4 *input_buffer, si4 *output_buffer, si1 input_is_detrended)
-{
-	RED_BLOCK_HEADER	*block_header;
-	
+{	
 	
         // generates lossy data from input_buffer to output_buffer
 	// if input_buffer == output_buffer lossy data will be made in place
-        
-	block_header = rps->block_header;
-	
+        	
 	// detrend from input_buffer to output_buffer (lossless)
 	if (rps->directives.detrend_data == MEF_TRUE && input_is_detrended == MEF_FALSE) {
 		input_buffer = RED_detrend(rps, input_buffer, output_buffer);
@@ -7829,11 +7863,12 @@ void	show_universal_header(FILE_PROCESSING_STRUCT *fps)
 {
 	UNIVERSAL_HEADER	*uh;
         si1			hex_str[HEX_STRING_BYTES(PASSWORD_VALIDATION_FIELD_BYTES)], time_str[TIME_STRING_BYTES];
-	ui4			type_code;
+	ui4			type_code, *file_type_string_int;
 	
 	
 	uh = fps->universal_header;
-	type_code = *((ui4 *) uh->file_type_string);
+	file_type_string_int = (ui4 *) uh->file_type_string;
+	type_code = *file_type_string_int;
 	
 	printf("---------------- Universal Header - START ----------------\n");
 	if (uh->header_CRC == CRC_NO_ENTRY)
