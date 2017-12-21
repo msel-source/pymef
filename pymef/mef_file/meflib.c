@@ -3876,10 +3876,11 @@ si1	**generate_file_list(si1 **file_list, si4 *num_files, si1 *enclosing_directo
 	// build file list
 	rewind(fp);
 	nf = 0;
-	for (i = 0; i < *num_files; ++i)
+	for (i = 0; i < *num_files; ++i){
 		nf = fscanf(fp, "%s", file_list[i]);
 		if (nf == 0)
 			return 0;
+	}
 	
 	// clean up
 	fclose(fp);
@@ -5908,7 +5909,7 @@ SESSION	*read_MEF_session(SESSION *session, si1 *sess_path, si1 *password, PASSW
         }
         (void) read_MEF_file(session->record_data_fps, full_file_name, password, password_data, NULL, RETURN_ON_FAIL | SUPPRESS_ERROR_OUTPUT);
         if (session->record_data_fps == NULL)
-                UTF8_fprintf(stderr, "%s() Warning: Session record indices file, but no session records data file (\"%s\") in session directory\n\n", __FUNCTION__, full_file_name);
+            UTF8_fprintf(stderr, "%s() Warning: Session record indices file, but no session records data file (\"%s\") in session directory\n\n", __FUNCTION__, full_file_name);
 		
 		if (session->record_data_fps->universal_header->number_of_entries > session->maximum_number_of_records)
 			session->maximum_number_of_records = session->record_data_fps->universal_header->number_of_entries;

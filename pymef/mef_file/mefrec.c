@@ -40,9 +40,10 @@ void	show_record(RECORD_HEADER *record_header, ui4 record_number, PASSWORD_DATA 
 			printf("Record Version Minor: no entry\n");
 		else
 			printf("Record Version Minor: %u\n", record_header->version_minor);
-	} else
+	} else {
 		printf("Record Version: %u.%u\n", record_header->version_major, record_header->version_minor);
 		printf("Record Encryption: %d ", record_header->encryption);
+	}
 	if (record_header->encryption == NO_ENCRYPTION)
 		printf("(none)\n");
 	else if (record_header->encryption == LEVEL_1_ENCRYPTION)
