@@ -1782,6 +1782,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
+    npy_intp dims[1];
     
     // Optional arguments
     times_specified = 0; // default behavior - read samples
@@ -1900,7 +1901,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         num_samps = end_samp - start_samp;
         
     // Allocate numpy array
-    npy_intp dims[1] = {num_samps};
+    dims[0] = num_samps;
 
     // Integers represent the "real" data but cannot use NaNs. this way can put data directly into numpy array
     // when decompressing - cannot do this with floats - have to be copied
@@ -3707,6 +3708,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     si8     prev_time, prev_sample, start_time, start_sample, samp_time_diff;
     sf8     fs;
     si8     *numpy_arr_data;
+    npy_intp dims[2];
 
     si4     i;
     
@@ -3727,7 +3729,8 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     prev_sample = tsi->start_sample;
 
     // Create NumPy array and get pointer to data
-    npy_intp dims[2] = {4,number_of_entries};
+    dims[0] = 4;
+    dims[1] = number_of_entries;
     
     py_array_out = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_INT64);
     numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, 0);
