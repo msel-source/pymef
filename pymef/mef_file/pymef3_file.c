@@ -972,11 +972,6 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     file_offset = UNIVERSAL_HEADER_BYTES;
 
     start_sample = 0;
-    if (tmd2->start_sample != TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY){
-        start_sample = tmd2->start_sample;
-    }else{
-        PyErr_WarnEx(PyExc_RuntimeWarning, "Start sample not specified. Will use 0", 1);
-    }
 
     // Write the data and update the metadata
     while (samps_remaining) {
