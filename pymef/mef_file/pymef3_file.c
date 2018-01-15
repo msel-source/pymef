@@ -2084,7 +2084,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
         if (n_read != total_data_bytes)
-            printf("Error reading file");
+            printf("Error reading file\n");
     }
     // spans across segments
     else {
@@ -2095,29 +2095,54 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
         if (n_read != bytes_to_read)
-            printf("Error reading file");
+            printf("Error reading file\n");
         cdp += bytes_to_read;
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
             fp = channel->segments[i].time_series_data_fps->fp;
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
-            bytes_to_read = channel->segments[i].time_series_data_fps->file_length;
+            bytes_to_read = channel->segments[i].time_series_data_fps->file_length - 
+            channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
             if (n_read != bytes_to_read)
-                printf("Error reading file");
+                printf("Error reading file\n");
             cdp += bytes_to_read;
         }
         
         // then last segment
-        fp = channel->segments[end_segment].time_series_data_fps->fp;
-        fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
-        bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
-        channel->segments[end_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
-        n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-        if (n_read != bytes_to_read)
-            printf("Error reading file");
-        cdp += bytes_to_read;
+        num_block_in_segment = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+        if (end_idx < (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+            fp = channel->segments[end_segment].time_series_data_fps->fp;
+            fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
+            bytes_to_read = channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
+            n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+            if (n_read != bytes_to_read)
+                printf("Error reading file\n");
+            cdp += bytes_to_read;
+        }
+        else {
+            // case where end_idx is last block in segment
+            fp = channel->segments[end_segment].time_series_data_fps->fp;
+            fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
+            bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
+            channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
+            n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+            if (n_read != bytes_to_read)
+                printf("Error reading file\n");
+            cdp += bytes_to_read;
+        }
+
+        // // then last segment
+        // fp = channel->segments[end_segment].time_series_data_fps->fp;
+        // fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
+        // bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
+        // channel->segments[end_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
+        // n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
+        // if (n_read != bytes_to_read)
+        //     printf("Error reading file");
+        // cdp += bytes_to_read;
     }
         
     // set up RED processing struct
@@ -4891,7 +4916,7 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     ui8 i, j, sample;
     sf8 native_samp_freq;
     ui8 prev_sample_number;
-    si8 prev_time;
+    si8 prev_time, seg_start_sample;
     
     native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
@@ -4899,10 +4924,11 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     
     for (j = 0; j < channel->number_of_segments; j++)
     {
+        seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
         for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
             if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time > uutc)
                 goto done;
-            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample;
+            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
             prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
         }
     }
@@ -4918,7 +4944,8 @@ si8 uutc_for_sample_c(si8 sample, CHANNEL *channel)
     ui8 i, j, uutc;
     sf8 native_samp_freq;
     ui8 prev_sample_number; 
-    si8 prev_time;
+    si8 prev_time, seg_start_sample;
+
 
     native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
@@ -4926,10 +4953,11 @@ si8 uutc_for_sample_c(si8 sample, CHANNEL *channel)
 
     for (j = 0; j < channel->number_of_segments; j++)
     {
+        seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
         for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i){
-            if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample > sample)
+            if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample > sample)
                 goto done;
-            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample;
+            prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
             prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
         }
     }
