@@ -3725,7 +3725,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     TIME_SERIES_INDEX     *tsi;
 
     si8     number_of_entries;
-    si8     prev_time, prev_sample, start_time, start_sample, samp_time_diff;
+    si8     prev_time, prev_sample, start_time, start_sample, samp_time_diff, seg_start_sample;
     sf8     fs;
     si8     *numpy_arr_data;
     npy_intp dims[2];
@@ -3747,6 +3747,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     fs = segment->metadata_fps->metadata.time_series_section_2->sampling_frequency;
     prev_time = tsi->start_time;
     prev_sample = tsi->start_sample;
+    seg_start_sample = segment->metadata_fps->metadata.time_series_section_2->start_sample;
 
     // Create NumPy array and get pointer to data
     dims[0] = 4;
@@ -3760,6 +3761,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
 
         start_time = tsi->start_time;
         start_sample = tsi->start_sample;
+        start_sample += seg_start_sample;
 
         // Have we found a discontinuity?
         numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, i);

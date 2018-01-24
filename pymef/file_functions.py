@@ -129,7 +129,11 @@ def get_TOC(channel_md):
     
     TOC = np.empty([4,0],dtype='int64')
     fs = channel_md['section_2']['sampling_frequency']
-    for segment_name in channel_md['segments']:
+    
+    # Sort the segments to eliminate dictionary randomness
+    segs = list(channel_md['segments'].keys())
+    segs.sort()
+    for segment_name in segs:
         seg_TOC = channel_md['segments'][segment_name]['TOC']
             
         # Join into channel TOC
