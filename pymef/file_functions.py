@@ -22,6 +22,100 @@ import os
 from .mef_file import pymef3_file
 import numpy as np
 
+def annonimize_session(session_path,password_1, password_2, new_name = None, new_id = None):
+    """
+    Anonimize mef session
+
+    Parameters:
+    -----------
+    session_path - path to the session.\n
+    password_1 - session password level 1\n
+    password_2 - session password level 2\n
+    new_name - new first name for the subject (default = None)\n
+    new_id - new subject id (default = None)\n
+
+    Returns:
+    --------
+    0 - on success
+    """
+
+    # Read the session metadata
+    session_md = pymef3_file.read_mef_session_metadata(session_path, password_2)
+
+    # Get individual metadata files and create a list matching the session md
+    md_file_list = []
+    for root, dirs, files in os.walk(session_path):
+        if root.endswith(".timd"):
+            channel = root[root.rindex('/')+1:-5]
+            channel_md = session_md['time_series_channels'][channel]
+        elif root.endswith(".vidd"):
+            channel = root[root.rindex('/')+1:-5]
+            channel_md = session_md['video_channels'][channel]
+        elif root.endswith(".segd"):
+            segment = root[root.rindex('/')+1:-5]
+            segment_md = channel_md['segments'][segment]
+            
+            
+        for file in files:
+            if file.endswith(".tmet") or file.endswith(".vmet"):
+                 md_file_list.append([segment_md,root,os.path.join(root,file)])
+                 
+    # Run through the list, modify section_3 and rewrite the files
+    for seg_md, seg_path, seg_md_file in md_file_list:
+        section_2 = seg_md['section_2']
+        section_3 = seg_md['section_3']
+        
+        seg_start = seg_md['universal_headers']['metadata']['start_time']
+        seg_stop = seg_md['universal_headers']['metadata']['end_time']
+        
+        if new_name is None:
+            section_3.pop('subject_name_1')
+        else:
+            section_3['subject_name_1'] = new_name
+        section_3.pop('subject_name_2')
+        if new_id is None:
+            section_3.pop('subject_ID')
+        else:
+            section_3['subject_ID'] = new_id
+
+        # Remove 'not entered fields' and modify no filter
+        items = list(section_3.items())
+        for item in items:
+            if item[1] is None:
+                section_3.pop(item[0])
+
+                
+        items = list(section_2.items())
+        for item in items:
+            if item[1] is None:
+                section_2.pop(item[0])
+            if item[1] in ('no low frequency filter',
+                           'no high frequency filter',
+                           'no notch filter'):
+                section_2[item[0]] = 0
+                
+        os.remove(seg_md_file)
+
+        if seg_md_file.endswith('.tmet'):
+            pymef3_file.write_mef_ts_metadata(seg_path,
+                                              password_1,
+                                              password_2,
+                                              seg_start,
+                                              seg_stop,
+                                              section_2,
+                                              section_3)
+        elif seg_md_file.endswith('.vmet'):
+            pymef3_file.write_mef_v_metadata(seg_path,
+                                             password_1,
+                                             password_2,
+                                             seg_start,
+                                             seg_stop,
+                                             section_2,
+                                             section_3)
+            
+    return 0
+
+
 def uutc_for_sample(sample,channel_md):
     
     # Sampling freq
