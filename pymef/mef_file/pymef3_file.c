@@ -611,7 +611,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     map_python_md3(py_md3_dict, metadata_fps->metadata.section_3);
 
     write_MEF_file(metadata_fps);
-    free_file_processing_struct(metadata_fps); // TODO Commented for now because it is likly to close Python objects - solve later
+    free_file_processing_struct(metadata_fps); 
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -2959,101 +2959,87 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
         PyDict_SetItemString(uh_dict, "header_CRC",
             Py_BuildValue("I", uh->header_CRC));
     else
-        PyDict_SetItemString(uh_dict, "header_CRC",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "header_CRC", Py_None);
     
     if (uh->body_CRC != UNIVERSAL_HEADER_BODY_CRC_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "body_CRC",
             Py_BuildValue("I", uh->body_CRC));
     else
-        PyDict_SetItemString(uh_dict, "body_CRC",
-            Py_BuildValue("s", temp_str));                         
+        PyDict_SetItemString(uh_dict, "body_CRC", Py_None);                         
                              
     if (uh->file_type_string[0])
         PyDict_SetItemString(uh_dict, "file_type_string",
             Py_BuildValue("s", uh->file_type_string));
     else
-        PyDict_SetItemString(uh_dict, "file_type_string",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "file_type_string", Py_None);
                              
     if (uh->mef_version_major != UNIVERSAL_HEADER_MEF_VERSION_MAJOR_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "mef_version_major",
             Py_BuildValue("B", uh->mef_version_major));
     else
-        PyDict_SetItemString(uh_dict, "mef_version_major",
-            Py_BuildValue("s", temp_str));   
+        PyDict_SetItemString(uh_dict, "mef_version_major", Py_None);   
 
     if (uh->mef_version_minor != UNIVERSAL_HEADER_MEF_VERSION_MINOR_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "mef_version_minor",
             Py_BuildValue("B", uh->mef_version_minor));
     else
-        PyDict_SetItemString(uh_dict, "mef_version_minor",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "mef_version_minor", Py_None);
 
     if (uh->byte_order_code != UNIVERSAL_HEADER_BYTE_ORDER_CODE_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "byte_order_code",
             Py_BuildValue("B", uh->byte_order_code));
     else
-        PyDict_SetItemString(uh_dict, "byte_order_code",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "byte_order_code", Py_None);
 
     if (uh->start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY){
         PyDict_SetItemString(uh_dict, "start_time",
             Py_BuildValue("l", uh->start_time));
     }
     else
-        PyDict_SetItemString(uh_dict, "start_time",
-            Py_BuildValue("s", temp_str)); 
+        PyDict_SetItemString(uh_dict, "start_time", Py_None); 
 
     if (uh->end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY){
         PyDict_SetItemString(uh_dict, "end_time",
             Py_BuildValue("l", uh->end_time));
     }
     else
-        PyDict_SetItemString(uh_dict, "end_time",
-            Py_BuildValue("s", temp_str));  
+        PyDict_SetItemString(uh_dict, "end_time", Py_None);  
 
     if (uh->number_of_entries != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "number_of_entries",
             Py_BuildValue("l", uh->number_of_entries));
     else
-        PyDict_SetItemString(uh_dict, "number_of_entries",
-            Py_BuildValue("s", temp_str));  
+        PyDict_SetItemString(uh_dict, "number_of_entries", Py_None);  
 
     if (uh->maximum_entry_size != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "maximum_entry_size",
             Py_BuildValue("l", uh->maximum_entry_size));
     else
-        PyDict_SetItemString(uh_dict, "maximum_entry_size",
-            Py_BuildValue("s", temp_str)); 
+        PyDict_SetItemString(uh_dict, "maximum_entry_size", Py_None); 
 
     if (uh->segment_number != UNIVERSAL_HEADER_SEGMENT_NUMBER_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "segment_number",
             Py_BuildValue("i", uh->segment_number));
     else
-        PyDict_SetItemString(uh_dict, "segment_number",
-            Py_BuildValue("s", temp_str)); 
+        PyDict_SetItemString(uh_dict, "segment_number", Py_None); 
 
     if (uh->channel_name[0])
         PyDict_SetItemString(uh_dict, "channel_name",
             Py_BuildValue("s", uh->channel_name));
     else
-        PyDict_SetItemString(uh_dict, "channel_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "channel_name", Py_None);
 
     if (uh->session_name[0])
         PyDict_SetItemString(uh_dict, "session_name",
             Py_BuildValue("s", uh->session_name));
     else
-        PyDict_SetItemString(uh_dict, "session_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "session_name", Py_None);
 
     if (uh->anonymized_name[0])
         PyDict_SetItemString(uh_dict, "anonymized_name",
             Py_BuildValue("s", uh->anonymized_name));
     else
-        PyDict_SetItemString(uh_dict, "anonymized_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(uh_dict, "anonymized_name", Py_None);
      
     // The rest will be done if necessary
 
@@ -3081,29 +3067,25 @@ PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
         PyDict_SetItemString(s1_dict, "section_2_encryption",
             Py_BuildValue("i", md1->section_2_encryption));
     else
-        PyDict_SetItemString(s1_dict, "section_2_encryption",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s1_dict, "section_2_encryption", Py_None);
     
     if (md1->section_3_encryption)
         PyDict_SetItemString(s1_dict, "section_3_encryption",
             Py_BuildValue("i", md1->section_3_encryption));
     else
-        PyDict_SetItemString(s1_dict, "section_3_encryption",
-            Py_BuildValue("s", temp_str));                         
+        PyDict_SetItemString(s1_dict, "section_3_encryption", Py_None);                         
                              
     if (md1->protected_region[0])
         PyDict_SetItemString(s1_dict, "protected_region",
             Py_BuildValue("s", md1->protected_region));
     else
-        PyDict_SetItemString(s1_dict, "protected_region",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s1_dict, "protected_region", Py_None);
                              
     if (md1->discretionary_region[0])
         PyDict_SetItemString(s1_dict, "discretionary_region",
             Py_BuildValue("s", md1->discretionary_region));
     else
-        PyDict_SetItemString(s1_dict, "discretionary_region",
-            Py_BuildValue("s", temp_str));          
+        PyDict_SetItemString(s1_dict, "discretionary_region", Py_None);          
 
     return s1_dict;
 }
@@ -3131,16 +3113,14 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
         PyDict_SetItemString(s2_dict, "channel_description",
             Py_BuildValue("s", tmd->channel_description));
     else
-        PyDict_SetItemString(s2_dict, "channel_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "channel_description", Py_None);
 
     // Session description                
     if (tmd->session_description[0])
         PyDict_SetItemString(s2_dict, "session_description",
             Py_BuildValue("s", tmd->session_description));
     else
-        PyDict_SetItemString(s2_dict, "session_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "session_description", Py_None);
     // Recording duration                    
     // long_file_time = (si8) (tmd->recording_duration + 500000) / 1000000;
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
@@ -3148,35 +3128,30 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
         PyDict_SetItemString(s2_dict, "recording_duration",
             Py_BuildValue("l", tmd->recording_duration));
     else
-        PyDict_SetItemString(s2_dict, "recording_duration",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "recording_duration", Py_None);
     
     // Reference description                         
     if (tmd->reference_description[0])
         PyDict_SetItemString(s2_dict, "reference_description",
             Py_BuildValue("s", tmd->reference_description));
     else
-        PyDict_SetItemString(s2_dict, "reference_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "reference_description", Py_None);
     // Acquisition channel number                        
     if (tmd->acquisition_channel_number != TIME_SERIES_METADATA_ACQUISITION_CHANNEL_NUMBER_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "acquisition_channel_number",
             Py_BuildValue("i", tmd->acquisition_channel_number));
     else
-        PyDict_SetItemString(s2_dict, "acquisition_channel_number",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "acquisition_channel_number", Py_None);
     // Sampling frequency                         
     if (tmd->sampling_frequency != TIME_SERIES_METADATA_SAMPLING_FREQUENCY_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "sampling_frequency",
             Py_BuildValue("d", tmd->sampling_frequency));
     else
-        PyDict_SetItemString(s2_dict, "sampling_frequency",
-            Py_BuildValue("s", temp_str));           
+        PyDict_SetItemString(s2_dict, "sampling_frequency", Py_None);           
     //Low frequency filter setting
     if (FLOAT_EQUAL (tmd->low_frequency_filter_setting, TIME_SERIES_METADATA_LOW_FREQUENCY_FILTER_SETTING_NO_ENTRY))
        {sprintf(temp_str, "not entered");
-        PyDict_SetItemString(s2_dict, "low_frequency_filter_setting",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "low_frequency_filter_setting", Py_None);
         }
     else if (tmd->low_frequency_filter_setting < EPSILON)
         {
@@ -3190,8 +3165,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // High frequency filter setting
     if (FLOAT_EQUAL (tmd->high_frequency_filter_setting, TIME_SERIES_METADATA_HIGH_FREQUENCY_FILTER_SETTING_NO_ENTRY))
        {sprintf(temp_str, "not entered");
-        PyDict_SetItemString(s2_dict, "high_frequency_filter_setting",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "high_frequency_filter_setting", Py_None);
         }
     else if (tmd->high_frequency_filter_setting < EPSILON)
         {
@@ -3205,8 +3179,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // Notch frequency filter setting
     if (FLOAT_EQUAL (tmd->notch_filter_frequency_setting, TIME_SERIES_METADATA_NOTCH_FILTER_FREQUENCY_SETTING_NO_ENTRY)){
         sprintf(temp_str, "not entered");
-        PyDict_SetItemString(s2_dict, "notch_filter_frequency_setting",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "notch_filter_frequency_setting", Py_None);
         }
     else if (tmd->notch_filter_frequency_setting < EPSILON){
         sprintf(temp_str, "no notch filter");
@@ -3219,8 +3192,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // AC line frequency
     if (FLOAT_EQUAL (tmd->AC_line_frequency, TIME_SERIES_METADATA_NOTCH_FILTER_FREQUENCY_SETTING_NO_ENTRY)){
         sprintf(temp_str, "not entered");
-        PyDict_SetItemString(s2_dict, "AC_line_frequency",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "AC_line_frequency", Py_None);
         }
     else
         PyDict_SetItemString(s2_dict, "AC_line_frequency",
@@ -3228,8 +3200,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // Units conversion factor
     if (FLOAT_EQUAL (tmd->units_conversion_factor, TIME_SERIES_METADATA_UNITS_CONVERSION_FACTOR_NO_ENTRY)){
         sprintf(temp_str, "not entered");
-        PyDict_SetItemString(s2_dict, "units_conversion_factor",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "units_conversion_factor", Py_None);
         }
     else
         PyDict_SetItemString(s2_dict, "units_conversion_factor",
@@ -3239,8 +3210,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
         PyDict_SetItemString(s2_dict, "units_description",
             Py_BuildValue("s", tmd->units_description));
     else
-        PyDict_SetItemString(s2_dict, "units_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "units_description", Py_None);
                          
     // TODO  - this is kind o a hack!
     // Maximum and minimum data value
@@ -3249,16 +3219,14 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
             Py_BuildValue("d", tmd->maximum_native_sample_value));
         
     else
-        PyDict_SetItemString(s2_dict, "maximum_native_sample_value",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_native_sample_value", Py_None);
         
 
     if (tmd->minimum_native_sample_value != RED_NAN)
         PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
             Py_BuildValue("d", tmd->minimum_native_sample_value));
     else
-        PyDict_SetItemString(s2_dict, "minimum_native_sample_value",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "minimum_native_sample_value", Py_None);
 
 
     
@@ -3268,92 +3236,79 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
         PyDict_SetItemString(s2_dict, "start_sample",
             Py_BuildValue("k", tmd->start_sample));
     else
-        PyDict_SetItemString(s2_dict, "start_sample",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "start_sample", Py_None);
     // Number of samples
     if (tmd->number_of_samples != TIME_SERIES_METADATA_NUMBER_OF_SAMPLES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_samples",
             Py_BuildValue("k", tmd->number_of_samples));
     else
-        PyDict_SetItemString(s2_dict, "number_of_samples",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "number_of_samples", Py_None);
     // Number of blocks
     if (tmd->number_of_blocks != TIME_SERIES_METADATA_NUMBER_OF_BLOCKS_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_blocks",
             Py_BuildValue("k", tmd->number_of_blocks));
     else
-        PyDict_SetItemString(s2_dict, "number_of_blocks",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "number_of_blocks", Py_None);
     // Maximum block bytes
     if (tmd->maximum_block_bytes != TIME_SERIES_METADATA_MAXIMUM_BLOCK_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_block_bytes",
             Py_BuildValue("k", tmd->maximum_block_bytes));
     else
-        PyDict_SetItemString(s2_dict, "maximum_block_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_block_bytes", Py_None);
     // Maximum block samples
     if (tmd->maximum_block_samples != TIME_SERIES_METADATA_MAXIMUM_BLOCK_SAMPLES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_block_samples",
             Py_BuildValue("k", tmd->maximum_block_samples));
     else
-        PyDict_SetItemString(s2_dict, "maximum_block_samples",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_block_samples", Py_None);
     // Maximum difference bytes
     if (tmd->maximum_difference_bytes != TIME_SERIES_METADATA_MAXIMUM_DIFFERENCE_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_difference_bytes",
             Py_BuildValue("k", tmd->maximum_difference_bytes));
     else
-        PyDict_SetItemString(s2_dict, "maximum_difference_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_difference_bytes", Py_None);
     // Block interval
     if (tmd->block_interval != TIME_SERIES_METADATA_BLOCK_INTERVAL_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "block_interval",
             Py_BuildValue("i", tmd->block_interval));
     else
-        PyDict_SetItemString(s2_dict, "block_interval",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "block_interval", Py_None);
     // Number of discontinuities
     if (tmd->number_of_discontinuities != TIME_SERIES_METADATA_NUMBER_OF_DISCONTINUITIES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_discontinuities",
             Py_BuildValue("i", tmd->number_of_discontinuities));
     else
-        PyDict_SetItemString(s2_dict, "number_of_discontinuities",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "number_of_discontinuities", Py_None);
     // Maximum contiguous blocks
     if (tmd->maximum_contiguous_blocks != TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCKS_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_contiguous_blocks",
             Py_BuildValue("i", tmd->maximum_contiguous_blocks));
     else
-        PyDict_SetItemString(s2_dict, "maximum_contiguous_blocks",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_contiguous_blocks", Py_None);
     // Maximum contiguous block bytes
     if (tmd->maximum_contiguous_block_bytes != TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_contiguous_block_bytes",
             Py_BuildValue("i", tmd->maximum_contiguous_block_bytes));
     else
-        PyDict_SetItemString(s2_dict, "maximum_contiguous_block_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_contiguous_block_bytes", Py_None);
     // Maximum contiguous samples
     if (tmd->maximum_contiguous_samples != TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_contiguous_samples",
             Py_BuildValue("i", tmd->maximum_contiguous_samples));
     else
-        PyDict_SetItemString(s2_dict, "maximum_contiguous_samples",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_contiguous_samples", Py_None);
     // Protected region
     if (tmd->protected_region[0])
         PyDict_SetItemString(s2_dict, "protected_region",
             Py_BuildValue("s", tmd->protected_region));
     else
-        PyDict_SetItemString(s2_dict, "protected_region",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "protected_region", Py_None);
     // Discretionary region
     if (tmd->discretionary_region[0])
         PyDict_SetItemString(s2_dict, "discretionary_region",
             Py_BuildValue("s", tmd->discretionary_region));
     else
-        PyDict_SetItemString(s2_dict, "discretionary_region",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "discretionary_region", Py_None);
 
     return s2_dict;
 }
@@ -3379,15 +3334,13 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
         PyDict_SetItemString(s2_dict, "channel_description",
             Py_BuildValue("s", vmd->channel_description));
     else
-        PyDict_SetItemString(s2_dict, "channel_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "channel_description", Py_None);
     // Session description                
     if (vmd->session_description[0])
         PyDict_SetItemString(s2_dict, "session_description",
             Py_BuildValue("s", vmd->session_description));
     else
-        PyDict_SetItemString(s2_dict, "session_description",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "session_description", Py_None);
     // Recording duration                    
     // long_file_time = (si8) (vmd->recording_duration + 500000) / 1000000;
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
@@ -3395,79 +3348,69 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
         PyDict_SetItemString(s2_dict, "recording_duration",
             Py_BuildValue("l", vmd->recording_duration));
     else
-        PyDict_SetItemString(s2_dict, "recording_duration",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "recording_duration", Py_None);
     
     // Horizontal resolution
     if (vmd->horizontal_resolution != VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "horizontal_resolution",
             Py_BuildValue("i", vmd->horizontal_resolution));
     else
-        PyDict_SetItemString(s2_dict, "horizontal_resolution",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "horizontal_resolution", Py_None);
                              
     // Vertical resolution
     if (vmd->vertical_resolution != VIDEO_METADATA_VERTICAL_RESOLUTION_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "vertical_resolution",
             Py_BuildValue("i", vmd->vertical_resolution));
     else
-        PyDict_SetItemString(s2_dict, "vertical_resolution",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "vertical_resolution", Py_None);
                              
     // Frame rate
     if (vmd->frame_rate != VIDEO_METADATA_FRAME_RATE_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "frame_rate",
             Py_BuildValue("d", vmd->frame_rate));
     else
-        PyDict_SetItemString(s2_dict, "frame_rate",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "frame_rate", Py_None);
                              
     // Number of clips
     if (vmd->number_of_clips != VIDEO_METADATA_NUMBER_OF_CLIPS_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_clips",
             Py_BuildValue("i", vmd->number_of_clips));
     else
-        PyDict_SetItemString(s2_dict, "number_of_clips",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "number_of_clips", Py_None);
                              
     // Maximum clip bytes
     if (vmd->maximum_clip_bytes != VIDEO_METADATA_MAXIMUM_CLIP_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_clip_bytes",
             Py_BuildValue("i", vmd->maximum_clip_bytes));
     else
-        PyDict_SetItemString(s2_dict, "maximum_clip_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "maximum_clip_bytes", Py_None);
               
     // Video format
     if (vmd->video_format[0])
         PyDict_SetItemString(s2_dict, "video_format",
             Py_BuildValue("s", vmd->video_format));
     else
-        PyDict_SetItemString(s2_dict, "video_format",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "video_format", Py_None);
                              
     // Video file CRC
     if (vmd->video_file_CRC != VIDEO_METADATA_VIDEO_FILE_CRC_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "video_file_CRC",
             Py_BuildValue("i", vmd->video_file_CRC));
     else
-        PyDict_SetItemString(s2_dict, "video_file_CRC",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "video_file_CRC", Py_None);
                              
     // Protected region
     if (vmd->protected_region[0])
         PyDict_SetItemString(s2_dict, "protected_region",
             Py_BuildValue("s", vmd->protected_region));
     else
-        PyDict_SetItemString(s2_dict, "protected_region",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "protected_region", Py_None);
     // Discretionary region
     if (vmd->discretionary_region[0])
         PyDict_SetItemString(s2_dict, "discretionary_region",
             Py_BuildValue("s", vmd->discretionary_region));
     else
-        PyDict_SetItemString(s2_dict, "discretionary_region",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s2_dict, "discretionary_region", Py_None);
                                  
     return s2_dict;
 }
@@ -3497,8 +3440,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
         PyDict_SetItemString(s3_dict, "recording_time_offset",
             Py_BuildValue("l", md3->recording_time_offset));
     else
-        PyDict_SetItemString(s3_dict, "recording_time_offset",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "recording_time_offset", Py_None);
                              
     // DST start time
     // long_file_time = (si8) (md3->DST_start_time + 500000) / 1000000;
@@ -3508,8 +3450,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
             Py_BuildValue("l", md3->DST_start_time));
     }
     else
-        PyDict_SetItemString(s3_dict, "DST_start_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "DST_start_time", Py_None);
                              
     // DST end time
     // long_file_time = (si8) (md3->DST_end_time + 500000) / 1000000;
@@ -3519,8 +3460,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
             Py_BuildValue("l", md3->DST_end_time));
     }
     else
-        PyDict_SetItemString(s3_dict, "DST_end_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "DST_end_time", Py_None);
                              
     // GMT offset
     // long_file_time = (si8) (md3->GMT_offset + 500000) / 1000000;
@@ -3529,54 +3469,49 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
         PyDict_SetItemString(s3_dict, "GMT_offset",
             Py_BuildValue("i", md3->GMT_offset));
     else
-        PyDict_SetItemString(s3_dict, "GMT_offset",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "GMT_offset", Py_None);
                              
     // Subject name 1
     if (md3->subject_name_1[0])
         PyDict_SetItemString(s3_dict, "subject_name_1",
             Py_BuildValue("s", md3->subject_name_1));
     else
-        PyDict_SetItemString(s3_dict, "subject_name_1",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "subject_name_1", Py_None);
                              
     // Subject name 2
     if (md3->subject_name_2[0])
         PyDict_SetItemString(s3_dict, "subject_name_2",
             Py_BuildValue("s", md3->subject_name_2));
     else
-        PyDict_SetItemString(s3_dict, "subject_name_2",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "subject_name_2", Py_None);
                              
     // Subject ID
     if (md3->subject_ID[0])
         PyDict_SetItemString(s3_dict, "subject_ID",
             Py_BuildValue("s", md3->subject_ID));
     else
-        PyDict_SetItemString(s3_dict, "subject_ID",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "subject_ID", Py_None);
                              
     // Recording location
     if (md3->recording_location[0])
         PyDict_SetItemString(s3_dict, "recording_location",
             Py_BuildValue("s", md3->recording_location));
     else
-        PyDict_SetItemString(s3_dict, "recording_location",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(s3_dict, "recording_location", Py_None);
     // Protected region
     // if (md3->protected_region[0])
     //     PyDict_SetItemString(s3_dict, "protected_region",
     //         Py_BuildValue("s", md3->protected_region));
     // else
     //     PyDict_SetItemString(s3_dict, "protected_region",
-    //         Py_BuildValue("s", temp_str));
+    //         Py_None);
     // // Discretionary region
     // if (md3->discretionary_region[0])
     //     PyDict_SetItemString(s3_dict, "discretionary_region",
     //         Py_BuildValue("s", md3->discretionary_region));
     // else
     //     PyDict_SetItemString(s3_dict, "discretionary_region",
-    //         Py_BuildValue("s", temp_str));
+    //         Py_None);
 
     return s3_dict; 
 }
@@ -3602,50 +3537,43 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti)
         PyDict_SetItemString(ti_dict, "file_offset",
             Py_BuildValue("l", ti->file_offset));
     else
-        PyDict_SetItemString(ti_dict, "file_offset",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ti_dict, "file_offset", Py_None);
 
     if (ti->start_time != TIME_SERIES_INDEX_START_TIME_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "start_time",
             Py_BuildValue("l", ti->start_time));
     else
-        PyDict_SetItemString(ti_dict, "start_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ti_dict, "start_time", Py_None);
 
     if (ti->start_sample != TIME_SERIES_INDEX_START_SAMPLE_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "start_sample",
             Py_BuildValue("l", ti->start_sample));
     else
-        PyDict_SetItemString(ti_dict, "start_sample",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ti_dict, "start_sample", Py_None);
 
     if (ti->number_of_samples != TIME_SERIES_INDEX_NUMBER_OF_SAMPLES_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "number_of_samples",
             Py_BuildValue("I", ti->number_of_samples));
     else
-        PyDict_SetItemString(ti_dict, "number_of_samples",
-            Py_BuildValue("s", temp_str));    
+        PyDict_SetItemString(ti_dict, "number_of_samples", Py_None);    
 
     if (ti->block_bytes != TIME_SERIES_INDEX_BLOCK_BYTES_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "block_bytes",
             Py_BuildValue("I", ti->block_bytes));
     else
-        PyDict_SetItemString(ti_dict, "block_bytes",
-            Py_BuildValue("s", temp_str));   
+        PyDict_SetItemString(ti_dict, "block_bytes", Py_None);   
 
     if (ti->maximum_sample_value != TIME_SERIES_INDEX_MAXIMUM_SAMPLE_VALUE_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "maximum_sample_value",
             Py_BuildValue("i", ti->maximum_sample_value));
     else
-        PyDict_SetItemString(ti_dict, "maximum_sample_value",
-            Py_BuildValue("s", temp_str)); 
+        PyDict_SetItemString(ti_dict, "maximum_sample_value", Py_None); 
 
     if (ti->minimum_sample_value != TIME_SERIES_INDEX_MINIMUM_SAMPLE_VALUE_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "minimum_sample_value",
             Py_BuildValue("i", ti->minimum_sample_value));
     else
-        PyDict_SetItemString(ti_dict, "minimum_sample_value",
-            Py_BuildValue("s", temp_str));  
+        PyDict_SetItemString(ti_dict, "minimum_sample_value", Py_None);  
 
     // The rest is to be done if neccessary
 
@@ -3666,50 +3594,44 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
     vi_dict = PyDict_New();
     
     // Set not not entered string   
-    sprintf(temp_str, "not entered");
+    sprintf(temp_str, "not specified");
 
     // Insert entries into dictionary                    
     if (vi->start_time != VIDEO_INDEX_START_TIME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "start_time",
             Py_BuildValue("l", vi->start_time));
     else
-        PyDict_SetItemString(vi_dict, "start_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "start_time", Py_None);
 
     if (vi->end_time != VIDEO_INDEX_END_TIME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "end_time",
             Py_BuildValue("l", vi->end_time));
     else
-        PyDict_SetItemString(vi_dict, "end_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "end_time", Py_None);
 
     if (vi->start_frame != VIDEO_INDEX_START_FRAME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "start_frame",
             Py_BuildValue("I", vi->start_frame));
     else
-        PyDict_SetItemString(vi_dict, "start_frame",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "start_frame", Py_None);
 
     if (vi->end_frame != VIDEO_INDEX_END_FRAME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "end_frame",
             Py_BuildValue("I", vi->end_frame));
     else
-        PyDict_SetItemString(vi_dict, "end_frame",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "end_frame", Py_None);
 
     if (vi->file_offset != VIDEO_INDEX_FILE_OFFSET_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "file_offset",
             Py_BuildValue("l", vi->file_offset));
     else
-        PyDict_SetItemString(vi_dict, "file_offset",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "file_offset", Py_None);
 
     if (vi->clip_bytes != VIDEO_INDEX_CLIP_BYTES_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "clip_bytes",
             Py_BuildValue("l", vi->clip_bytes));
     else
-        PyDict_SetItemString(vi_dict, "clip_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(vi_dict, "clip_bytes", Py_None);
 
     // The rest if neccessary
 
@@ -3840,8 +3762,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
         PyDict_SetItemString(spec_dict, "segment_name",
             Py_BuildValue("s", segment->name));
     else
-        PyDict_SetItemString(spec_dict, "segment_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "segment_name", Py_None);
                             
     // Read segment records if present and add it to metadata
     if ((segment->record_indices_fps != NULL) & (segment->record_data_fps != NULL)){
@@ -4010,43 +3931,37 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
         PyDict_SetItemString(spec_dict, "earliest_start_time",
             Py_BuildValue("l", channel->earliest_start_time));
     else
-        PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "earliest_start_time", Py_None);
     // Latest end time                     
     if (channel->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
             Py_BuildValue("l", channel->latest_end_time));
     else
-        PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "latest_end_time", Py_None);
     // Anonymized name                     
     if (channel->anonymized_name[0])
         PyDict_SetItemString(spec_dict, "anonymized_name",
             Py_BuildValue("s", channel->anonymized_name));
     else
-        PyDict_SetItemString(spec_dict, "anonymized_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "anonymized_name", Py_None);
     // Maximum number of records
     if (channel->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
             Py_BuildValue("l", channel->maximum_number_of_records));
     else
-        PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "maximum_number_of_records", Py_None);
     // Maximum record bytes                  
     if (channel->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
             Py_BuildValue("l", channel->maximum_record_bytes));
     else
-        PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "maximum_record_bytes", Py_None);
     // Channel name             
     if (channel->name[0])
         PyDict_SetItemString(spec_dict, "channel_name",
             Py_BuildValue("s", channel->name));
     else
-        PyDict_SetItemString(spec_dict, "channel_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "channel_name", Py_None);
     
     // Read channel records if present and add it to metadata
     if ((channel->record_indices_fps != NULL) & (channel->record_data_fps != NULL)){
@@ -4165,43 +4080,37 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
         PyDict_SetItemString(spec_dict, "earliest_start_time",
             Py_BuildValue("l", session->earliest_start_time));
     else
-        PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "earliest_start_time", Py_None);
     // Latest end time                     
     if (session->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
             Py_BuildValue("l", session->latest_end_time));
     else
-        PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "latest_end_time", Py_None);
     // Anonymized name                     
     if (session->anonymized_name[0])
         PyDict_SetItemString(spec_dict, "anonymized_name",
             Py_BuildValue("s", session->anonymized_name));
     else
-        PyDict_SetItemString(spec_dict, "anonymized_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "anonymized_name", Py_None);
     // Maximum number of records
     if (session->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
             Py_BuildValue("l", session->maximum_number_of_records));
     else
-        PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "maximum_number_of_records", Py_None);
     // Maximum record bytes                  
     if (session->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
             Py_BuildValue("l", session->maximum_record_bytes));
     else
-        PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "maximum_record_bytes", Py_None);
     // Session name             
     if (session->name[0])
         PyDict_SetItemString(spec_dict, "session_name",
             Py_BuildValue("s", session->name));
     else
-        PyDict_SetItemString(spec_dict, "session_name",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(spec_dict, "session_name", Py_None);
     // Number of time series channels            
     if (session->number_of_time_series_channels != 0)
         PyDict_SetItemString(spec_dict, "number_of_times_series_channles",
@@ -4382,51 +4291,44 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         PyDict_SetItemString(rh_dict, "record_CRC",
             Py_BuildValue("I", rh->record_CRC));
     else
-        PyDict_SetItemString(rh_dict, "record_CRC",
-            Py_BuildValue("s", temp_str));                       
+        PyDict_SetItemString(rh_dict, "record_CRC", Py_None);                       
                              
     if (rh->type_string[0])
         PyDict_SetItemString(rh_dict, "type_string",
             Py_BuildValue("s", rh->type_string));
     else
-        PyDict_SetItemString(rh_dict, "type_string",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(rh_dict, "type_string", Py_None);
                              
     if (rh->version_major != RECORD_HEADER_VERSION_MAJOR_NO_ENTRY)
         PyDict_SetItemString(rh_dict, "version_major",
             Py_BuildValue("B", rh->version_major));
     else
-        PyDict_SetItemString(rh_dict, "version_major",
-            Py_BuildValue("s", temp_str));   
+        PyDict_SetItemString(rh_dict, "version_major", Py_None);   
 
     if (rh->version_minor != RECORD_HEADER_VERSION_MINOR_NO_ENTRY)
         PyDict_SetItemString(rh_dict, "version_minor",
             Py_BuildValue("B", rh->version_minor));
     else
-        PyDict_SetItemString(rh_dict, "version_minor",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(rh_dict, "version_minor", Py_None);
 
     if (rh->encryption != ENCRYPTION_LEVEL_NO_ENTRY)
         PyDict_SetItemString(rh_dict, "encryption",
             Py_BuildValue("b", rh->encryption));
     else
-        PyDict_SetItemString(rh_dict, "encryption",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(rh_dict, "encryption", Py_None);
 
     if (rh->bytes != RECORD_HEADER_BYTES_NO_ENTRY)
         PyDict_SetItemString(rh_dict, "bytes",
             Py_BuildValue("I", rh->bytes));
     else
-        PyDict_SetItemString(rh_dict, "bytes",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(rh_dict, "bytes", Py_None);
 
     if (rh->time != RECORD_HEADER_TIME_NO_ENTRY){
         PyDict_SetItemString(rh_dict, "time",
             Py_BuildValue("l", rh->time));
     }
     else
-        PyDict_SetItemString(rh_dict, "time",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(rh_dict, "time", Py_None);
 
     type_str_int = (ui4 *) rh->type_string;
     type_code = *type_str_int;
@@ -4494,36 +4396,31 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
         PyDict_SetItemString(ri_dict, "type_string",
             Py_BuildValue("s", ri->type_string));
     else
-        PyDict_SetItemString(ri_dict, "type_string",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ri_dict, "type_string", Py_None);
                              
     if (ri->version_major != RECORD_INDEX_VERSION_MAJOR_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "version_major",
             Py_BuildValue("B", ri->version_major));
     else
-        PyDict_SetItemString(ri_dict, "version_major",
-            Py_BuildValue("s", temp_str));   
+        PyDict_SetItemString(ri_dict, "version_major", Py_None);   
 
     if (ri->version_minor != RECORD_INDEX_VERSION_MINOR_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "version_minor",
             Py_BuildValue("B", ri->version_minor));
     else
-        PyDict_SetItemString(ri_dict, "version_minor",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ri_dict, "version_minor", Py_None);
 
     if (ri->encryption != ENCRYPTION_LEVEL_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "encryption",
             Py_BuildValue("b", ri->encryption));
     else
-        PyDict_SetItemString(ri_dict, "encryption",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ri_dict, "encryption", Py_None);
 
     if (ri->file_offset != RECORD_INDEX_FILE_OFFSET_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "file_offset",
             Py_BuildValue("l", ri->file_offset));
     else
-        PyDict_SetItemString(ri_dict, "file_offset",
-            Py_BuildValue("s", temp_str));
+        PyDict_SetItemString(ri_dict, "file_offset", Py_None);
 
     if (ri->time != RECORD_INDEX_TIME_NO_ENTRY){
         // long_file_time = Py_BuildValue("l", ri->time);
@@ -4533,8 +4430,7 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
             Py_BuildValue("l", ri->time));
     }
     else
-        PyDict_SetItemString(ri_dict, "time",
-            Py_BuildValue("s", temp_str));       
+        PyDict_SetItemString(ri_dict, "time", Py_None);       
 
     return ri_dict;
 }
@@ -4658,7 +4554,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
 
         switch (seizure->onset_code) {
             case MEFREC_Seiz_1_0_ONSET_NO_ENTRY:
-                PyDict_SetItemString(dict_out,"seizure_type",Py_BuildValue("s", "no_entry"));
+                PyDict_SetItemString(dict_out,"seizure_type",Py_None);
                 break;
             case MEFREC_Seiz_1_0_ONSET_UNKNOWN:
                 PyDict_SetItemString(dict_out,"seizure_type",Py_BuildValue("s", "unknown"));
@@ -4690,18 +4586,18 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
 
         }else if (mn1 == MEF_TRUE){
             PyDict_SetItemString(dict_out,"marker_name_1",Py_BuildValue("s", seizure->marker_name_1));
-            PyDict_SetItemString(dict_out,"marker_name_2",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"marker_name_2",Py_None);
         }else if (mn2 == MEF_TRUE){
-            PyDict_SetItemString(dict_out,"marker_name_1",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"marker_name_1",Py_None);
             PyDict_SetItemString(dict_out,"marker_name_2",Py_BuildValue("s", seizure->marker_name_2));
         }else{
-            PyDict_SetItemString(dict_out,"marker_name_1",Py_BuildValue("s", "no_entry"));
-            PyDict_SetItemString(dict_out,"marker_name_2",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"marker_name_1",Py_None);
+            PyDict_SetItemString(dict_out,"marker_name_2",Py_None);
         }
         if (strlen(seizure->annotation))
             PyDict_SetItemString(dict_out,"annotation",Py_BuildValue("s", seizure->annotation));
         else
-            PyDict_SetItemString(dict_out,"annotation",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"annotation",Py_None);
 
         channels = (MEFREC_Seiz_1_0_CHANNEL *) ((ui1 *) rh + MEFREC_Seiz_1_0_CHANNELS_OFFSET);            
         
@@ -4714,7 +4610,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
             if (strlen(channels[i].name))
                 PyDict_SetItemString(dict_channel, "name", Py_BuildValue("s", channels[i].name));
             else
-                PyDict_SetItemString(dict_channel, "name", Py_BuildValue("s", "no_entry"));
+                PyDict_SetItemString(dict_channel, "name", Py_None);
 
             PyDict_SetItemString(dict_channel,"onset_uUTC",Py_BuildValue("l", channels[i].onset));
             local_date_time_string(channels[i].onset, time_str);
@@ -4754,19 +4650,19 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
         if (strlen(cog_stim->task_type))
             PyDict_SetItemString(dict_out,"task_type",Py_BuildValue("s", cog_stim->task_type));
         else
-            PyDict_SetItemString(dict_out,"task_type",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"task_type", Py_None);
 
         PyDict_SetItemString(dict_out,"stimulus_duration",Py_BuildValue("l", cog_stim->stimulus_duration));
 
         if (strlen(cog_stim->stimulus_type))
             PyDict_SetItemString(dict_out,"stimulus_type",Py_BuildValue("s", cog_stim->stimulus_type));
         else
-            PyDict_SetItemString(dict_out,"stimulus_type",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"stimulus_type",Py_None);
 
         if (strlen(cog_stim->patient_response))
             PyDict_SetItemString(dict_out,"patient_response",Py_BuildValue("s", cog_stim->patient_response));
         else
-            PyDict_SetItemString(dict_out,"patient_response",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"patient_response",Py_None);
         
     }
     // Unrecognized record version
@@ -4799,7 +4695,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
         PyDict_SetItemString(dict_out,"ampunit_code",Py_BuildValue("i", el_stim->ampunit_code));
         switch (el_stim->ampunit_code) {
             case MEFREC_ESti_1_0_AMPUNIT_NO_ENTRY:
-                PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "no_entry"));
+                PyDict_SetItemString(dict_out,"amplitude_unit",Py_None);
                 break;
             case MEFREC_ESti_1_0_AMPUNIT_UNKNOWN:
                 PyDict_SetItemString(dict_out,"amplitude_unit",Py_BuildValue("s", "unknown"));
@@ -4818,7 +4714,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
         PyDict_SetItemString(dict_out,"mode_code",Py_BuildValue("i", el_stim->mode_code));
         switch (el_stim->mode_code) {
             case MEFREC_ESti_1_0_MODE_NO_ENTRY:
-                PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "no_entry"));
+                PyDict_SetItemString(dict_out,"mode",Py_None);
                 break;
             case MEFREC_ESti_1_0_MODE_UNKNOWN:
                 PyDict_SetItemString(dict_out,"mode",Py_BuildValue("s", "unknown"));
@@ -4837,18 +4733,18 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
         if (strlen(el_stim->waveform))
             PyDict_SetItemString(dict_out,"waveform",Py_BuildValue("s", el_stim->waveform));
         else
-            PyDict_SetItemString(dict_out,"waveform",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"waveform",Py_None);
 
         if (strlen(el_stim->anode))
             PyDict_SetItemString(dict_out,"anode",Py_BuildValue("s", el_stim->anode));
         else
-            PyDict_SetItemString(dict_out,"anode",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"anode",Py_None);
 
 
         if (strlen(el_stim->catode))
             PyDict_SetItemString(dict_out,"catode",Py_BuildValue("s", el_stim->catode));
         else
-            PyDict_SetItemString(dict_out,"catode",Py_BuildValue("s", "no_entry"));
+            PyDict_SetItemString(dict_out,"catode",Py_None);
   
     }
     // Unrecognized record version
