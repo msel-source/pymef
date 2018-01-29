@@ -385,7 +385,7 @@ def read_ts_channel_basic_info(session_path,password):
     channel_list\n
     """
     
-    session_ts_metadata_dict = pymef3_file.read_mef_session_metadata(session_path,password)
+    session_ts_metadata_dict = pymef3_file.read_mef_session_metadata(session_path, password, False)
     
     channel_list = list(session_ts_metadata_dict['time_series_channels'].keys())
     channel_list.sort()
