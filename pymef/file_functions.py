@@ -17,14 +17,135 @@ Mayo Clinic
 Rochester, MN
 United States
 """
-import os
+import os, struct, shutil, warnings
 
 from .mef_file import pymef3_file
 import numpy as np
 
+def detect_corrupt_data(session_path, password, repair = False):
+    """
+    Detects corrupt data\n
+    
+    Parameters:\n
+    -----------\n
+    session_path - path to the session.\n
+    password - session password \n
+    repair(bool) - whether to try to repair data (default=False)\n
+    
+    Returns:\n
+    --------\n
+    0 - on success
+    """
+    
+    md = pymef3_file.read_mef_session_metadata(session_path,None)
+
+    tsd = md['time_series_channels']
+    channels = list(tsd)
+    channels.sort()
+    
+    repair = True
+    
+    # ----- Check time indices entries -----
+    
+    for channel in channels:
+        
+        # Get total number of blocks in the channel
+        total_analyzed_blocks = 0
+        segments = list(tsd[channel]['segments'])
+        segments.sort()
+    
+        for segment in segments:
+            idcs = tsd[channel]['segments'][segment]['indices']
+            total_analyzed_blocks += len(tsd[channel]['segments'][segment]['indices'])
+        
+        current_total_block = 0
+        for segment in segments:
+            idcs = tsd[channel]['segments'][segment]['indices']
+            
+            path_to_data = session_path+'/'+channel+'.timd/'+segment+'.segd/'+segment+'.tdat'
+            
+            # Open the data file
+            f_dat = open(path_to_data, 'r+b')
+            f_dat.seek(1024) # Skippnig the UH
+            
+            if repair:
+                orig_idx_file = path_to_data[:-4] + 'tidx'
+                bup_idx_file = path_to_data[:-4] + 'tidx_bup'
+            
+            # Check the file offset and block bytres of the previous block
+            for i,idx in enumerate(idcs):
+                current_total_block += 1
+                
+                header_bytes = f_dat.read(304) # Read block header
+                number_of_samples =  struct.unpack('I',header_bytes[32:36])[0]
+                block_bytes = struct.unpack('I',header_bytes[36:40])[0]
+                start_time = struct.unpack('q',header_bytes[40:48])[0]
+                
+                if idx['block_bytes'] != block_bytes:
+                    print("Block",i,"/",len(idcs),"(",current_total_block,"/",
+                          total_analyzed_blocks,")","segment",segment,"channel",
+                          channel,"has different block_bytes than the block header:",
+                          idx['block_bytes']," X ",block_bytes)
+        
+                    if repair:
+                            
+                        # Index is zeroed out
+                        if idx['block_bytes'] == 0:
+                            
+                            if not os.path.exists(bup_idx_file):
+                                shutil.copyfile(orig_idx_file, bup_idx_file)
+                            
+                            f_idx = open(orig_idx_file, 'r+b')
+                            
+                            # Skip the UH
+                            f_idx.seek(1024)
+                            
+                            # Seek to the index entry
+                            f_idx.seek(i * 56, 1)
+                            
+                            # Copy the file offset
+                            f_idx.write(struct.pack('q', f_dat.tell()-304))
+                            
+                            # Copy the start time
+                            f_idx.write(struct.pack('q', start_time))
+                            
+                            # Calculate and insert the start sample (in segment)
+                            if i == 0:
+                                f_idx.write(struct.pack('q', 0))
+                            else:
+                                ns = idcs[i-1]['start_sample'] + idcs[i-1]['number_of_samples']
+                                f_idx.write(struct.pack('q', ns))
+                            
+                            # Copy number of samples
+                            f_idx.write(struct.pack('I',number_of_samples))
+                            
+                            # Copy blok bytes
+                            f_idx.write(struct.pack('I',block_bytes))
+                            
+                            # Insert RED_NAN to the sample values
+                            f_idx.write(bytearray.fromhex("000000"))
+                            f_idx.write(bytearray.fromhex("000000"))
+                            
+                            # Close the file
+                            f_idx.close()
+                            
+                        # RED_block header is zeroed out - invalidate the whole segment + throw a warning
+                        else:
+                            path_to_segment = session_path+'/'+channel+'.timd/'+segment+'.segd'
+                            warnings.warn("Data cannot be recovered, invalidating segment "+path_to_segment, RuntimeWarning)
+                            os.rename(path_to_segment,path_to_segment+'_corrupt')
+                            break
+                                
+     
+                # Skip the block bytes - move to the next block
+                f_dat.seek(block_bytes - 304,1)
+        
+        
+            f_dat.close()
+
 def annonimize_session(session_path,password_1, password_2, new_name = None, new_id = None):
     """
-    Anonimize mef session
+    Anonimize mef session\n
 
     Parameters:
     -----------
