@@ -2002,7 +2002,6 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (end_idx < (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
             total_samps += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
-            //fprintf(stderr, "total_samps = %d\n", total_samps);
             total_data_bytes += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         }
@@ -2034,6 +2033,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         total_data_bytes +=  channel->segments[start_segment].time_series_data_fps->file_length -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         num_blocks = num_block_in_segment - start_idx;
+
+        if (channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset < 1024){
+            PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
+            PyErr_Occurred();
+            return NULL;
+        }
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
@@ -2042,6 +2047,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             total_data_bytes += channel->segments[i].time_series_data_fps->file_length -
             channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
             num_blocks += num_block_in_segment;
+
+            if (channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset < 1024){
+                PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
+                PyErr_Occurred();
+                return NULL;
+            }
         }
         
         // then last segment
@@ -2061,6 +2072,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             num_blocks += end_idx + 1;
         }
+
+        if (channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx].file_offset < 1024){
+            PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
+            PyErr_Occurred();
+            return NULL;
+        }
     }
     
     // allocate buffers
@@ -2078,8 +2095,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         fp = channel->segments[start_segment].time_series_data_fps->fp;
         fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
-        if (n_read != total_data_bytes)
-            printf("Error reading file\n");
+        if (n_read != total_data_bytes){
+            PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+            PyErr_Occurred();
+            free (compressed_data_buffer);
+            free (decomp_data);
+            return NULL;
+        }
     }
     // spans across segments
     else {
@@ -2089,8 +2111,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         bytes_to_read = channel->segments[start_segment].time_series_data_fps->file_length -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-        if (n_read != bytes_to_read)
-            printf("Error reading file\n");
+        if (n_read != bytes_to_read){
+            PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+            PyErr_Occurred();
+            free (compressed_data_buffer);
+            free (decomp_data);
+            return NULL;
+        }
         cdp += bytes_to_read;
         
         // this loop will only run if there are segments in between the start and stop segments
@@ -2100,8 +2127,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             bytes_to_read = channel->segments[i].time_series_data_fps->file_length - 
             channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-            if (n_read != bytes_to_read)
-                printf("Error reading file\n");
+            if (n_read != bytes_to_read){
+                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+                PyErr_Occurred();
+                free (compressed_data_buffer);
+                free (decomp_data);
+                return NULL;
+            }
             cdp += bytes_to_read;
         }
         
@@ -2113,8 +2145,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             bytes_to_read = channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-            if (n_read != bytes_to_read)
-                printf("Error reading file\n");
+            if (n_read != bytes_to_read){
+                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+                PyErr_Occurred();
+                free (compressed_data_buffer);
+                free (decomp_data);
+                return NULL;
+            }
             cdp += bytes_to_read;
         }
         else {
@@ -2124,8 +2161,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-            if (n_read != bytes_to_read)
-                printf("Error reading file\n");
+            if (n_read != bytes_to_read){
+                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+                PyErr_Occurred();
+                free (compressed_data_buffer);
+                free (decomp_data);
+                return NULL;
+            }
             cdp += bytes_to_read;
         }
 
@@ -2200,6 +2242,15 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         
         // we need to manually remove offset, since we are using the time value of the block bevore decoding the block
         // (normally the offset is removed during the decoding process)
+
+        if (rps->block_header->block_bytes == 0){
+            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, data likely corrupt...");
+            PyErr_Occurred();
+            free (compressed_data_buffer);
+            free (decomp_data);
+            free (temp_data_buf);
+            return NULL;
+        }
 
         if (times_specified){
 

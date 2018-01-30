@@ -102,8 +102,8 @@ static char read_mef_ts_data_docstring[] =
 
 static char read_mef_session_metadata_docstring[] =
     "Function to read MEF3 session metadata.\n\n \
-     Parameters: \
-     ----------- \
+     Parameters:\n \
+     -----------\n \
      target_path - path to MEF3 session being read (str)\n \
      password - level 1 or level 2 password (str)\n \
      Returns:\n \
