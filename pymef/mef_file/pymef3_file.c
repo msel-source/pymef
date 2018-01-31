@@ -1850,12 +1850,18 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     {
         PyErr_SetString(PyExc_RuntimeError, "Start time later than end time, exiting...");
         PyErr_Occurred();
+        if (channel->number_of_segments > 0)
+            channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+        free_channel(channel, MEF_TRUE);
         return NULL;
     }
     if (!times_specified && start_samp >= end_samp)
     {
         PyErr_SetString(PyExc_RuntimeError, "Start sample larger than end sample, exiting...");
         PyErr_Occurred();
+        if (channel->number_of_segments > 0)
+            channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+        free_channel(channel, MEF_TRUE);
         return NULL;
     }    
 
@@ -1865,6 +1871,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             ((start_time > channel->latest_end_time) & (end_time > channel->latest_end_time))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
             Py_INCREF(Py_None);
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             return Py_None;
         }
         if (end_time > channel->latest_end_time)
@@ -1877,6 +1886,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             ((start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
             Py_INCREF(Py_None);
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             return Py_None;
         }
         if (end_samp > channel->metadata.time_series_section_2->number_of_samples){
@@ -2037,6 +2049,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset < 1024){
             PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
             PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             return NULL;
         }
         
@@ -2051,6 +2066,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             if (channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset < 1024){
                 PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
                 PyErr_Occurred();
+                if (channel->number_of_segments > 0)
+                    channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+                free_channel(channel, MEF_TRUE);
                 return NULL;
             }
         }
@@ -2076,6 +2094,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx].file_offset < 1024){
             PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
             PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             return NULL;
         }
     }
@@ -2098,6 +2119,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (n_read != total_data_bytes){
             PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
             PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             free (compressed_data_buffer);
             free (decomp_data);
             return NULL;
@@ -2114,6 +2138,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (n_read != bytes_to_read){
             PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
             PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             free (compressed_data_buffer);
             free (decomp_data);
             return NULL;
@@ -2130,6 +2157,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             if (n_read != bytes_to_read){
                 PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
                 PyErr_Occurred();
+                if (channel->number_of_segments > 0)
+                    channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+                free_channel(channel, MEF_TRUE);
                 free (compressed_data_buffer);
                 free (decomp_data);
                 return NULL;
@@ -2148,6 +2178,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             if (n_read != bytes_to_read){
                 PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
                 PyErr_Occurred();
+                if (channel->number_of_segments > 0)
+                    channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+                free_channel(channel, MEF_TRUE);
                 free (compressed_data_buffer);
                 free (decomp_data);
                 return NULL;
@@ -2164,6 +2197,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             if (n_read != bytes_to_read){
                 PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
                 PyErr_Occurred();
+                if (channel->number_of_segments > 0)
+                    channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+                free_channel(channel, MEF_TRUE);
                 free (compressed_data_buffer);
                 free (decomp_data);
                 return NULL;
@@ -2246,6 +2282,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (rps->block_header->block_bytes == 0){
             PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, data likely corrupt...");
             PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
             free (compressed_data_buffer);
             free (decomp_data);
             free (temp_data_buf);
