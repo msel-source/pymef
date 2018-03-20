@@ -22,14 +22,14 @@ import os, struct, shutil, warnings
 from .mef_file import pymef3_file
 import numpy as np
 
-def detect_corrupt_data(session_path, password, repair = False):
+def detect_corrupt_data(session_path, password = None, repair = False):
     """
     Detects corrupt data\n
     
     Parameters:\n
     -----------\n
     session_path - path to the session.\n
-    password - session password \n
+    password - session password (default=None)\n
     repair(bool) - whether to try to repair data (default=False)\n
     
     Returns:\n
@@ -37,14 +37,12 @@ def detect_corrupt_data(session_path, password, repair = False):
     0 - on success
     """
     
-    md = pymef3_file.read_mef_session_metadata(session_path,None)
+    md = pymef3_file.read_mef_session_metadata(session_path,password)
 
     tsd = md['time_series_channels']
     channels = list(tsd)
     channels.sort()
-    
-    repair = True
-    
+        
     # ----- Check time indices entries -----
     
     for channel in channels:
@@ -71,6 +69,8 @@ def detect_corrupt_data(session_path, password, repair = False):
             if repair:
                 orig_idx_file = path_to_data[:-4] + 'tidx'
                 bup_idx_file = path_to_data[:-4] + 'tidx_bup'
+                orig_dat_file = path_to_data[:-4] + 'tdat'
+                bup_dat_file = path_to_data[:-4] + 'tdat_bup'
             
             # Check the file offset and block bytres of the previous block
             for i,idx in enumerate(idcs):
@@ -139,6 +139,28 @@ def detect_corrupt_data(session_path, password, repair = False):
      
                 # Skip the block bytes - move to the next block
                 f_dat.seek(block_bytes - 304,1)
+                
+            # Check that we are not out of file (file is not shirter than what metadata say)
+            f_size = os.path.getsize(path_to_data)
+            f_size_md = f_dat.tell()
+            if f_size > f_size_md:
+                
+                if repair:
+                    warnings.warn("Data file larger than metadata information, cutting file "+path_to_data, RuntimeWarning)
+                    
+                    if not os.path.exists(bup_dat_file):
+                        shutil.copyfile(orig_dat_file, bup_dat_file)
+                    
+                    f_dat.seek(0)
+                    whole_file = f_dat.read(f_size_md)
+                    f_dat.close()
+                    
+                    f_dat = open(path_to_data, 'wb')
+                    f_dat.write(whole_file)
+                    
+                else:
+                    print("Data file larger than metadata information",
+                          path_to_data)
         
         
             f_dat.close()
