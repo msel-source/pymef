@@ -487,7 +487,6 @@ class TestStringMethods(unittest.TestCase):
         # User specified fields section 2
         section_2_usr_field_list = ['channel_description',
                                     'session_description',
-                                    'recording_duration',
                                     'reference_description',
                                     'acquisition_channel_number',
                                     'sampling_frequency',
@@ -539,6 +538,10 @@ class TestStringMethods(unittest.TestCase):
                      * (self.secs_to_write + self.secs_to_append))
         self.assertEqual(N_samples,
                          seg_md['section_2']['number_of_samples'])
+        
+        rec_duration = int((N_samples / self.sampling_frequency) * 1e6)
+        self.assertEqual(rec_duration,
+                         seg_md['section_2']['recording_duration'])
             
     def test_time_series_metadata_section_3(self):
         

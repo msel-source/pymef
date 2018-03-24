@@ -917,6 +917,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     tmd2 = metadata_fps->metadata.time_series_section_2;
     tmd2->number_of_samples = (si8) PyArray_SHAPE(raw_data)[0];
+    tmd2->recording_duration = (si8) (((sf8)tmd2->number_of_samples / (sf8) tmd2->sampling_frequency) * 1e6);
     tmd2->number_of_blocks = (si8) ceil((sf8) tmd2->number_of_samples / (sf8) samps_per_mef_block);
     tmd2->maximum_block_samples = samps_per_mef_block;
 
@@ -1406,6 +1407,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         block_header->flags = 0;
     start_sample = tmd2->number_of_samples;
     tmd2->number_of_samples = tmd2->number_of_samples + (si8) PyArray_SHAPE(raw_data)[0];
+    tmd2->recording_duration = (si8) (((sf8)tmd2->number_of_samples / (sf8) tmd2->sampling_frequency) * 1e6);
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
     block_samps = samps_per_mef_block; 
