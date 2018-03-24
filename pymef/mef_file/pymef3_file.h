@@ -267,6 +267,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
 
 // Helper functions
+si4 check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 total_data_bytes);
 si4 extract_segment_number(si1 *segment_name);
 si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel);
 si8 uutc_for_sample_c(si8 sample, CHANNEL *channel);

@@ -2240,6 +2240,18 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
     rps->compressed_data = cdp;
     rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
+    if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
+    {
+        PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
+        PyErr_Occurred();
+        if (channel->number_of_segments > 0)
+            channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+        free_channel(channel, MEF_TRUE);
+        free (compressed_data_buffer);
+        free (decomp_data);
+        free (temp_data_buf);
+        return NULL;
+    }
     RED_decode(rps);
     cdp += rps->block_header->block_bytes;
     
@@ -2279,8 +2291,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         // we need to manually remove offset, since we are using the time value of the block bevore decoding the block
         // (normally the offset is removed during the decoding process)
 
-        if (rps->block_header->block_bytes == 0){
-            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, data likely corrupt...");
+        if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)){
+            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
             PyErr_Occurred();
             if (channel->number_of_segments > 0)
                 channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
@@ -2317,6 +2329,18 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
+        if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
+        {
+            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
+            PyErr_Occurred();
+            if (channel->number_of_segments > 0)
+                channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
+            free_channel(channel, MEF_TRUE);
+            free (compressed_data_buffer);
+            free (decomp_data);
+            free (temp_data_buf);
+            return NULL;
+        }
         RED_decode(rps);
         
         offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
@@ -4870,6 +4894,39 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
 
 
 /**************************  Other helper functions  ****************************/
+
+si4 check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 total_data_bytes)
+{
+    ui8 offset_into_data, remaining_buf_size;
+    si1 CRC_valid;
+    RED_BLOCK_HEADER* block_header;
+    
+    offset_into_data = block_hdr_ptr - total_data_ptr;
+    remaining_buf_size = total_data_bytes - offset_into_data;
+    
+    // check if remaining buffer at least contains the RED block header
+    if (remaining_buf_size < RED_BLOCK_HEADER_BYTES)
+        return 0;
+    
+    block_header = (RED_BLOCK_HEADER*) block_hdr_ptr;
+    
+    // check if entire block, based on size specified in header, can possibly fit in the remaining buffer
+    if (block_header->block_bytes > remaining_buf_size)
+        return 0;
+    
+    // check if size specified in header is absurdly large
+    if (block_header->block_bytes > RED_MAX_COMPRESSED_BYTES(max_samps, 1))
+        return 0;
+    
+    // at this point we know we have enough data to actually run the CRC calculation, so do it
+    CRC_valid = CRC_validate((ui1*) block_header + CRC_BYTES, block_header->block_bytes - CRC_BYTES, block_header->block_CRC);
+    
+    // return output of CRC heck
+    if (CRC_valid == MEF_TRUE)
+        return 1;
+    else
+        return 0;
+}
 
 si4 extract_segment_number(si1 *segment_name)
 {
