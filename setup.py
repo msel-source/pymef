@@ -28,7 +28,7 @@ mef_file_ext = Extension("pymef.mef_file.pymef3_file",
 						 extra_compile_args = ['-O3'])
 
 setup(name = "pymef",
-	version='0.1.3',
+	version='0.1.4',
 	description='Wrapper for MEF (multiscale electrophysiology format)',
       #url='http://github.com/storborg/funniest',
       author='Jan Cimbalnik',

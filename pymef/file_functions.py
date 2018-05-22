@@ -541,9 +541,11 @@ def read_ts_channel_basic_info(session_path,password):
         ufact = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_conversion_factor']
         unit = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['units_description']
         start_time = session_ts_metadata_dict['time_series_channels'][channel]['channel_specific_metadata']['earliest_start_time']
-        
+        ch_desc = session_ts_metadata_dict['time_series_channels'][channel]['section_2']['channel_description']
+
         channel_infos.append({'name':channel,'fsamp':fsamp,'nsamp':nsamp,
                               'ufact':ufact,'unit':unit,
-                              'start_time':start_time})
+                              'start_time':start_time,
+                              'channel_description':ch_desc})
     
     return channel_infos
