@@ -176,8 +176,9 @@ def detect_corrupt_data(session_path, password=None, repair=False):
                     f_dat.write(whole_file)
 
                 else:
-                    print("Data file larger than metadata information",
-                          path_to_data)
+                    warn_str = ("Data file larger than metadata information",
+                                path_to_data)
+                    warnings.warn(warn_str, RuntimeWarning)
 
             f_dat.close()
 
@@ -312,9 +313,7 @@ def uutc_for_sample(sample, channel_md):
             prev_sample = index_start_sample
             prev_time = index_start_time
 
-    print('Sample number out of file')
-
-    return None
+    raise RuntimeError('Sample number out of file')
 
 
 def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
@@ -333,8 +332,7 @@ def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
     """
     # UUTC check
     if not uutc_check(uutc, channel_md):
-        print('uUTC time out of file')
-        return None
+        raise RuntimeError('uUTC time out of file')
 
     # Sampling freq
     fsamp = channel_md['section_2']['sampling_frequency']
@@ -358,9 +356,11 @@ def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
                 # Check for discontinuity
                 time_diff = index_start_time - prev_time
                 if (time_diff / 1e6)*fsamp > prev_n_samples:
-                    print('uUTC time at discontinuity,',
-                          'returning the first sample after dicontinuity',
-                          '(not inclusive while reading)')
+                    warn_str = ('uUTC time at discontinuity,',
+                                'returning the first sample after',
+                                'dicontinuity (not inclusive)')
+                    warnings.warn(warn_str, RuntimeWarning)
+
                     if return_discont_distance:
                         discont_dist = (((index_start_time-uutc) / 1000000)
                                         * fsamp)
@@ -471,17 +471,21 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
 
     data_list = []
 
-    if (isinstance(sample_map[0], list)
-            and isinstance(sample_map[0], np.ndarray)):
+    if not isinstance(channel_map, (list, np.ndarray, str)):
+        raise TypeError('Channel map has to be list, array or str')
+
+    if isinstance(channel_map, str):
+        channel_map = [channel_map]
+
+    if isinstance(sample_map[0], (float, int)):
         sample_map = [sample_map]
 
     if len(sample_map) == 1:
         sample_map = sample_map*len(channel_map)
 
     if len(sample_map) != len(channel_map):
-        print('Length of sample map is not equivalent',
-              'to the length of channel map')
-        return None
+        raise RuntimeError('Length of sample map is not equivalent',
+                           'to the length of channel map')
 
     for channel, sample_ss in zip(channel_map, sample_map):
         channel_path = session_path+'/'+channel+'.timd'
@@ -515,17 +519,21 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
 
     data_list = []
 
-    if (isinstance(uutc_map[0], list)
-            and isinstance(uutc_map[0], np.ndarray)):
+    if not isinstance(channel_map, (list, np.ndarray, str)):
+        raise TypeError('Channel map has to be list, array or str')
+
+    if isinstance(channel_map, str):
+        channel_map = [channel_map]
+
+    if isinstance(uutc_map[0], (float, int)):
         uutc_map = [uutc_map]
 
     if len(uutc_map) == 1:
         uutc_map = uutc_map*len(channel_map)
 
     if len(uutc_map) != len(uutc_map):
-        print('Length of sample map is not equivalent',
-              'to the length of channel map')
-        return None
+        raise RuntimeError('Length of uutc map is not equivalent',
+                           'to the length of channel map')
 
     for channel, uutc_ss in zip(channel_map, uutc_map):
         channel_path = session_path+'/'+channel+'.timd'
