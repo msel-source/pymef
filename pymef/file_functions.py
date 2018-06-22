@@ -620,13 +620,14 @@ def read_ts_channel_basic_info(session_path, password):
     for channel in channel_list:
 
         channel_md = session_ts_md['time_series_channels'][channel]
+        channel_md_spec = channel_md['channel_specific_metadata']
         channel_md_s2 = channel_md['section_2']
 
         fsamp = channel_md_s2['sampling_frequency']
         nsamp = channel_md_s2['number_of_samples']
         ufact = channel_md_s2['units_conversion_factor']
         unit = channel_md_s2['units_description']
-        start_time = channel_md_s2['earliest_start_time']
+        start_time = channel_md_spec['earliest_start_time']
         ch_desc = channel_md_s2['channel_description']
 
         channel_infos.append({'name': channel, 'fsamp': fsamp, 'nsamp': nsamp,
