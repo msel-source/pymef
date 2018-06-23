@@ -176,8 +176,8 @@ def detect_corrupt_data(session_path, password=None, repair=False):
                     f_dat.write(whole_file)
 
                 else:
-                    warn_str = ("Data file larger than metadata information",
-                                path_to_data)
+                    warn_str = ("Data file larger than metadata information"
+                                + path_to_data)
                     warnings.warn(warn_str, RuntimeWarning)
 
             f_dat.close()
@@ -356,8 +356,8 @@ def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
                 # Check for discontinuity
                 time_diff = index_start_time - prev_time
                 if (time_diff / 1e6)*fsamp > prev_n_samples:
-                    warn_str = ('uUTC time at discontinuity,',
-                                'returning the first sample after',
+                    warn_str = ('uUTC time at discontinuity,'
+                                'returning the first sample after'
                                 'dicontinuity (not inclusive)')
                     warnings.warn(warn_str, RuntimeWarning)
 
@@ -484,7 +484,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
         sample_map = sample_map*len(channel_map)
 
     if len(sample_map) != len(channel_map):
-        raise RuntimeError('Length of sample map is not equivalent',
+        raise RuntimeError('Length of sample map is not equivalent'
                            'to the length of channel map')
 
     for channel, sample_ss in zip(channel_map, sample_map):
@@ -532,7 +532,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
         uutc_map = uutc_map*len(channel_map)
 
     if len(uutc_map) != len(uutc_map):
-        raise RuntimeError('Length of uutc map is not equivalent',
+        raise RuntimeError('Length of uutc map is not equivalent'
                            'to the length of channel map')
 
     for channel, uutc_ss in zip(channel_map, uutc_map):
