@@ -477,7 +477,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
     if isinstance(channel_map, str):
         channel_map = [channel_map]
 
-    if isinstance(sample_map[0], (float, int)):
+    if not isinstance(sample_map[0], (list, np.ndarray)):
         sample_map = [sample_map]
 
     if len(sample_map) == 1:
@@ -525,7 +525,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
     if isinstance(channel_map, str):
         channel_map = [channel_map]
 
-    if isinstance(uutc_map[0], (float, int)):
+    if not isinstance(uutc_map[0], (list, np.ndarray)):
         uutc_map = [uutc_map]
 
     if len(uutc_map) == 1:
