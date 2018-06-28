@@ -278,146 +278,10 @@ def annonimize_session(session_path, password_1, password_2,
     return 0
 
 
-def uutc_for_sample(sample, channel_md):
-    """
-    Convert sample to uUTC time\n
-
-    Parameters:\n
-    -------------\n
-    sample - sample to be converted\n
-    channel_md - channel metadata dictionary\n
-
-    Returns:\n
-    ----------\n
-    uUTC time
-    """
-    # Sampling freq
-    fsamp = channel_md['section_2']['sampling_frequency']
-
-    seg_list = list(channel_md['segments'])
-    seg_list.sort()
-
-    prev_sample = 0
-    prev_time = channel_md['segments'][seg_list[0]]['indices'][0]['start_time']
-
-    for segment in seg_list:
-        indices = channel_md['segments'][segment]['indices']
-        for index in indices:
-            index_start_time = index['start_time']
-            index_start_sample = index['start_sample']
-
-            if index_start_sample > sample:
-                return int(prev_time
-                           + np.ceil(((sample - prev_sample) / fsamp)))
-
-            prev_sample = index_start_sample
-            prev_time = index_start_time
-
-    raise RuntimeError('Sample number out of file')
-
-
-def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
-    """
-    Convert uUTC to sample time\n
-
-    Parameters:\n
-    -------------\n
-    uUTC - sample to be converted\n
-    channel_md - channel metadata dictionary\n
-    return_discont_distance - flag if return distance to neares discontinuity\n
-
-    Returns:\n
-    ----------\n
-    sample
-    """
-    # UUTC check
-    if not uutc_check(uutc, channel_md):
-        raise RuntimeError('uUTC time out of file')
-
-    # Sampling freq
-    fsamp = channel_md['section_2']['sampling_frequency']
-
-    seg_list = list(channel_md['segments'])
-    seg_list.sort()
-
-    prev_sample = 0
-    first_index = channel_md['segments'][seg_list[0]]['indices'][0]
-    prev_n_samples = first_index['number_of_samples']
-    prev_time = first_index['start_time']
-
-    for segment in seg_list:
-        indices = channel_md['segments'][segment]['indices']
-        for index in indices:
-            index_start_time = index['start_time']
-            index_start_sample = index['start_sample']
-            index_n_samples = index['number_of_samples']
-
-            if index_start_time > uutc:
-                # Check for discontinuity
-                time_diff = index_start_time - prev_time
-                if (time_diff / 1e6)*fsamp > prev_n_samples:
-                    warn_str = ('uUTC time at discontinuity,'
-                                'returning the first sample after'
-                                'dicontinuity (not inclusive)')
-                    warnings.warn(warn_str, RuntimeWarning)
-
-                    if return_discont_distance:
-                        discont_dist = (((index_start_time-uutc) / 1000000)
-                                        * fsamp)
-                        return (int(index_start_sample),
-                                discont_dist)
-
-                    return int(index_start_sample)
-
-                if return_discont_distance:
-                    return int(prev_sample
-                               + ((uutc - prev_time) / 1000000)
-                               * fsamp), 0
-
-                return int(prev_sample
-                           + ((uutc - prev_time) / 1000000)
-                           * fsamp)
-
-            prev_sample = index_start_sample
-            prev_time = index_start_time
-            prev_n_samples = index_n_samples
-
-    # Ran out of indices
-    if return_discont_distance:
-        return int(prev_sample
-                   + ((uutc - prev_time) / 1000000)
-                   * fsamp), 0
-    return None
-
-
-def uutc_check(uutc, channel_md):
-    """
-    Check if the uUTC is in the recording.\n
-
-    Parameters:\n
-    -----------\n
-    uutc - timestamp\n
-    channel_md - channel metadata dict\n
-
-    Returns:\n
-    --------\n
-    True if inside the recording
-    """
-
-    channel_spec_md = channel_md['channel_specific_metadata']
-
-    # Get the uUTC start
-    chan_uutc_start = channel_spec_md['earliest_start_time']
-    # Get the uUTC stop
-    chan_uutc_stop = channel_spec_md['latest_end_time']
-
-    return uutc >= chan_uutc_start and uutc <= chan_uutc_stop
-
-
 def get_toc(channel_md):
 
     """
-    Processes indices and returns discontinuities accross segments
+    Returns discontinuities accross segments
 
     Parameters:
     -----------
@@ -449,6 +313,99 @@ def get_toc(channel_md):
                    * 1e6)
 
     return toc
+
+
+def uutc_for_sample(sample, channel_md):
+    """
+    Convert sample to uUTC time\n
+
+    Parameters:\n
+    -------------\n
+    sample - sample to be converted\n
+    channel_md - channel metadata dictionary\n
+
+    Returns:\n
+    ----------\n
+    uUTC time
+    """
+
+    toc = get_toc(channel_md)
+    fsamp = channel_md['section_2']['sampling_frequency']
+    nsamp = channel_md['section_2']['number_of_samples']
+
+    if sample > nsamp:
+        raise RuntimeError('Sample '+str(sample)+' is too large. '
+                           'Number of samples is '+str(nsamp))
+
+    toc_idx = np.where(toc[2] <= sample)[0][-1]
+    sample_diff = sample - toc[2][toc_idx]
+
+    return int(toc[3][toc_idx] + (sample_diff/fsamp) * 1e6)
+
+
+def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
+    """
+    Convert uUTC to sample time\n
+
+    Parameters:\n
+    -------------\n
+    uUTC - sample to be converted\n
+    channel_md - channel metadata dictionary\n
+    return_discont_distance - flag if return distance to neares discontinuity\n
+
+    Returns:\n
+    ----------\n
+    sample
+    """
+    # UUTC check
+    if not uutc_check(uutc, channel_md):
+        raise RuntimeError('uUTC time out of file')
+
+    toc = get_toc(channel_md)
+    fsamp = channel_md['section_2']['sampling_frequency']
+    nsamp = channel_md['section_2']['number_of_samples']
+
+    toc_idx = np.where(toc[3] <= uutc)[0][-1]
+    uutc_diff = uutc - toc[3][toc_idx]
+    sample_diff = int(((uutc_diff/1e6)*fsamp) + 0.5)
+
+    # If we are in the last block we do not need to check disconts.
+    if toc_idx == len(toc[3])-1:
+        return toc[2][toc_idx] + sample_diff
+
+    block_len = toc[2][toc_idx+1] - toc[2][toc_idx]
+    if sample_diff >= block_len:
+        warn_str = ('uUTC time at discontinuity,'
+                    'returning the first sample after'
+                    'dicontinuity (not inclusive)')
+        warnings.warn(warn_str, RuntimeWarning)
+        return toc[2][toc_idx+1]
+    else:
+        return toc[2][toc_idx] + sample_diff
+
+
+def uutc_check(uutc, channel_md):
+    """
+    Check if the uUTC is in the recording.\n
+
+    Parameters:\n
+    -----------\n
+    uutc - timestamp\n
+    channel_md - channel metadata dict\n
+
+    Returns:\n
+    --------\n
+    True if inside the recording
+    """
+
+    channel_spec_md = channel_md['channel_specific_metadata']
+
+    # Get the uUTC start
+    chan_uutc_start = channel_spec_md['earliest_start_time']
+    # Get the uUTC stop
+    chan_uutc_stop = channel_spec_md['latest_end_time']
+
+    return uutc >= chan_uutc_start and uutc <= chan_uutc_stop
 
 
 def read_ts_channels_sample(session_path, password, channel_map, sample_map):
