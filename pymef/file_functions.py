@@ -21,6 +21,7 @@ import os
 import struct
 import shutil
 import warnings
+from multiprocessing import Pool
 
 import numpy as np
 
@@ -363,7 +364,6 @@ def sample_for_uutc(uutc, channel_md, return_discont_distance=False):
 
     toc = get_toc(channel_md)
     fsamp = channel_md['section_2']['sampling_frequency']
-    nsamp = channel_md['section_2']['number_of_samples']
 
     toc_idx = np.where(toc[3] <= uutc)[0][-1]
     uutc_diff = uutc - toc[3][toc_idx]
@@ -408,7 +408,12 @@ def uutc_check(uutc, channel_md):
     return uutc >= chan_uutc_start and uutc <= chan_uutc_stop
 
 
-def read_ts_channels_sample(session_path, password, channel_map, sample_map):
+def _sample_arg_merger(args):
+    return pymef3_file.read_mef_ts_data(*args)
+
+
+def read_ts_channels_sample(session_path, password, channel_map, sample_map,
+                            process_n=None):
     """
     Reads desired channels in desired sample segment
 
@@ -416,10 +421,11 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
     -----------
     session_path - path to mef3 session (.mefd)\n
     password - mef3 data password\n
-    channel_map - list of channels to be read\n
+    channel_map - channel or list of channels to be read\n
     sample_map - list of [start,stop] samples to be loaded that correspond\n
         to channel_map. if there is only one entry the same range is applied\n
         to all channels\n
+    process_n - how many processes use for reading (defualt None)\n
 
     Returns:
     --------
@@ -444,6 +450,23 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
         raise RuntimeError('Length of sample map is not equivalent'
                            'to the length of channel map')
 
+    if process_n is not None and not isinstance(process_n, int):
+        raise RuntimeError('Process_n argument must be Nnoe or int')
+
+    if process_n is not None:
+        mp = Pool(process_n)
+
+        iterator = []
+        for channel, sample_ss in zip(channel_map, sample_map):
+
+            channel_path = session_path+'/'+channel+'.timd'
+            iterator.append([channel_path, password,
+                             sample_ss[0], sample_ss[1]])
+
+        data_list = mp.map(_sample_arg_merger, iterator)
+        mp.terminate()
+        return data_list
+
     for channel, sample_ss in zip(channel_map, sample_map):
         channel_path = session_path+'/'+channel+'.timd'
 
@@ -454,7 +477,12 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map):
     return data_list
 
 
-def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
+def _uutc_arg_merger(args):
+    return pymef3_file.read_mef_ts_data(*args)
+
+
+def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
+                          process_n=None):
     """
     Reads desired channels in desired time segment. Missing data at
     discontinuities are filled with NaNs.
@@ -464,10 +492,11 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
     session_md - mef3 session metadata dictionary\n
     session_path - path to mef3 session (.mefd)\n
     password - mef3 data password\n
-    channel_map - list of channels to be read\n
+    channel_map - channel or list of channels to be read\n
     uutc_map - list of [start,stop] uutc times to be loaded that correspond\n
        to channel_map. if there is only one entry the same range is applied\n
        to all channels\n
+    process_n - how many processes use for reading (defualt None)\n
 
     Returns:
     --------
@@ -491,6 +520,23 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map):
     if len(uutc_map) != len(uutc_map):
         raise RuntimeError('Length of uutc map is not equivalent'
                            'to the length of channel map')
+
+    if process_n is not None and not isinstance(process_n, int):
+        raise RuntimeError('Process_n argument must be Nnoe or int')
+
+    if process_n is not None:
+        mp = Pool(process_n)
+
+        iterator = []
+        for channel, sample_ss in zip(channel_map, uutc_map):
+
+            channel_path = session_path+'/'+channel+'.timd'
+            iterator.append([channel_path, password,
+                             sample_ss[0], sample_ss[1], True])
+
+        data_list = mp.map(_uutc_arg_merger, iterator)
+        mp.terminate()
+        return data_list
 
     for channel, uutc_ss in zip(channel_map, uutc_map):
         channel_path = session_path+'/'+channel+'.timd'
