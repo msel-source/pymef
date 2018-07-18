@@ -2244,7 +2244,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
     if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
     {
-        PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
+        PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx);
         PyErr_Occurred();
         if (channel->number_of_segments > 0)
             channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
@@ -2294,7 +2294,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         // (normally the offset is removed during the decoding process)
 
         if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)){
-            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
+            PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx+i);
             PyErr_Occurred();
             if (channel->number_of_segments > 0)
                 channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
@@ -2333,7 +2333,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
         if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
         {
-            PyErr_SetString(PyExc_RuntimeError, "RED block has 0 bytes, or CRC failed, data likely corrupt...");
+            PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx+i);
             PyErr_Occurred();
             if (channel->number_of_segments > 0)
                 channel->segments[0].metadata_fps->directives.free_password_data = MEF_TRUE;
