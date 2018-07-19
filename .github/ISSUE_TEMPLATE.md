@@ -16,4 +16,4 @@ PASTE TRACEBACK HERE
 
 ```
 
-## Pymef version
+## Pymef version and platform
