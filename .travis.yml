@@ -32,6 +32,6 @@ deploy:
   script:
     - python -m twine upload -u cimba -p $TWINE_PASSWORD $DIST_FOLD/*
   skip_cleanup: true
-  #on:
-  #  tags: true
+  on:
+    tags: true
   
