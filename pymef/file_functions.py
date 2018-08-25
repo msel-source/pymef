@@ -438,8 +438,11 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         raise TypeError('Channel map has to be list, array or str')
 
     if isinstance(channel_map, str):
+        is_chan_str = True
         channel_map = [channel_map]
-
+    else:
+        is_chan_str = False
+        
     if not isinstance(sample_map[0], (list, np.ndarray)):
         sample_map = [sample_map]
 
@@ -465,7 +468,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
 
         data_list = mp.map(_sample_arg_merger, iterator)
         mp.terminate()
-        if len(data_list) == 1:
+        if is_chan_str:
             return data_list[0]
         else:
             return data_list
@@ -477,7 +480,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
                                             sample_ss[0], sample_ss[1])
         data_list.append(data)
     
-    if len(data_list) == 1:
+    if is_chan_str:
         return data_list[0]
     else:
         return data_list
@@ -515,7 +518,10 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
         raise TypeError('Channel map has to be list, array or str')
 
     if isinstance(channel_map, str):
+        is_chan_str = True
         channel_map = [channel_map]
+    else:
+        is_chan_str = False
 
     if not isinstance(uutc_map[0], (list, np.ndarray)):
         uutc_map = [uutc_map]
@@ -542,7 +548,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
 
         data_list = mp.map(_uutc_arg_merger, iterator)
         mp.terminate()
-        if len(data_list) == 1:
+        if is_chan_str:
             return data_list[0]
         else:
             return data_list
@@ -554,7 +560,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
                                             uutc_ss[0], uutc_ss[1], True)
         data_list.append(data)
 
-    if len(data_list) == 1:
+    if is_chan_str:
         return data_list[0]
     else:
         return data_list
