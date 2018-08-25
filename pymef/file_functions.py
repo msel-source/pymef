@@ -465,7 +465,10 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
 
         data_list = mp.map(_sample_arg_merger, iterator)
         mp.terminate()
-        return data_list
+        if len(data_list) == 1:
+            return data_list[0]
+        else:
+            return data_list
 
     for channel, sample_ss in zip(channel_map, sample_map):
         channel_path = session_path+'/'+channel+'.timd'
@@ -473,8 +476,11 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         data = pymef3_file.read_mef_ts_data(channel_path, password,
                                             sample_ss[0], sample_ss[1])
         data_list.append(data)
-
-    return data_list
+    
+    if len(data_list) == 1:
+        return data_list[0]
+    else:
+        return data_list
 
 
 def _uutc_arg_merger(args):
@@ -536,7 +542,10 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
 
         data_list = mp.map(_uutc_arg_merger, iterator)
         mp.terminate()
-        return data_list
+        if len(data_list) == 1:
+            return data_list[0]
+        else:
+            return data_list
 
     for channel, uutc_ss in zip(channel_map, uutc_map):
         channel_path = session_path+'/'+channel+'.timd'
@@ -545,7 +554,10 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
                                             uutc_ss[0], uutc_ss[1], True)
         data_list.append(data)
 
-    return data_list
+    if len(data_list) == 1:
+        return data_list[0]
+    else:
+        return data_list
 
 
 def change_channel_name(session_path, orig_channel_name, new_channel_name):
