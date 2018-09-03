@@ -3,6 +3,7 @@
 set -e
 
 brew update
+brew list pyenv &>/dev/null || brew install pyenv
 brew outdated pyenv || brew upgrade pyenv
 export PATH=~/.pyenv/shims:$PATH
 for PYVER in "3.6.3"; do
