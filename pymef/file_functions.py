@@ -432,6 +432,9 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
     data - numpy array [channels,samples]\n
     """
 
+    # Check password
+    check_session_password(session_path, password)
+
     data_list = []
 
     if not isinstance(channel_map, (list, np.ndarray, str)):
@@ -442,7 +445,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         channel_map = [channel_map]
     else:
         is_chan_str = False
-        
+
     if not isinstance(sample_map[0], (list, np.ndarray)):
         sample_map = [sample_map]
 
@@ -479,7 +482,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         data = pymef3_file.read_mef_ts_data(channel_path, password,
                                             sample_ss[0], sample_ss[1])
         data_list.append(data)
-    
+
     if is_chan_str:
         return data_list[0]
     else:
@@ -511,6 +514,9 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
     --------
     data - numpy array [channels,samples]\n
     """
+
+    # Check password
+    check_session_password(session_path, password)
 
     data_list = []
 
@@ -639,6 +645,9 @@ def read_ts_channel_basic_info(session_path, password):
     channel_list\n
     """
 
+    # Check password
+    check_session_password(session_path, password)
+
     session_ts_md = pymef3_file.read_mef_session_metadata(session_path,
                                                           password, False)
 
@@ -665,3 +674,31 @@ def read_ts_channel_basic_info(session_path, password):
                               'channel_description': ch_desc})
 
     return channel_infos
+
+
+def check_session_password(session_path, password):
+    """
+    Checks provided password on all files in the session
+
+    Parameters:
+    -----------
+    session_path - path to mef3 session\n
+    password - mef3 data password\n
+
+    Returns:
+    --------
+    None on success]n
+    """
+    mef_files = []
+    for path, subdirs, files in os.walk(session_path):
+        for name in files:
+            mef_files.append(os.path.join(path, name))
+
+    results = np.zeros(len(mef_files))
+    for i, mef_file in enumerate(mef_files):
+        results[i] = pymef3_file.check_mef_password(mef_file, password)
+
+    if np.any(results < 0):
+        raise RuntimeError('MEF password is invalid')
+
+    return
