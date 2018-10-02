@@ -432,6 +432,10 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
     data - numpy array [channels,samples]\n
     """
 
+    # Check if path exists
+    if not os.path.exists(session_path):
+        raise FileNotFoundError(session_path+' does not exist!')
+
     # Check password
     check_session_password(session_path, password)
 
@@ -514,6 +518,10 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
     --------
     data - numpy array [channels,samples]\n
     """
+
+    # Check if path exists
+    if not os.path.exists(session_path):
+        raise FileNotFoundError(session_path+' does not exist!')
 
     # Check password
     check_session_password(session_path, password)
@@ -644,6 +652,10 @@ def read_ts_channel_basic_info(session_path, password):
     --------
     channel_list\n
     """
+
+    # Check if path exists
+    if not os.path.exists(session_path):
+        raise FileNotFoundError(session_path+' does not exist!')
 
     # Check password
     check_session_password(session_path, password)
