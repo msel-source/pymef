@@ -436,9 +436,6 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
     if not os.path.exists(session_path):
         raise FileNotFoundError(session_path+' does not exist!')
 
-    # Check password
-    check_session_password(session_path, password)
-
     data_list = []
 
     if not isinstance(channel_map, (list, np.ndarray, str)):
@@ -470,6 +467,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         for channel, sample_ss in zip(channel_map, sample_map):
 
             channel_path = session_path+'/'+channel+'.timd'
+            check_password(channel_path, password)
             iterator.append([channel_path, password,
                              sample_ss[0], sample_ss[1]])
 
@@ -523,9 +521,6 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
     if not os.path.exists(session_path):
         raise FileNotFoundError(session_path+' does not exist!')
 
-    # Check password
-    check_session_password(session_path, password)
-
     data_list = []
 
     if not isinstance(channel_map, (list, np.ndarray, str)):
@@ -557,6 +552,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
         for channel, sample_ss in zip(channel_map, uutc_map):
 
             channel_path = session_path+'/'+channel+'.timd'
+            check_password(channel_path, password)
             iterator.append([channel_path, password,
                              sample_ss[0], sample_ss[1], True])
 
@@ -658,7 +654,7 @@ def read_ts_channel_basic_info(session_path, password):
         raise FileNotFoundError(session_path+' does not exist!')
 
     # Check password
-    check_session_password(session_path, password)
+    check_password(session_path, password)
 
     session_ts_md = pymef3_file.read_mef_session_metadata(session_path,
                                                           password, False)
@@ -688,13 +684,13 @@ def read_ts_channel_basic_info(session_path, password):
     return channel_infos
 
 
-def check_session_password(session_path, password):
+def check_password(mefpath, password):
     """
     Checks provided password on all files in the session
 
     Parameters:
     -----------
-    session_path - path to mef3 session\n
+    mefpath - path to mef3 direcory\n
     password - mef3 data password\n
 
     Returns:
@@ -702,7 +698,7 @@ def check_session_password(session_path, password):
     None on success]n
     """
     mef_files = []
-    for path, subdirs, files in os.walk(session_path):
+    for path, subdirs, files in os.walk(mefpath):
         for name in files:
             mef_files.append(os.path.join(path, name))
 
