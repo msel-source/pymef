@@ -480,7 +480,7 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
 
     for channel, sample_ss in zip(channel_map, sample_map):
         channel_path = session_path+'/'+channel+'.timd'
-
+        check_password(channel_path, password)
         data = pymef3_file.read_mef_ts_data(channel_path, password,
                                             sample_ss[0], sample_ss[1])
         data_list.append(data)
@@ -565,7 +565,7 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
 
     for channel, uutc_ss in zip(channel_map, uutc_map):
         channel_path = session_path+'/'+channel+'.timd'
-
+        check_password(channel_path, password)
         data = pymef3_file.read_mef_ts_data(channel_path, password,
                                             uutc_ss[0], uutc_ss[1], True)
         data_list.append(data)
