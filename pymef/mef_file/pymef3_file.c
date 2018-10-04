@@ -2452,6 +2452,7 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
 
     // Type independent fields
     temp_o = PyDict_GetItemString(tmd2_dict,"channel_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2463,6 +2464,7 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     }
 
     temp_o = PyDict_GetItemString(tmd2_dict,"session_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2474,11 +2476,13 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     }
 
     temp_o = PyDict_GetItemString(tmd2_dict,"recording_duration");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->recording_duration = PyLong_AsLong(temp_o);
 
     // Time series specific fields
     temp_o = PyDict_GetItemString(tmd2_dict,"reference_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2490,34 +2494,42 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     }
 
     temp_o = PyDict_GetItemString(tmd2_dict,"acquisition_channel_number");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->acquisition_channel_number = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"sampling_frequency");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->sampling_frequency = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"low_frequency_filter_setting");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->low_frequency_filter_setting = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"high_frequency_filter_setting");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->high_frequency_filter_setting = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"notch_filter_frequency_setting");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->notch_filter_frequency_setting = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"AC_line_frequency");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->AC_line_frequency = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"units_conversion_factor");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->units_conversion_factor = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"units_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2532,54 +2544,67 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     // something bad happens and one would want to fix stuff
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_native_sample_value");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_native_sample_value = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"minimum_native_sample_value");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->minimum_native_sample_value = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"start_sample");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->start_sample = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_samples");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->number_of_samples = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_blocks");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->number_of_blocks = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_block_bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_block_bytes = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_block_samples");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_block_samples = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_difference_bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_difference_bytes = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"block_interval");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->block_interval = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_discontinuities");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->number_of_discontinuities = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_blocks");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_contiguous_blocks = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_block_bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_contiguous_block_bytes = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_samples");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         tmd2->maximum_contiguous_samples = PyLong_AsLong(temp_o);
 
@@ -2599,6 +2624,7 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
 
     // Type independent fields
     temp_o = PyDict_GetItemString(vmd2_dict,"channel_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2610,6 +2636,7 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     }
 
     temp_o = PyDict_GetItemString(vmd2_dict,"session_description");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2621,31 +2648,38 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     }
 
     temp_o = PyDict_GetItemString(vmd2_dict,"recording_duration");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->recording_duration = PyLong_AsLong(temp_o);
 
     // Video specific fields
     temp_o = PyDict_GetItemString(vmd2_dict,"horizontal_resolution");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->horizontal_resolution = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"vertical_resolution");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->vertical_resolution = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"frame_rate");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->frame_rate = PyFloat_AsDouble(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"number_of_clips");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->number_of_clips = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"maximum_clip_bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->maximum_clip_bytes = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"video_format");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2657,6 +2691,7 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     }
 
     temp_o = PyDict_GetItemString(vmd2_dict,"video_file_CRC");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vmd2->video_file_CRC = PyLong_AsLong(temp_o);
 
@@ -2669,26 +2704,32 @@ void    map_python_vi(PyObject *vi_dict, VIDEO_INDEX *vi)
     PyObject    *temp_o;
 
     temp_o = PyDict_GetItemString(vi_dict,"start_time");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->start_time = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"end_time");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->end_time = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"start_frame");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->start_frame = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"end_frame");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->end_frame = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"file_offset");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->file_offset = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"clip_bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         vi->clip_bytes = PyLong_AsLong(temp_o);
 
@@ -2706,30 +2747,35 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(md3_dict,"recording_time_offset");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         md3->recording_time_offset = PyLong_AsLong(temp_o);
     else
         md3->recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_start_time");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         md3->DST_start_time = PyLong_AsLong(temp_o);
     else
         md3->DST_start_time = METADATA_DST_START_TIME_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_end_time");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         md3->DST_end_time = PyLong_AsLong(temp_o);
     else
         md3->DST_end_time = METADATA_DST_END_TIME_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"GMT_offset");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         md3->GMT_offset = PyLong_AsLong(temp_o);
     else
         md3->GMT_offset = GMT_OFFSET_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_name_1");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2741,6 +2787,7 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_name_2");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2752,6 +2799,7 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"subject_ID");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2763,6 +2811,7 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
     }
 
     temp_o = PyDict_GetItemString(md3_dict,"recording_location");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2801,22 +2850,27 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
     }
 
     temp_o = PyDict_GetItemString(rh_dict,"version_major");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         rh->version_major = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"version_minor");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         rh->version_minor = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"encryption");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         rh->encryption = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"bytes");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         rh->bytes = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"time");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         rh->time = PyLong_AsLong(temp_o);
     }
@@ -2831,6 +2885,7 @@ void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type)
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(EDFA_type_dict,"duration");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o !=NULL)
         r_type->duration = PyLong_AsLong(temp_o);
 
@@ -2844,6 +2899,7 @@ void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type)
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(LNTP_type_dict,"length");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->length = PyLong_AsLong(temp_o);
 
@@ -2859,26 +2915,32 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
 
     // Assign from dict to struct
     temp_o = PyDict_GetItemString(Siez_type_dict,"earliest_onset");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->earliest_onset = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"latest_offset");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->latest_offset = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"duration");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->duration = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"number_of_channels");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->number_of_channels = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"onset_code");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->onset_code = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"marker_name_1");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2890,6 +2952,7 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"marker_name_2");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2901,6 +2964,7 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"annotation");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2952,6 +3016,7 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     // Assign from dict to struct
     temp_UTF_str = NULL;
     temp_o = PyDict_GetItemString(CSti_type_dict,"task_type");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2963,10 +3028,12 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_duration");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->stimulus_duration = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_type");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -2978,6 +3045,7 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"patient_response");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -3001,22 +3069,32 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
     // Assign from dict to struct
     temp_UTF_str = NULL;
     temp_o = PyDict_GetItemString(ESti_type_dict,"amplitude");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->amplitude = PyFloat_AsDouble(temp_o);
+
     temp_o = PyDict_GetItemString(ESti_type_dict,"frequency");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->frequency = PyFloat_AsDouble(temp_o);
+
     temp_o = PyDict_GetItemString(ESti_type_dict,"pulse_width");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->pulse_width = PyLong_AsLong(temp_o);
+
     temp_o = PyDict_GetItemString(ESti_type_dict,"ampunit_code");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->ampunit_code = PyLong_AsLong(temp_o);
+
     temp_o = PyDict_GetItemString(ESti_type_dict,"mode_code");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
         r_type->mode_code = PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"waveform");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -3028,6 +3106,7 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"anode");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
@@ -3039,6 +3118,7 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
     }
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"catode");
+    if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
         #if PY_MAJOR_VERSION >= 3
             temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
