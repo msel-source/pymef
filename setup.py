@@ -47,4 +47,5 @@ setup(name="pymef",
                    'Topic :: Scientific/Engineering'],
       packages=["pymef", "pymef.mef_file"],
       ext_modules=[MEF_FILE_EXT],
-      include_dirs=[numpy.get_include()])
+      include_dirs=[numpy.get_include()],
+      test_suite='tests')
