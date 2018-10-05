@@ -28,9 +28,13 @@ Installation
 
 To install please use:
 ```bash
+pip install pymef
+```
+
+To install from source:
+```bash
 python setup.py install
 ```
-(Note: Will be available through pip in the future.)
 
 Documentation
 -------------
