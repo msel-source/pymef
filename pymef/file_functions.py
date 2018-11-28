@@ -467,6 +467,8 @@ def read_ts_channels_sample(session_path, password, channel_map, sample_map,
         for channel, sample_ss in zip(channel_map, sample_map):
 
             channel_path = session_path+'/'+channel+'.timd'
+            if not os.path.exists(channel_path):
+                raise FileNotFoundError(channel_path+' does not exist!')
             check_password(channel_path, password)
             iterator.append([channel_path, password,
                              sample_ss[0], sample_ss[1]])
@@ -552,6 +554,8 @@ def read_ts_channels_uutc(session_path, password, channel_map, uutc_map,
         for channel, sample_ss in zip(channel_map, uutc_map):
 
             channel_path = session_path+'/'+channel+'.timd'
+            if not os.path.exists(channel_path):
+                raise FileNotFoundError(channel_path+' does not exist!')
             check_password(channel_path, password)
             iterator.append([channel_path, password,
                              sample_ss[0], sample_ss[1], True])
