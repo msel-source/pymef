@@ -42,6 +42,7 @@ matrix:
       
   - os: windows
     language: c
+    before_install: chmod +x .ci/build_windows_wheels.sh
     env:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
