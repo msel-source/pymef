@@ -41,8 +41,13 @@ matrix:
       - pip install twine --user
       
   - os: windows
-    language: c
-    before_install: chmod +x .ci/build_windows_wheels.sh
+    language: sh
+    python: "3.6"
+    before_install:
+      - chmod +x .ci/build_windows_wheels.sh
+      - choco install python3 --version 3.6.3
+      - export PATH="/c/Python36:/c/Python36/Scripts:$PATH"
+      - python -m pip install --upgrade pip wheel
     env:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
