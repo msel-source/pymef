@@ -68,7 +68,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     RECORD_INDEX            *ri;
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOlllO!",
+    if (!PyArg_ParseTuple(args,"sOOLLLO!",
                           &py_file_path,
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -348,7 +348,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 }
 
                 // Pad to 16
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_LNTP_TYPE_CODE:
@@ -356,7 +356,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rh->bytes = MEFREC_LNTP_1_0_BYTES;
                 MEF_strncpy(ri->type_string, MEFREC_LNTP_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_LNTP_TYPE_STRING, TYPE_BYTES);
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_Seiz_TYPE_CODE:
@@ -389,7 +389,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                     #endif
                     rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_CSti_TYPE_CODE:
@@ -397,7 +397,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(ri->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_CSti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_CSti_1_0_BYTES;
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_ESti_TYPE_CODE:
@@ -406,7 +406,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_ESti_TYPE_STRING, TYPE_BYTES);
                 rh->bytes = MEFREC_ESti_1_0_BYTES;
 
-                //MEF_pad(rd, rh->bytes, 16); // unnecessary but kept for consistency
+                //(ui4) MEF_pad(rd, rh->bytes, 16); // unnecessary but kept for consistency
                 break;
 
             case MEFREC_SyLg_TYPE_CODE:
@@ -424,7 +424,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                     #endif
                     rh->bytes += MEF_strcpy((si1 *) rd, temp_str_bytes);
                 }
-                rh->bytes = MEF_pad(rd, rh->bytes, 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_UnRc_TYPE_CODE:
@@ -481,7 +481,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOllO!O!",
+    if (!PyArg_ParseTuple(args,"sOOLLO!O!",
                           &py_file_path,
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -498,7 +498,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // Apply recording offset
     temp_o = PyDict_GetItemString(py_md3_dict,"recording_time_offset");
     if (temp_o != NULL)
-        recording_time_offset = PyLong_AsLong(temp_o);
+        recording_time_offset = PyLong_AsLongLong(temp_o);
     else
         recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
     MEF_globals->recording_time_offset = recording_time_offset;
@@ -641,7 +641,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     si1     file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOllO!O!",
+    if (!PyArg_ParseTuple(args,"sOOLLO!O!",
                           &py_file_path,
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -802,14 +802,15 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
     si4     max_samp, min_samp;
-    si8     start_sample, ts_indices_file_bytes, samps_remaining, block_samps, file_offset;
+    ui4     block_samps;
+    si8     start_sample, ts_indices_file_bytes, samps_remaining, file_offset;
     si8     curr_time, time_inc;
 
     // Optional arguments
     lossy_flag = 0; // default - no lossy compression
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOlO|i",
+    if (!PyArg_ParseTuple(args,"sOOLO|i",
                           &py_file_path, // full path including segment
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -919,7 +920,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     tmd2->number_of_samples = (si8) PyArray_SHAPE(raw_data)[0];
     tmd2->recording_duration = (si8) (((sf8)tmd2->number_of_samples / (sf8) tmd2->sampling_frequency) * 1e6);
     tmd2->number_of_blocks = (si8) ceil((sf8) tmd2->number_of_samples / (sf8) samps_per_mef_block);
-    tmd2->maximum_block_samples = samps_per_mef_block;
+    tmd2->maximum_block_samples = (ui4) samps_per_mef_block;
 
     // Get the start time and end time from the metadata file
     uh->start_time = metadata_fps->universal_header->start_time;
@@ -963,13 +964,13 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // create new RED blocks
     curr_time = metadata_fps->universal_header->start_time;
-    time_inc = ((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6;
+    time_inc = (si8) (((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6);
     samps_remaining = tmd2->number_of_samples;
     block_header = rps->block_header;
     tsi = ts_idx_fps->time_series_indices;
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
-    block_samps = samps_per_mef_block;
+    block_samps = (ui4) samps_per_mef_block;
     file_offset = UNIVERSAL_HEADER_BYTES;
 
     start_sample = 0;
@@ -979,7 +980,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
         // check
         if (samps_remaining < block_samps)
-            block_samps = samps_remaining;
+            block_samps = (ui4) samps_remaining;
         block_header->number_of_samples = block_samps;
         block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
         curr_time += time_inc;
@@ -990,7 +991,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         // filtps->data_length = block_samps;
         // RED_filter(filtps);
 
-        samps_remaining -= block_samps;
+        samps_remaining -= (si8) block_samps;
 
         // compress
         (void) RED_encode(rps);
@@ -1002,7 +1003,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         file_offset += (tsi->block_bytes = block_header->block_bytes);
         tsi->start_time = block_header->start_time;
         tsi->start_sample = start_sample;
-        start_sample += (tsi->number_of_samples = block_samps);
+        start_sample += (tsi->number_of_samples = (si8) block_samps);
         RED_find_extrema(rps->original_ptr, block_samps, tsi);
         if (max_samp < tsi->maximum_sample_value)
             max_samp = tsi->maximum_sample_value;
@@ -1080,7 +1081,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     si8     v_indices_file_bytes;
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOllO!",
+    if (!PyArg_ParseTuple(args,"sOOLLO!",
                           &py_file_path, // full path including segment
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -1256,7 +1257,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     lossy_flag = 0; // default - no lossy compression
 
     // --- Parse the input --- 
-    if (!PyArg_ParseTuple(args,"sOOlllO|ii",
+    if (!PyArg_ParseTuple(args,"sOOLLLO|ii",
                           &py_file_path, // full path including segment
                           &py_pass_1_obj,
                           &py_pass_2_obj,
@@ -1369,7 +1370,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     tmd2->number_of_blocks +=  (si8) ceil((sf8) PyArray_SHAPE(raw_data)[0] / (sf8) samps_per_mef_block);
     if (samps_per_mef_block > tmd2->maximum_block_samples)
-        tmd2->maximum_block_samples = samps_per_mef_block;
+        tmd2->maximum_block_samples = (ui4) samps_per_mef_block;
 
     // Read in the indices file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
@@ -1399,7 +1400,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // TODO - take care of discontinuity flags here!!!
     // create new RED blocks
-    curr_time = recording_start_uutc_time;
+    curr_time = (sf8) recording_start_uutc_time;
     time_inc = ((sf8) samps_per_mef_block / tmd2->sampling_frequency) * (sf8) 1e6;
     samps_remaining = (si8) PyArray_SHAPE(raw_data)[0];
     block_header = rps->block_header;
@@ -1428,7 +1429,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         // check
         if (samps_remaining < block_samps)
             block_samps = samps_remaining;
-        block_header->number_of_samples = block_samps;
+        block_header->number_of_samples = (ui4) block_samps;
         block_header->start_time = (si8) (curr_time + 0.5);
         curr_time += time_inc;
 
@@ -1450,7 +1451,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         file_offset += (tsi->block_bytes = block_header->block_bytes);
         tsi->start_time = block_header->start_time;
         tsi->start_sample = start_sample;
-        start_sample += (tsi->number_of_samples = block_samps);
+        start_sample += (tsi->number_of_samples = (ui4) block_samps);
         RED_find_extrema(rps->original_ptr, block_samps, tsi);
         if (max_samp < tsi->maximum_sample_value)
             max_samp = tsi->maximum_sample_value;
@@ -1745,29 +1746,28 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     PyArrayObject    *py_array_out;
 
     // Method specific variables
-    si4     i, j;
+    ui4     i, j;
     // si4     offset_to_start_samp;
     //ui8     data_len;
     ui4 n_segments;
     CHANNEL    *channel;
-    si4 start_segment, end_segment;
+    ui4 start_segment, end_segment;
     
     si1  channel_path[MEF_FULL_FILE_NAME_BYTES];
     si8  total_samps;//, samp_counter_base;
     ui8  total_data_bytes;
-    ui8 start_idx, end_idx, num_blocks;
+    ui8 start_idx, end_idx, num_blocks, num_block_in_segment;
     ui1 *compressed_data_buffer, *cdp;
     si8  segment_start_sample, segment_end_sample;
     si8  segment_start_time, segment_end_time;
     si8  block_start_time;
-    si4 num_block_in_segment;
     FILE *fp;
     ui8 n_read, bytes_to_read;
     RED_PROCESSING_STRUCT   *rps;
     si4 sample_counter;
     ui4 max_samps;
     si4 *temp_data_buf;
-    si4 num_samps;
+    ui4 num_samps;
 
     si4 *decomp_data;
     sf8 *numpy_arr_data;
@@ -1842,10 +1842,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     end_samp = channel->metadata.time_series_section_2->number_of_samples;
     end_time = channel->latest_end_time;
     if (ostart != Py_None)
-        start_samp = start_time = PyLong_AsLong(ostart);
+        start_samp = start_time = PyLong_AsLongLong(ostart);
     
     if (oend != Py_None)
-        end_samp = end_time = PyLong_AsLong(oend);
+        end_samp = end_time = PyLong_AsLongLong(oend);
 
     // check if valid data range
     if (times_specified && start_time >= end_time)
@@ -1905,9 +1905,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // Determine the number of samples
     num_samps = 0;
     if (times_specified)
-        num_samps = (si4)(((end_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency);
+        num_samps = (ui4)(((end_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency);
     else
-        num_samps = end_samp - start_samp;
+        num_samps = (ui4) (end_samp - start_samp);
         
     // Allocate numpy array
     dims[0] = num_samps;
@@ -1921,7 +1921,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     numpy_arr_data = (sf8 *) PyArray_GETPTR1(py_array_out, 0);
     
     // Iterate through segments, looking for data that matches our criteria
-    n_segments = channel->number_of_segments;
+    n_segments = (ui4) channel->number_of_segments;
     start_segment = end_segment = -1;
     
     if (times_specified) {
@@ -2013,7 +2013,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
-        if (end_idx < (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+        if (end_idx < (ui8) (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
             total_samps += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
             total_data_bytes += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
@@ -2041,7 +2041,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // spans across segments
     else {
         // start with first segment
-        num_block_in_segment = channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+        num_block_in_segment = (ui8) channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
         total_samps += channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
         total_data_bytes +=  channel->segments[start_segment].time_series_data_fps->file_length -
@@ -2059,7 +2059,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
-            num_block_in_segment = channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+            num_block_in_segment = (ui8) channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_blocks;
             total_samps += channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
             total_data_bytes += channel->segments[i].time_series_data_fps->file_length -
             channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
@@ -2076,8 +2076,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         }
         
         // then last segment
-        num_block_in_segment = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
-        if (end_idx < (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+        num_block_in_segment = (ui8) channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
+        if (end_idx < (ui8) (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
             total_samps += channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].start_sample -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
             total_data_bytes += channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
@@ -2116,7 +2116,11 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
         fp = channel->segments[start_segment].time_series_data_fps->fp;
-        fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #ifdef _WIN32
+            _fseeki64(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #else
+            fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #endif
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
         if (n_read != total_data_bytes){
             PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
@@ -2133,7 +2137,11 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     else {
         // start with first segment
         fp = channel->segments[start_segment].time_series_data_fps->fp;
-        fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #ifdef _WIN32
+             _fseeki64(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #else
+            fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
+        #endif
         bytes_to_read = channel->segments[start_segment].time_series_data_fps->file_length -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
@@ -2171,7 +2179,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         
         // then last segment
         num_block_in_segment = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
-        if (end_idx < (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
+        if (end_idx < (ui8) (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
             fp = channel->segments[end_segment].time_series_data_fps->fp;
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
             bytes_to_read = channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
@@ -2259,9 +2267,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     
 
     if (times_specified)
-        offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
     else
-        offset_into_output_buffer = channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
+        offset_into_output_buffer = (si4) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
 
     // copy requested samples from first block to output buffer
     // TBD this loop could be optimized
@@ -2273,7 +2281,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             continue;
         }
         
-        if (offset_into_output_buffer >= num_samps)
+        if ((ui4) offset_into_output_buffer >= num_samps)
             break;
         
         *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
@@ -2362,7 +2370,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
                 continue;
             }
             
-            if (offset_into_output_buffer >= num_samps)
+            if ((ui4) offset_into_output_buffer >= num_samps)
                 break;
             
             *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
@@ -2478,7 +2486,7 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     temp_o = PyDict_GetItemString(tmd2_dict,"recording_duration");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->recording_duration = PyLong_AsLong(temp_o);
+        tmd2->recording_duration = PyLong_AsLongLong(temp_o);
 
     // Time series specific fields
     temp_o = PyDict_GetItemString(tmd2_dict,"reference_description");
@@ -2496,7 +2504,7 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     temp_o = PyDict_GetItemString(tmd2_dict,"acquisition_channel_number");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->acquisition_channel_number = PyLong_AsLong(temp_o);
+        tmd2->acquisition_channel_number = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"sampling_frequency");
     if (temp_o == Py_None) temp_o = NULL;
@@ -2556,57 +2564,57 @@ void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd
     temp_o = PyDict_GetItemString(tmd2_dict,"start_sample");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->start_sample = PyLong_AsLong(temp_o);
+        tmd2->start_sample = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_samples");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->number_of_samples = PyLong_AsLong(temp_o);
+        tmd2->number_of_samples = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_blocks");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->number_of_blocks = PyLong_AsLong(temp_o);
+        tmd2->number_of_blocks = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_block_bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_block_bytes = PyLong_AsLong(temp_o);
+        tmd2->maximum_block_bytes = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_block_samples");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_block_samples = PyLong_AsLong(temp_o);
+        tmd2->maximum_block_samples = PyLong_AsUnsignedLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_difference_bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_difference_bytes = PyLong_AsLong(temp_o);
+        tmd2->maximum_difference_bytes = PyLong_AsUnsignedLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"block_interval");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->block_interval = PyLong_AsLong(temp_o);
+        tmd2->block_interval = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"number_of_discontinuities");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->number_of_discontinuities = PyLong_AsLong(temp_o);
+        tmd2->number_of_discontinuities = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_blocks");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_contiguous_blocks = PyLong_AsLong(temp_o);
+        tmd2->maximum_contiguous_blocks = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_block_bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_contiguous_block_bytes = PyLong_AsLong(temp_o);
+        tmd2->maximum_contiguous_block_bytes = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(tmd2_dict,"maximum_contiguous_samples");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        tmd2->maximum_contiguous_samples = PyLong_AsLong(temp_o);
+        tmd2->maximum_contiguous_samples = PyLong_AsLongLong(temp_o);
 
     return;
 }
@@ -2650,18 +2658,18 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     temp_o = PyDict_GetItemString(vmd2_dict,"recording_duration");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->recording_duration = PyLong_AsLong(temp_o);
+        vmd2->recording_duration = PyLong_AsLongLong(temp_o);
 
     // Video specific fields
     temp_o = PyDict_GetItemString(vmd2_dict,"horizontal_resolution");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->horizontal_resolution = PyLong_AsLong(temp_o);
+        vmd2->horizontal_resolution = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"vertical_resolution");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->vertical_resolution = PyLong_AsLong(temp_o);
+        vmd2->vertical_resolution = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"frame_rate");
     if (temp_o == Py_None) temp_o = NULL;
@@ -2671,12 +2679,12 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     temp_o = PyDict_GetItemString(vmd2_dict,"number_of_clips");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->number_of_clips = PyLong_AsLong(temp_o);
+        vmd2->number_of_clips = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"maximum_clip_bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->maximum_clip_bytes = PyLong_AsLong(temp_o);
+        vmd2->maximum_clip_bytes = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vmd2_dict,"video_format");
     if (temp_o == Py_None) temp_o = NULL;
@@ -2693,7 +2701,7 @@ void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2)
     temp_o = PyDict_GetItemString(vmd2_dict,"video_file_CRC");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vmd2->video_file_CRC = PyLong_AsLong(temp_o);
+        vmd2->video_file_CRC = PyLong_AsUnsignedLong(temp_o);
 
     return;
 }
@@ -2706,32 +2714,32 @@ void    map_python_vi(PyObject *vi_dict, VIDEO_INDEX *vi)
     temp_o = PyDict_GetItemString(vi_dict,"start_time");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->start_time = PyLong_AsLong(temp_o);
+        vi->start_time = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"end_time");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->end_time = PyLong_AsLong(temp_o);
+        vi->end_time = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"start_frame");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->start_frame = PyLong_AsLong(temp_o);
+        vi->start_frame = PyLong_AsUnsignedLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"end_frame");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->end_frame = PyLong_AsLong(temp_o);
+        vi->end_frame = PyLong_AsUnsignedLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"file_offset");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->file_offset = PyLong_AsLong(temp_o);
+        vi->file_offset = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(vi_dict,"clip_bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        vi->clip_bytes = PyLong_AsLong(temp_o);
+        vi->clip_bytes = PyLong_AsLongLong(temp_o);
 
     return;
 }
@@ -2749,21 +2757,21 @@ void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3)
     temp_o = PyDict_GetItemString(md3_dict,"recording_time_offset");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        md3->recording_time_offset = PyLong_AsLong(temp_o);
+        md3->recording_time_offset = PyLong_AsLongLong(temp_o);
     else
         md3->recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_start_time");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        md3->DST_start_time = PyLong_AsLong(temp_o);
+        md3->DST_start_time = PyLong_AsLongLong(temp_o);
     else
         md3->DST_start_time = METADATA_DST_START_TIME_NO_ENTRY;
 
     temp_o = PyDict_GetItemString(md3_dict,"DST_end_time");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        md3->DST_end_time = PyLong_AsLong(temp_o);
+        md3->DST_end_time = PyLong_AsLongLong(temp_o);
     else
         md3->DST_end_time = METADATA_DST_END_TIME_NO_ENTRY;
 
@@ -2852,27 +2860,27 @@ void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh)
     temp_o = PyDict_GetItemString(rh_dict,"version_major");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        rh->version_major = PyLong_AsLong(temp_o);
+        rh->version_major = (ui1) PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"version_minor");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        rh->version_minor = PyLong_AsLong(temp_o);
+        rh->version_minor = (ui1) PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"encryption");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        rh->encryption = PyLong_AsLong(temp_o);
+        rh->encryption = (si1) PyLong_AsLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"bytes");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        rh->bytes = PyLong_AsLong(temp_o);
+        rh->bytes = PyLong_AsUnsignedLong(temp_o);
 
     temp_o = PyDict_GetItemString(rh_dict,"time");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL){
-        rh->time = PyLong_AsLong(temp_o);
+        rh->time = PyLong_AsLongLong(temp_o);
     }
 
     return;
@@ -2887,7 +2895,7 @@ void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type)
     temp_o = PyDict_GetItemString(EDFA_type_dict,"duration");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o !=NULL)
-        r_type->duration = PyLong_AsLong(temp_o);
+        r_type->duration = PyLong_AsLongLong(temp_o);
 
     return;
 }
@@ -2901,7 +2909,7 @@ void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type)
     temp_o = PyDict_GetItemString(LNTP_type_dict,"length");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->length = PyLong_AsLong(temp_o);
+        r_type->length = PyLong_AsLongLong(temp_o);
 
     return;
 }
@@ -2917,17 +2925,17 @@ void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type)
     temp_o = PyDict_GetItemString(Siez_type_dict,"earliest_onset");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->earliest_onset = PyLong_AsLong(temp_o);
+        r_type->earliest_onset = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"latest_offset");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->latest_offset = PyLong_AsLong(temp_o);
+        r_type->latest_offset = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"duration");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->duration = PyLong_AsLong(temp_o);
+        r_type->duration = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(Siez_type_dict,"number_of_channels");
     if (temp_o == Py_None) temp_o = NULL;
@@ -2998,10 +3006,10 @@ void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_
     }
 
     if ((temp_o = PyDict_GetItemString(Siez_ch_type_dict,"onset")))
-        r_type->onset = PyLong_AsLong(temp_o);
+        r_type->onset = PyLong_AsLongLong(temp_o);
 
     if ((temp_o = PyDict_GetItemString(Siez_ch_type_dict,"offset")))
-        r_type->offset = PyLong_AsLong(temp_o);
+        r_type->offset = PyLong_AsLongLong(temp_o);
 
     return;
 }   
@@ -3030,7 +3038,7 @@ void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type)
     temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_duration");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->stimulus_duration = PyLong_AsLong(temp_o);
+        r_type->stimulus_duration = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(CSti_type_dict,"stimulus_type");
     if (temp_o == Py_None) temp_o = NULL;
@@ -3081,7 +3089,7 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
     temp_o = PyDict_GetItemString(ESti_type_dict,"pulse_width");
     if (temp_o == Py_None) temp_o = NULL;
     if (temp_o != NULL)
-        r_type->pulse_width = PyLong_AsLong(temp_o);
+        r_type->pulse_width = PyLong_AsLongLong(temp_o);
 
     temp_o = PyDict_GetItemString(ESti_type_dict,"ampunit_code");
     if (temp_o == Py_None) temp_o = NULL;
@@ -3189,27 +3197,27 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
 
     if (uh->start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY){
         PyDict_SetItemString(uh_dict, "start_time",
-            Py_BuildValue("l", uh->start_time));
+            Py_BuildValue("L", uh->start_time));
     }
     else
         PyDict_SetItemString(uh_dict, "start_time", Py_None); 
 
     if (uh->end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY){
         PyDict_SetItemString(uh_dict, "end_time",
-            Py_BuildValue("l", uh->end_time));
+            Py_BuildValue("L", uh->end_time));
     }
     else
         PyDict_SetItemString(uh_dict, "end_time", Py_None);  
 
     if (uh->number_of_entries != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "number_of_entries",
-            Py_BuildValue("l", uh->number_of_entries));
+            Py_BuildValue("L", uh->number_of_entries));
     else
         PyDict_SetItemString(uh_dict, "number_of_entries", Py_None);  
 
     if (uh->maximum_entry_size != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(uh_dict, "maximum_entry_size",
-            Py_BuildValue("l", uh->maximum_entry_size));
+            Py_BuildValue("L", uh->maximum_entry_size));
     else
         PyDict_SetItemString(uh_dict, "maximum_entry_size", Py_None); 
 
@@ -3322,7 +3330,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (tmd->recording_duration)
         PyDict_SetItemString(s2_dict, "recording_duration",
-            Py_BuildValue("l", tmd->recording_duration));
+            Py_BuildValue("L", tmd->recording_duration));
     else
         PyDict_SetItemString(s2_dict, "recording_duration", Py_None);
     
@@ -3430,37 +3438,37 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     // Start sample
     if (tmd->start_sample != TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "start_sample",
-            Py_BuildValue("k", tmd->start_sample));
+            Py_BuildValue("K", tmd->start_sample));
     else
         PyDict_SetItemString(s2_dict, "start_sample", Py_None);
     // Number of samples
     if (tmd->number_of_samples != TIME_SERIES_METADATA_NUMBER_OF_SAMPLES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_samples",
-            Py_BuildValue("k", tmd->number_of_samples));
+            Py_BuildValue("K", tmd->number_of_samples));
     else
         PyDict_SetItemString(s2_dict, "number_of_samples", Py_None);
     // Number of blocks
     if (tmd->number_of_blocks != TIME_SERIES_METADATA_NUMBER_OF_BLOCKS_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "number_of_blocks",
-            Py_BuildValue("k", tmd->number_of_blocks));
+            Py_BuildValue("K", tmd->number_of_blocks));
     else
         PyDict_SetItemString(s2_dict, "number_of_blocks", Py_None);
     // Maximum block bytes
     if (tmd->maximum_block_bytes != TIME_SERIES_METADATA_MAXIMUM_BLOCK_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_block_bytes",
-            Py_BuildValue("k", tmd->maximum_block_bytes));
+            Py_BuildValue("K", tmd->maximum_block_bytes));
     else
         PyDict_SetItemString(s2_dict, "maximum_block_bytes", Py_None);
     // Maximum block samples
     if (tmd->maximum_block_samples != TIME_SERIES_METADATA_MAXIMUM_BLOCK_SAMPLES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_block_samples",
-            Py_BuildValue("k", tmd->maximum_block_samples));
+            Py_BuildValue("K", tmd->maximum_block_samples));
     else
         PyDict_SetItemString(s2_dict, "maximum_block_samples", Py_None);
     // Maximum difference bytes
     if (tmd->maximum_difference_bytes != TIME_SERIES_METADATA_MAXIMUM_DIFFERENCE_BYTES_NO_ENTRY)
         PyDict_SetItemString(s2_dict, "maximum_difference_bytes",
-            Py_BuildValue("k", tmd->maximum_difference_bytes));
+            Py_BuildValue("K", tmd->maximum_difference_bytes));
     else
         PyDict_SetItemString(s2_dict, "maximum_difference_bytes", Py_None);
     // Block interval
@@ -3542,7 +3550,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (vmd->recording_duration)
         PyDict_SetItemString(s2_dict, "recording_duration",
-            Py_BuildValue("l", vmd->recording_duration));
+            Py_BuildValue("L", vmd->recording_duration));
     else
         PyDict_SetItemString(s2_dict, "recording_duration", Py_None);
     
@@ -3634,7 +3642,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (md3->recording_time_offset != METADATA_RECORDING_TIME_OFFSET_NO_ENTRY)
         PyDict_SetItemString(s3_dict, "recording_time_offset",
-            Py_BuildValue("l", md3->recording_time_offset));
+            Py_BuildValue("L", md3->recording_time_offset));
     else
         PyDict_SetItemString(s3_dict, "recording_time_offset", Py_None);
                              
@@ -3643,7 +3651,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (md3->DST_start_time != METADATA_DST_START_TIME_NO_ENTRY){
         PyDict_SetItemString(s3_dict, "DST_start_time",
-            Py_BuildValue("l", md3->DST_start_time));
+            Py_BuildValue("L", md3->DST_start_time));
     }
     else
         PyDict_SetItemString(s3_dict, "DST_start_time", Py_None);
@@ -3653,7 +3661,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
     // time_str = ctime((time_t *) &long_file_time); time_str[24] = 0;
     if (md3->DST_end_time != METADATA_DST_END_TIME_NO_ENTRY){
         PyDict_SetItemString(s3_dict, "DST_end_time",
-            Py_BuildValue("l", md3->DST_end_time));
+            Py_BuildValue("L", md3->DST_end_time));
     }
     else
         PyDict_SetItemString(s3_dict, "DST_end_time", Py_None);
@@ -3731,19 +3739,19 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti)
     // Insert entries into dictionary                    
     if (ti->file_offset != TIME_SERIES_INDEX_FILE_OFFSET_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "file_offset",
-            Py_BuildValue("l", ti->file_offset));
+            Py_BuildValue("L", ti->file_offset));
     else
         PyDict_SetItemString(ti_dict, "file_offset", Py_None);
 
     if (ti->start_time != TIME_SERIES_INDEX_START_TIME_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "start_time",
-            Py_BuildValue("l", ti->start_time));
+            Py_BuildValue("L", ti->start_time));
     else
         PyDict_SetItemString(ti_dict, "start_time", Py_None);
 
     if (ti->start_sample != TIME_SERIES_INDEX_START_SAMPLE_NO_ENTRY)
         PyDict_SetItemString(ti_dict, "start_sample",
-            Py_BuildValue("l", ti->start_sample));
+            Py_BuildValue("L", ti->start_sample));
     else
         PyDict_SetItemString(ti_dict, "start_sample", Py_None);
 
@@ -3795,13 +3803,13 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
     // Insert entries into dictionary                    
     if (vi->start_time != VIDEO_INDEX_START_TIME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "start_time",
-            Py_BuildValue("l", vi->start_time));
+            Py_BuildValue("L", vi->start_time));
     else
         PyDict_SetItemString(vi_dict, "start_time", Py_None);
 
     if (vi->end_time != VIDEO_INDEX_END_TIME_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "end_time",
-            Py_BuildValue("l", vi->end_time));
+            Py_BuildValue("L", vi->end_time));
     else
         PyDict_SetItemString(vi_dict, "end_time", Py_None);
 
@@ -3819,13 +3827,13 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
 
     if (vi->file_offset != VIDEO_INDEX_FILE_OFFSET_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "file_offset",
-            Py_BuildValue("l", vi->file_offset));
+            Py_BuildValue("L", vi->file_offset));
     else
         PyDict_SetItemString(vi_dict, "file_offset", Py_None);
 
     if (vi->clip_bytes != VIDEO_INDEX_CLIP_BYTES_NO_ENTRY)
         PyDict_SetItemString(vi_dict, "clip_bytes",
-            Py_BuildValue("l", vi->clip_bytes));
+            Py_BuildValue("L", vi->clip_bytes));
     else
         PyDict_SetItemString(vi_dict, "clip_bytes", Py_None);
 
@@ -4125,13 +4133,13 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
     // Earliest start time
     if (channel->earliest_start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("l", channel->earliest_start_time));
+            Py_BuildValue("L", channel->earliest_start_time));
     else
         PyDict_SetItemString(spec_dict, "earliest_start_time", Py_None);
     // Latest end time                     
     if (channel->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("l", channel->latest_end_time));
+            Py_BuildValue("L", channel->latest_end_time));
     else
         PyDict_SetItemString(spec_dict, "latest_end_time", Py_None);
     // Anonymized name                     
@@ -4143,13 +4151,13 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
     // Maximum number of records
     if (channel->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("l", channel->maximum_number_of_records));
+            Py_BuildValue("L", channel->maximum_number_of_records));
     else
         PyDict_SetItemString(spec_dict, "maximum_number_of_records", Py_None);
     // Maximum record bytes                  
     if (channel->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("l", channel->maximum_record_bytes));
+            Py_BuildValue("L", channel->maximum_record_bytes));
     else
         PyDict_SetItemString(spec_dict, "maximum_record_bytes", Py_None);
     // Channel name             
@@ -4274,13 +4282,13 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     // Earliest start time
     if (session->earliest_start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "earliest_start_time",
-            Py_BuildValue("l", session->earliest_start_time));
+            Py_BuildValue("L", session->earliest_start_time));
     else
         PyDict_SetItemString(spec_dict, "earliest_start_time", Py_None);
     // Latest end time                     
     if (session->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "latest_end_time",
-            Py_BuildValue("l", session->latest_end_time));
+            Py_BuildValue("L", session->latest_end_time));
     else
         PyDict_SetItemString(spec_dict, "latest_end_time", Py_None);
     // Anonymized name                     
@@ -4292,13 +4300,13 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     // Maximum number of records
     if (session->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_number_of_records",
-            Py_BuildValue("l", session->maximum_number_of_records));
+            Py_BuildValue("L", session->maximum_number_of_records));
     else
         PyDict_SetItemString(spec_dict, "maximum_number_of_records", Py_None);
     // Maximum record bytes                  
     if (session->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
         PyDict_SetItemString(spec_dict, "maximum_record_bytes",
-            Py_BuildValue("l", session->maximum_record_bytes));
+            Py_BuildValue("L", session->maximum_record_bytes));
     else
         PyDict_SetItemString(spec_dict, "maximum_record_bytes", Py_None);
     // Session name             
@@ -4521,7 +4529,7 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
 
     if (rh->time != RECORD_HEADER_TIME_NO_ENTRY){
         PyDict_SetItemString(rh_dict, "time",
-            Py_BuildValue("l", rh->time));
+            Py_BuildValue("L", rh->time));
     }
     else
         PyDict_SetItemString(rh_dict, "time", Py_None);
@@ -4614,16 +4622,16 @@ PyObject *map_mef3_ri(RECORD_INDEX *ri)
 
     if (ri->file_offset != RECORD_INDEX_FILE_OFFSET_NO_ENTRY)
         PyDict_SetItemString(ri_dict, "file_offset",
-            Py_BuildValue("l", ri->file_offset));
+            Py_BuildValue("L", ri->file_offset));
     else
         PyDict_SetItemString(ri_dict, "file_offset", Py_None);
 
     if (ri->time != RECORD_INDEX_TIME_NO_ENTRY){
-        // long_file_time = Py_BuildValue("l", ri->time);
+        // long_file_time = Py_BuildValue("L", ri->time);
         // PyDict_SetItemString(ri_dict, "time",
         //     ABS(long_file_time));
         PyDict_SetItemString(ri_dict, "time",
-            Py_BuildValue("l", ri->time));
+            Py_BuildValue("L", ri->time));
     }
     else
         PyDict_SetItemString(ri_dict, "time", Py_None);       
@@ -4670,7 +4678,7 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh)
         edfa = (MEFREC_EDFA_1_0 *) ((ui1 *) rh + MEFREC_EDFA_1_0_OFFSET);
         annotation = (si1 *) rh + MEFREC_EDFA_1_0_ANNOTATION_OFFSET;
         PyDict_SetItemString(dict_out,"annotation",Py_BuildValue("s", annotation));
-        PyDict_SetItemString(dict_out,"duration",Py_BuildValue("l", edfa->duration));
+        PyDict_SetItemString(dict_out,"duration",Py_BuildValue("L", edfa->duration));
     }
 
     // Unrecognized record version
@@ -4734,15 +4742,15 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
     if (rh->version_major == 1 && rh->version_minor == 0) {
         seizure = (MEFREC_Seiz_1_0 *) ((ui1 *) rh + MEFREC_Seiz_1_0_OFFSET);
 
-        PyDict_SetItemString(dict_out,"earliest_onset_uUTC",Py_BuildValue("l", seizure->earliest_onset));
+        PyDict_SetItemString(dict_out,"earliest_onset_uUTC",Py_BuildValue("L", seizure->earliest_onset));
         local_date_time_string(seizure->earliest_onset, time_str);
         PyDict_SetItemString(dict_out,"earliest_onset_str",Py_BuildValue("s", time_str));
 
-        PyDict_SetItemString(dict_out,"latest_offset_uUTC",Py_BuildValue("l", seizure->latest_offset));
+        PyDict_SetItemString(dict_out,"latest_offset_uUTC",Py_BuildValue("L", seizure->latest_offset));
         local_date_time_string(seizure->latest_offset, time_str);
         PyDict_SetItemString(dict_out,"latest_offset_str",Py_BuildValue("s", time_str));
 
-        PyDict_SetItemString(dict_out,"duration",Py_BuildValue("l", seizure->duration));
+        PyDict_SetItemString(dict_out,"duration",Py_BuildValue("L", seizure->duration));
 
         PyDict_SetItemString(dict_out,"number_of_channels",Py_BuildValue("i", seizure->number_of_channels));
 
@@ -4808,11 +4816,11 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
             else
                 PyDict_SetItemString(dict_channel, "name", Py_None);
 
-            PyDict_SetItemString(dict_channel,"onset_uUTC",Py_BuildValue("l", channels[i].onset));
+            PyDict_SetItemString(dict_channel,"onset_uUTC",Py_BuildValue("L", channels[i].onset));
             local_date_time_string(channels[i].onset, time_str);
             PyDict_SetItemString(dict_channel,"onset_str",Py_BuildValue("s", time_str));
 
-            PyDict_SetItemString(dict_channel,"offset_uUTC",Py_BuildValue("l", channels[i].offset));
+            PyDict_SetItemString(dict_channel,"offset_uUTC",Py_BuildValue("L", channels[i].offset));
             local_date_time_string(channels[i].offset, time_str);
             PyDict_SetItemString(dict_channel,"offset_str",Py_BuildValue("s", time_str));
 
@@ -4848,7 +4856,7 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
         else
             PyDict_SetItemString(dict_out,"task_type", Py_None);
 
-        PyDict_SetItemString(dict_out,"stimulus_duration",Py_BuildValue("l", cog_stim->stimulus_duration));
+        PyDict_SetItemString(dict_out,"stimulus_duration",Py_BuildValue("L", cog_stim->stimulus_duration));
 
         if (strlen(cog_stim->stimulus_type))
             PyDict_SetItemString(dict_out,"stimulus_type",Py_BuildValue("s", cog_stim->stimulus_type));
@@ -4886,7 +4894,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
 
         PyDict_SetItemString(dict_out,"amplitude",Py_BuildValue("d", el_stim->amplitude));
         PyDict_SetItemString(dict_out,"frequency",Py_BuildValue("d", el_stim->frequency));
-        PyDict_SetItemString(dict_out,"pulse_width",Py_BuildValue("l", el_stim->pulse_width));
+        PyDict_SetItemString(dict_out,"pulse_width",Py_BuildValue("L", el_stim->pulse_width));
 
         PyDict_SetItemString(dict_out,"ampunit_code",Py_BuildValue("i", el_stim->ampunit_code));
         switch (el_stim->ampunit_code) {
@@ -5044,10 +5052,10 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
     prev_time = channel->segments[0].time_series_indices_fps->time_series_indices[0].start_time;
     
-    for (j = 0; j < channel->number_of_segments; j++)
+    for (j = 0; j < (ui8) channel->number_of_segments; j++)
     {
         seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
-        for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
+        for (i = 0; i < (ui8) channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
             if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time > uutc)
                 goto done;
             prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
@@ -5073,10 +5081,10 @@ si8 uutc_for_sample_c(si8 sample, CHANNEL *channel)
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
     prev_time = channel->segments[0].time_series_indices_fps->time_series_indices[0].start_time;
 
-    for (j = 0; j < channel->number_of_segments; j++)
+    for (j = 0; j < (ui8) channel->number_of_segments; j++)
     {
         seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
-        for (i = 0; i < channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i){
+        for (i = 0; i < (ui8) channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i){
             if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample > sample)
                 goto done;
             prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
