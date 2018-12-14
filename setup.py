@@ -24,7 +24,7 @@ import numpy
 # the c extension module
 MEF_FILE_EXT = Extension("pymef.mef_file.pymef3_file",
                          ["pymef/mef_file/pymef3_file.c"],
-                         include_dirs=["pymef/meflib"],
+                         include_dirs=["meflib/meflib"],
                          extra_compile_args=['-O3'])
 
 setup(name="pymef",
