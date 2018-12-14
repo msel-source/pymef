@@ -1,0 +1,3 @@
+[submodule "meflib"]
+	path = meflib
+	url = https://github.com/msel-source/meflib.git
