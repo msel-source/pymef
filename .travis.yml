@@ -41,7 +41,7 @@ matrix:
       - pip install twine --user
       
   - os: windows
-    language: generic
+    language: c
     env:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
