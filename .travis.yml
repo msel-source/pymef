@@ -42,12 +42,7 @@ matrix:
       
   - os: windows
     language: sh
-    python: "3.6"
-    before_install:
-      - chmod +x .ci/build_windows_wheels.sh
-      - choco install python3 --version 3.6.3
-      - export PATH="/c/Python36:/c/Python36/Scripts:$PATH"
-      - python -m pip install --upgrade pip wheel
+    before_install: chmod +x .ci/build_windows_wheels.sh
     env:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
@@ -56,7 +51,7 @@ matrix:
 deploy:
   provider: script 
   script:
-    - python -m twine upload -u cimba -p $TWINE_PASSWORD $DIST_FOLD/*
+    - python -m twine upload -u cimba -p cimbal1Pip $DIST_FOLD/*
   skip_cleanup: true
   on:
     tags: true
