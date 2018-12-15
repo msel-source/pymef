@@ -47,7 +47,7 @@ matrix:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
     after_success:
-      - pip install twine --user
+      - python -m pip install twine --user
     
     
 deploy:
