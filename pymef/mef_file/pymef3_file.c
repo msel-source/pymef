@@ -5183,11 +5183,15 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
     
     // Read file universal header
-    fp = fopen(py_mef_file_path,"r");
+    fp = fopen(py_mef_file_path,"rb");
     nb = fread((void *) uh, sizeof(UNIVERSAL_HEADER), 1, fp);
-    if (nb != 1)
-        printf("Error reading file");
     fclose(fp);
+    if (nb != 1){
+        PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
+        PyErr_Occurred();
+        free(uh);
+        return NULL;
+    }
 
     // Check the password - extracted from process_pasword_data
     extract_terminal_password_bytes(password, password_bytes);
