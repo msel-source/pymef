@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/msel-source/pymef.svg?branch=master)](https://travis-ci.com/msel-source/pymef)
+
 Pymef
 ====
 
