@@ -678,11 +678,13 @@ def read_ts_channel_basic_info(session_path, password):
         ufact = channel_md_s2['units_conversion_factor']
         unit = channel_md_s2['units_description']
         start_time = channel_md_spec['earliest_start_time']
+        end_time = channel_md_spec['latest_end_time']
         ch_desc = channel_md_s2['channel_description']
 
         channel_infos.append({'name': channel, 'fsamp': fsamp, 'nsamp': nsamp,
                               'ufact': ufact, 'unit': unit,
                               'start_time':  start_time,
+                              'end_time': end_time,
                               'channel_description': ch_desc})
 
     return channel_infos
