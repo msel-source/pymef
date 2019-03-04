@@ -1600,10 +1600,10 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Session info
-    ses_metadata_dict = map_mef3_session(session, map_indices_flag);
+    ses_metadata_dict = map_mef3_session_npy(session, map_indices_flag);
 
     // clean up
-    free_session(session, MEF_TRUE); 
+    //free_session(session, MEF_TRUE); 
     
     return ses_metadata_dict;   
 }
@@ -1663,7 +1663,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
     // map the channel info
-    ch_metadata_dict = map_mef3_channel(channel, map_indices_flag);
+    ch_metadata_dict = map_mef3_channel_npy(channel, map_indices_flag);
 
     // clean up
     free_channel(channel, MEF_TRUE);
@@ -1724,7 +1724,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
     // map the segment info
-    seg_metadata_dict = map_mef3_segment(segment,map_indices_flag);
+    seg_metadata_dict = map_mef3_segment_npy(segment,map_indices_flag);
 
     // clean up
     free_segment(segment, MEF_TRUE);
@@ -3250,6 +3250,22 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
     return uh_dict;
 }
 
+PyObject *map_mef3_uh_npy(UNIVERSAL_HEADER *uh)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {UNIVERSAL_HEADER_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_uh_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) uh, 1, Py_None);
+    return py_array_out;
+}
+
 PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
 {
     // Dictionaries
@@ -3292,6 +3308,22 @@ PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
         PyDict_SetItemString(s1_dict, "discretionary_region", Py_None);          
 
     return s1_dict;
+}
+
+PyObject *map_mef3_md1_npy(METADATA_SECTION_1 *md1)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {METADATA_SECTION_1_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_md1_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md1, 1, Py_None);
+    return py_array_out;
 }
 
 PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
@@ -3517,6 +3549,22 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd)
     return s2_dict;
 }
 
+PyObject *map_mef3_tmd2_npy(TIME_SERIES_METADATA_SECTION_2 *tmd2)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {METADATA_SECTION_2_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_tmd2_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) tmd2, 1, Py_None);
+    return py_array_out;
+}
+
 PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
 {
     // Dictionaries
@@ -3617,6 +3665,22 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd)
         PyDict_SetItemString(s2_dict, "discretionary_region", Py_None);
                                  
     return s2_dict;
+}
+
+PyObject *map_mef3_vmd2_npy(VIDEO_METADATA_SECTION_2 *vmd2)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {METADATA_SECTION_2_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_vmd2_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vmd2, 1, Py_None);
+    return py_array_out;
 }
 
 PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
@@ -3720,6 +3784,23 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
     return s3_dict; 
 }
 
+PyObject *map_mef3_md3_npy(METADATA_SECTION_3 *md3)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {METADATA_SECTION_3_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_md3_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md3, 1, Py_None);
+    return py_array_out;
+}
+
+
 PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti)
 {
     // Dictionaries
@@ -3784,6 +3865,23 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti)
     return ti_dict;
 }
 
+// TODO - call number of entries from the parent dtype
+PyObject *map_mef3_ti_npy(TIME_SERIES_INDEX *ti, si8 number_of_entries)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {number_of_entries};
+    npy_intp strides[] = {TIME_SERIES_INDEX_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_md1_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) ti, 1, Py_None);
+    return py_array_out;
+}
+
 PyObject *map_mef3_vi(VIDEO_INDEX *vi)
 {
     // Dictionaries
@@ -3840,6 +3938,23 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi)
     // The rest if neccessary
 
     return vi_dict;
+}
+
+// TODO - call number of entries from the parent dtype
+PyObject *map_mef3_vi_npy(VIDEO_INDEX *vi, si8 number_of_entries)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {number_of_entries};
+    npy_intp strides[] = {VIDEO_INDEX_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_md1_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vi, 1, Py_None);
+    return py_array_out;
 }
 
 PyObject *create_mef3_TOC(SEGMENT *segment)
@@ -3995,7 +4110,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
     // Create section 1 dictionary
     s1_dict = map_mef3_md1(md1);
     PyDict_SetItemString(metadata_dict, "section_1", s1_dict);
-    
+
     // Create section 2 dictionary
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
@@ -4010,7 +4125,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
             return NULL;
     }
 
-    PyDict_SetItemString(metadata_dict, "section_2", s2_dict); 
+    PyDict_SetItemString(metadata_dict, "section_2", s2_dict);
     
     // Create section 3 dictionary
     s3_dict = map_mef3_md3(md3);
@@ -4027,6 +4142,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
         case TIME_SERIES_CHANNEL_TYPE:
             number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
             tsi = segment->time_series_indices_fps->time_series_indices;
+
             idx_list = PyList_New(number_of_entries);
 
             // Map time series indices - this takes long if indices are many
@@ -4080,6 +4196,148 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
         case VIDEO_CHANNEL_TYPE:
             uh_dict = map_mef3_uh(segment->video_indices_fps->universal_header);
             PyDict_SetItemString(uhs_dict, "video_indices", uh_dict);
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }
+
+    PyDict_SetItemString(metadata_dict, "universal_headers", uhs_dict);
+
+    return metadata_dict;
+}
+
+PyObject *map_mef3_segment_npy(SEGMENT *segment, si1 map_indices_flag)
+{
+    // Dictionaries
+    PyObject *metadata_dict;
+    PyObject *records_dict;
+    PyObject *uh_dict;
+    PyObject *uhs_dict;
+    PyObject *TOC;
+    
+    // Helper variables
+    si8   number_of_entries;
+    
+    METADATA_SECTION_1      *md1;
+        TIME_SERIES_METADATA_SECTION_2  *tmd2;
+        VIDEO_METADATA_SECTION_2    *vmd2;
+    METADATA_SECTION_3      *md3;
+    TIME_SERIES_INDEX       *tsi;
+    VIDEO_INDEX       *vi;
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {sizeof(SEGMENT)};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    import_array();
+
+    // Create python output dictionary
+    metadata_dict = PyDict_New();
+    
+    /* SEGMENT SPECIFIC */
+    descr = (PyArray_Descr *) create_segment_dtype();
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) segment, 1, Py_None);
+    
+    // Create specific dictionary
+    PyDict_SetItemString(metadata_dict, "segment_specific_metadata", py_array_out); 
+                            
+    // Read segment records if present and add it to metadata
+    if ((segment->record_indices_fps != NULL) & (segment->record_data_fps != NULL)){
+        records_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+    }
+
+    // Assign pointers for reading metadata and read universal headers
+    md1 = segment->metadata_fps->metadata.section_1;
+    tmd2 = NULL;
+    vmd2 = NULL;
+    switch (segment->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            tmd2 = segment->metadata_fps->metadata.time_series_section_2;
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            vmd2 = segment->metadata_fps->metadata.video_section_2; 
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }      
+    md3 = segment->metadata_fps->metadata.section_3;
+
+    // Create section 1 dictionary
+    PyDict_SetItemString(metadata_dict, "section_1", map_mef3_md1_npy(md1));
+
+    // Create section 2 dictionary
+    switch (segment->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_tmd2_npy(tmd2));
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_vmd2_npy(vmd2));
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }
+    
+    // Create section 3 dictionary
+    PyDict_SetItemString(metadata_dict, "section_3", map_mef3_md3_npy(md3));
+
+    // TODO - this should be a list - there is more indices in indices file!!!!
+
+    // Set the TOC to NULL so that the logic works
+    TOC = NULL;
+
+    // Create indices dictionary
+    
+    switch (segment->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
+            tsi = segment->time_series_indices_fps->time_series_indices;
+
+            PyDict_SetItemString(metadata_dict, "indices", map_mef3_ti_npy(tsi, number_of_entries));
+
+            // Create TOC
+            TOC = create_mef3_TOC(segment);
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            number_of_entries = segment->video_indices_fps->universal_header->number_of_entries;
+            vi = segment->video_indices_fps->video_indices;
+
+            PyDict_SetItemString(metadata_dict, "indices", map_mef3_vi_npy(vi, number_of_entries));
+
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }
+
+    
+    if (TOC != NULL)
+        PyDict_SetItemString(metadata_dict, "TOC", TOC);
+
+    // Get universal headers
+    uhs_dict = PyDict_New();
+
+    // Metadata
+    uh_dict = map_mef3_uh(segment->metadata_fps->universal_header);
+    PyDict_SetItemString(uhs_dict, "metadata", uh_dict);
+
+    // Data an indices universal headers
+    switch (segment->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            PyDict_SetItemString(uhs_dict, "time_series_data", map_mef3_uh_npy(segment->time_series_data_fps->universal_header));
+            PyDict_SetItemString(uhs_dict, "time_series_indices", map_mef3_uh_npy(segment->time_series_indices_fps->universal_header));
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            PyDict_SetItemString(uhs_dict, "time_series_indices", map_mef3_uh_npy(segment->video_indices_fps->universal_header));
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -4225,6 +4483,104 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
         segment = channel->segments + i;
         // Map the channel
         segment_dict = map_mef3_segment(segment,map_indices_flag);
+        // Put into ditionary
+        PyDict_SetItemString(segments_dict, segment->name, segment_dict); 
+    }
+
+    return metadata_dict;
+}
+
+PyObject *map_mef3_channel_npy(CHANNEL *channel, si1 map_indices_flag) // This funtion also loops through segments
+{
+    // Dictionaries
+    PyObject *metadata_dict;
+    PyObject *records_dict;
+    PyObject *segment_dict;
+    PyObject *segments_dict;
+    
+    // Helper variables
+    si4   i;
+    
+    // Method
+    SEGMENT *segment;
+    
+    METADATA_SECTION_1      *md1;
+        TIME_SERIES_METADATA_SECTION_2  *tmd2;
+        VIDEO_METADATA_SECTION_2    *vmd2;
+    METADATA_SECTION_3      *md3;
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {sizeof(CHANNEL)};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    import_array();
+
+    // Create python output dictionary
+    metadata_dict = PyDict_New();
+    
+    /* CHANNEL SPECIFIC */
+    descr = (PyArray_Descr *) create_channel_dtype();
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) channel, 1, Py_None);
+    
+    // Create specific dictionary
+    PyDict_SetItemString(metadata_dict, "channel_specific_metadata", py_array_out);
+    
+    // Read channel records if present and add it to metadata
+    if ((channel->record_indices_fps != NULL) & (channel->record_data_fps != NULL)){
+        records_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+    }
+
+    // Assign pointers for reading metadata
+    md1 = channel->metadata.section_1;
+    tmd2 = NULL;
+    vmd2 = NULL;
+    switch (channel->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            tmd2 = channel->metadata.time_series_section_2;
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            vmd2 = channel->metadata.video_section_2;  
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }     
+    md3 = channel->metadata.section_3;
+    
+    // Create section 1 dictionary
+    PyDict_SetItemString(metadata_dict, "section_1", map_mef3_md1_npy(md1));
+    
+    // Create section 2 dictionary
+    switch (channel->channel_type){
+        case TIME_SERIES_CHANNEL_TYPE:
+            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_tmd2_npy(tmd2)); 
+            break;
+        case VIDEO_CHANNEL_TYPE:
+            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_vmd2_npy(vmd2)); 
+            break;
+        default:
+            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
+            PyErr_Occurred();
+            return NULL;
+    }
+
+    // Create section 3 dictionary
+    PyDict_SetItemString(metadata_dict, "section_3", map_mef3_md3_npy(md3));
+    
+    // Loop over segments
+    for (i = 0; i < channel->number_of_segments; ++i){
+        if (i == 0){
+            PyDict_SetItemString(metadata_dict, "segments", PyDict_New()); 
+            segments_dict = PyDict_GetItemString(metadata_dict, "segments");
+        }
+        // Get the channel pointer
+        segment = channel->segments + i;
+        // Map the channel
+        segment_dict = map_mef3_segment_npy(segment,map_indices_flag);
         // Put into ditionary
         PyDict_SetItemString(segments_dict, segment->name, segment_dict); 
     }
@@ -4417,6 +4773,179 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     return metadata_dict;
 }
 
+PyObject *map_mef3_session_npy(SESSION *session, si1 map_indices_flag) // This funtion also loops through channels
+{
+    // Dictionaries
+    PyObject *metadata_dict;
+    PyObject *records_dict;
+
+    PyObject *ts_metadata;
+    PyObject *ts_dict;
+
+    PyObject *v_metadata;
+    PyObject *v_dict;
+    
+    // Helper variables
+    si4   i;
+    
+    // Method 
+    CHANNEL *channel;
+
+    METADATA_SECTION_1      *md1;
+        TIME_SERIES_METADATA_SECTION_2  *tmd2;
+        VIDEO_METADATA_SECTION_2    *vmd2;
+    METADATA_SECTION_3      *md3;
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {sizeof(SESSION)};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    import_array();
+
+    // Create python output dictionary
+    metadata_dict = PyDict_New();
+    
+    /* SESSION SPECIFIC */
+    
+    descr = (PyArray_Descr *) create_session_dtype();
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) session, 1, Py_None);
+    
+    // Create specific dictionary
+    PyDict_SetItemString(metadata_dict, "session_specific_metadata", py_array_out);
+
+    
+    // Insert entries into dictionary
+    
+    // Earliest start time
+    // if (session->earliest_start_time != UNIVERSAL_HEADER_START_TIME_NO_ENTRY)
+    //     PyDict_SetItemString(spec_dict, "earliest_start_time",
+    //         Py_BuildValue("L", session->earliest_start_time));
+    // else
+    //     PyDict_SetItemString(spec_dict, "earliest_start_time", Py_None);
+    // // Latest end time                     
+    // if (session->latest_end_time != UNIVERSAL_HEADER_END_TIME_NO_ENTRY)
+    //     PyDict_SetItemString(spec_dict, "latest_end_time",
+    //         Py_BuildValue("L", session->latest_end_time));
+    // else
+    //     PyDict_SetItemString(spec_dict, "latest_end_time", Py_None);
+    // // Anonymized name                     
+    // if (session->anonymized_name[0])
+    //     PyDict_SetItemString(spec_dict, "anonymized_name",
+    //         Py_BuildValue("s", session->anonymized_name));
+    // else
+    //     PyDict_SetItemString(spec_dict, "anonymized_name", Py_None);
+    // // Maximum number of records
+    // if (session->maximum_number_of_records != UNIVERSAL_HEADER_NUMBER_OF_ENTRIES_NO_ENTRY)
+    //     PyDict_SetItemString(spec_dict, "maximum_number_of_records",
+    //         Py_BuildValue("L", session->maximum_number_of_records));
+    // else
+    //     PyDict_SetItemString(spec_dict, "maximum_number_of_records", Py_None);
+    // // Maximum record bytes                  
+    // if (session->maximum_record_bytes != UNIVERSAL_HEADER_MAXIMUM_ENTRY_SIZE_NO_ENTRY)
+    //     PyDict_SetItemString(spec_dict, "maximum_record_bytes",
+    //         Py_BuildValue("L", session->maximum_record_bytes));
+    // else
+    //     PyDict_SetItemString(spec_dict, "maximum_record_bytes", Py_None);
+    // // Session name             
+    // if (session->name[0])
+    //     PyDict_SetItemString(spec_dict, "session_name",
+    //         Py_BuildValue("s", session->name));
+    // else
+    //     PyDict_SetItemString(spec_dict, "session_name", Py_None);
+    // // Number of time series channels            
+    // if (session->number_of_time_series_channels != 0)
+    //     PyDict_SetItemString(spec_dict, "number_of_times_series_channles",
+    //         Py_BuildValue("i", session->number_of_time_series_channels));
+    // else
+    //     PyDict_SetItemString(spec_dict, "number_of_times_series_channles",
+    //         Py_BuildValue("i", 0));
+    // // Number of video channels            
+    // if (session->number_of_video_channels != 0)
+    //     PyDict_SetItemString(spec_dict, "number_of_video_channels",
+    //         Py_BuildValue("i", session->number_of_video_channels));
+    // else
+    //     PyDict_SetItemString(spec_dict, "number_of_video_channels",
+    //         Py_BuildValue("i", 0));                    
+
+    // Read session records if present and add it to metadata
+    if ((session->record_indices_fps != NULL) & (session->record_data_fps != NULL)){
+        records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
+        PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+    }
+
+    // Get time series metadata
+    if (session->number_of_time_series_channels > 0)
+    {
+        // Create dictionary
+        PyDict_SetItemString(metadata_dict, "time_series_metadata", PyDict_New()); 
+        ts_metadata = PyDict_GetItemString(metadata_dict, "time_series_metadata");
+
+        // Assign pointers for reading time series metadata
+        md1 = session->time_series_metadata.section_1;
+        tmd2 = session->time_series_metadata.time_series_section_2;
+        md3 = session->time_series_metadata.section_3;
+        
+        // Create section time series 1 dictionary
+        PyDict_SetItemString(ts_metadata, "section_1", map_mef3_md1_npy(md1));
+        
+        // Create section time series 2 dictionary
+        PyDict_SetItemString(ts_metadata, "section_2", map_mef3_tmd2_npy(tmd2)); 
+        
+        // Create section time series 3 dictionary
+        PyDict_SetItemString(ts_metadata, "section_3", map_mef3_md3_npy(md3));
+    }
+
+    // Get video metadata
+    if (session->number_of_video_channels > 0)
+    {
+        // Create dictionary
+        PyDict_SetItemString(metadata_dict, "video_metadata", PyDict_New()); 
+        v_metadata = PyDict_GetItemString(metadata_dict, "video_metadata");
+
+        // Assign pointers for reading video metadata
+        md1 = session->video_metadata.section_1;
+        vmd2 = session->video_metadata.video_section_2;
+        md3 = session->video_metadata.section_3;
+        
+        // Create section video 1 dictionary
+        PyDict_SetItemString(v_metadata, "section_1", map_mef3_md1_npy(md1));
+        
+        // Create section video 2 dictionary
+        PyDict_SetItemString(v_metadata, "section_2", map_mef3_vmd2_npy(vmd2)); 
+        
+        // Create section video 3 dictionary
+        PyDict_SetItemString(v_metadata, "section_3", map_mef3_md3_npy(md3));
+    }
+
+    // Loop over time series channels         
+    for (i = 0; i < session->number_of_time_series_channels; ++i){
+        if (i == 0){
+            PyDict_SetItemString(metadata_dict, "time_series_channels", PyDict_New()); 
+            ts_dict = PyDict_GetItemString(metadata_dict, "time_series_channels");
+        }
+        // Get the channel pointer
+        channel = session->time_series_channels + i;
+        // Put into ditionary
+        PyDict_SetItemString(ts_dict, channel->name,  map_mef3_channel_npy(channel, map_indices_flag)); 
+
+    }
+    // Loop over video channels
+    for (i = 0; i < session->number_of_video_channels; ++i){
+        if (i == 0){
+            PyDict_SetItemString(metadata_dict, "video_channels", PyDict_New()); 
+            v_dict = PyDict_GetItemString(metadata_dict, "video_channels");
+        }
+        // Get the channel pointer
+        channel = session->video_channels + i;
+        // Put into ditionary
+        PyDict_SetItemString(v_dict, channel->name, map_mef3_channel_npy(channel, map_indices_flag)); 
+    }
+
+    return metadata_dict;
+}
+
 /**************************  Mef record struct to Python  ****************************/
 
 PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps) // Runs through records and puts them in a dictionary
@@ -4576,6 +5105,22 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
     PyDict_SetItemString(rh_dict, "record_body", type_dict);
 
     return rh_dict;
+}
+
+PyObject *map_mef3_rh_npy(RECORD_HEADER *rh)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {VIDEO_INDEX_BYTES};
+    PyObject    *py_array_out;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_rh_dtype();
+
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) rh, 1, Py_None);
+    return py_array_out;
 }
 
 PyObject *map_mef3_ri(RECORD_INDEX *ri)
@@ -4982,6 +5527,516 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     return dict_out;
 }
 
+/**************************  Numpy data types  ****************************/
+static PyObject *create_uh_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                       "header_CRC", "u4", 1,
+                       "body_CRC", "u4", 1,
+                       "file_type_string", "S", TYPE_BYTES,
+                       "mef_version_major", "u1", 1,
+                       "mef_version_minor", "u1", 1,
+                       "byte_order_code", "u1", 1,
+
+                       "start_time", "i8", 1,
+                       "end_time", "i8", 1,
+                       "number_of_entries", "i8", 1,
+                       "maximum_entry_size", "i8", 1,
+                       "segment_number", "i4", 1,
+
+                       "channel_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
+
+                       "level_UUID", "V", UUID_BYTES,
+                       "file_UUID", "V", UUID_BYTES,
+                       "provenance_UUID", "V", UUID_BYTES,
+                       "level_1_password_validation_field", "V", PASSWORD_VALIDATION_FIELD_BYTES,
+                       "level_2_password_validation_field", "V", PASSWORD_VALIDATION_FIELD_BYTES,
+                       "protected_region", "V", UNIVERSAL_HEADER_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", UNIVERSAL_HEADER_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_md1_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                       "section_2_encryption", "i1", 1,
+                       "section_3_encryption", "i1", 1,
+                       "protected_region", "V", METADATA_SECTION_1_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", METADATA_SECTION_1_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_tmd2_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       // type-independent fields
+                       "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
+                       "session_description", "S", METADATA_SESSION_DESCRIPTION_BYTES,
+                       "recording_duration", "i8", 1,
+                       // type-specific fields
+                       "reference_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
+                       "acquisition_channel_number", "i8", 1,
+                       "sampling_frequency", "f8", 1,
+                       "low_frequency_filter_setting", "f8", 1,
+                       "high_frequency_filter_setting", "f8", 1,
+                       "notch_filter_frequency_setting", "f8", 1,
+                       "AC_line_frequency", "f8", 1,
+                       "units_conversion_factor", "f8", 1,
+                       "units_description", "S", TIME_SERIES_METADATA_UNITS_DESCRIPTION_BYTES,
+                       "maximum_native_sample_value", "f8", 1,
+                       "minimum_native_sample_value", "f8", 1,
+                       "start_sample", "i8", 1,
+                       "number_of_samples", "i8", 1,
+                       "number_of_blocks", "i8", 1,
+                       "maximum_block_bytes", "i8", 1,
+                       "maximum_block_samples", "u4", 1,
+                       "maximum_difference_bytes", "u4", 1,
+                       "block_interval", "i8", 1,
+                       "number_of_discontinuities", "i8", 1,
+                       "maximum_contiguous_blocks", "i8", 1,
+                       "maximum_contiguous_block_bytes", "i8", 1,
+                       "maximum_contiguous_samples", "i8", 1,
+                       "protected_region", "V", TIME_SERIES_METADATA_SECTION_2_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", TIME_SERIES_METADATA_SECTION_2_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_vmd2_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       // type-independent fields
+                       "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
+                       "session_description", "S", METADATA_SESSION_DESCRIPTION_BYTES,
+                       "recording_duration", "i8", 1,
+                       // type-specific fields
+                       "horizontal_resolution", "i8", 1,
+                       "vertical_resolution", "i8", 1,
+                       "frame_rate", "f8", 1,
+                       "number_of_clips", "i8", 1,
+                       "maximum_clip_bytes", "i8", 1,
+                       "video_format", "S", VIDEO_METADATA_VIDEO_FORMAT_BYTES,
+                       "video_file_CRC", "u4", 1,
+                       "protected_region", "V", VIDEO_METADATA_SECTION_2_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", VIDEO_METADATA_SECTION_2_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_md3_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                       "recording_time_offset", "i8", 1,
+                       "DST_start_time", "i8", 1,
+                       "DST_end_time", "i8", 1,
+                       "GMT_offset", "i4", 1,
+                       "subject_name_1", "S", METADATA_SUBJECT_NAME_BYTES,
+                       "subject_name_2", "S", METADATA_SUBJECT_NAME_BYTES,
+                       "subject_ID", "S", METADATA_SUBJECT_ID_BYTES,
+                       "recording_location", "S", METADATA_RECORDING_LOCATION_BYTES,
+                       "protected_region", "V", METADATA_SECTION_3_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", METADATA_SECTION_3_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_rh_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                       "record_CRC", "u4", 1,
+                       "type_string", "S", TYPE_BYTES,
+                       "version_major", "u1", 1,
+                       "version_minor", "u1", 1,
+                       "encryption", "i1", 1,
+                       "bytes", "u4", 1,
+                       "time", "i8", 1);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_ri_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                       "type_string", "S", TYPE_BYTES,
+                       "version_major", "u1", 1,
+                       "version_minor", "u1", 1,
+                       "encryption", "i1", 1,
+                       "file_offset", "i8", 1,
+                       "time", "i8", 1);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_ti_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       "file_offset", "i8", 1,
+                       "start_time", "i8", 1,
+                       "start_sample", "i8", 1,
+                       "number_of_samples", "u4", 1,
+                       "block_bytes", "u4", 1,
+                       "maximum_sample_value", "i4", 1,
+                       "minimum_sample_value", "i4", 1,
+
+                       "protected_region", "V", TIME_SERIES_INDEX_PROTECTED_REGION_BYTES,
+                       "RED_block_flags", "V", 1,
+                       "RED_block_protected_region", "V", RED_BLOCK_PROTECTED_REGION_BYTES,
+                       "RED_block_discretionary_region", "V", RED_BLOCK_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_vi_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       "start_time", "i8", 1,
+                       "end_time", "i8", 1,
+                       "start_frame", "u4", 1,
+                       "end_frame", "u4", 1,
+                       "file_offset", "i8", 1,
+                       "clip_bytes", "i8", 1,
+                       "RED_block_protected_region", "V", VIDEO_INDEX_PROTECTED_REGION_BYTES,
+                       "RED_block_discretionary_region", "V", VIDEO_INDEX_DISCRETIONARY_REGION_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_segment_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       "channel_type", "i4", 1,
+                       "metadata_fps", "V", sizeof (void *),
+                       "time_series_data_fps", "V", sizeof (void *),
+                       "time_series_indices_fps", "V", sizeof (void *),
+                       "video_indices_fps", "V", sizeof (void *),
+                       "record_data_fps", "V", sizeof (void *),
+                       "record_indices_fps", "V", sizeof (void *),
+                       "name", "S", MEF_SEGMENT_BASE_FILE_NAME_BYTES,
+                       "path", "S", MEF_FULL_FILE_NAME_BYTES,
+                       "channel_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "level_UUID", "i1", UUID_BYTES);
+
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_channel_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       "channel_type", "i4", 1,
+                       "metadata", "V", sizeof (METADATA),
+                       "record_data_fps", "V", sizeof (void *),
+                       "record_indices_fps", "V", sizeof (void *),
+                       "number_of_segments", "i8", 1,
+                       "segments", "V", sizeof (void *),
+                       "path", "S", MEF_FULL_FILE_NAME_BYTES,
+                       "name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "extension", "S", TYPE_BYTES,
+                       "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "level_UUID", "i1", UUID_BYTES,
+                       "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
+                       "maximum_number_of_records", "i8", 1,
+                       "maximum_record_bytes", "i8", 1,
+                       "earliest_start_time", "i8", 1,
+                       "latest_end_time", "i8", 1);
+
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_session_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i)]",
+                       "time_series_metadata", "V", sizeof (METADATA),
+                       "number_of_time_series_channels", "i4", 1,
+                       "time_series_channels", "V", sizeof (void *),
+
+                       "video_metadata", "V", sizeof (METADATA),
+                       "number_of_video_channels", "i4", 1,
+                       "video_channels", "V", sizeof (void *),
+
+                       "record_data_fps", "V", sizeof (void *),
+                       "record_indices_fps", "V", sizeof (void *),
+
+                       "name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "path", "S", MEF_FULL_FILE_NAME_BYTES,
+                       "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
+                       "level_UUID", "i1", UUID_BYTES,
+
+                       "maximum_number_of_records", "i8", 1,
+                       "maximum_record_bytes", "i8", 1,
+                       "earliest_start_time", "i8", 1,
+                       "latest_end_time", "i8", 1);
+
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
 
 /**************************  Other helper functions  ****************************/
 

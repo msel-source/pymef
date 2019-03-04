@@ -8,7 +8,6 @@
 #define FLOAT_EQUAL(x,y) ( ((y - EPSILON) < x) && (x <( y + EPSILON)) )
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
-
 /* Python methods definitions and help */
 
 static char pymef3_file_docstring[] =
@@ -161,6 +160,22 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
 /* Python object declaration - helper functions */
 static PyObject *check_mef_password(PyObject *self, PyObject *args);
 
+/* Python object declaration - numpy data types */
+static PyObject *create_uh_dtype();
+static PyObject *create_md1_dtype();
+static PyObject *create_tmd2_dtype();
+static PyObject *create_vmd2_dtype();
+static PyObject *create_md3_dtype();
+static PyObject *create_rh_dtype();
+static PyObject *create_ri_dtype();
+static PyObject *create_ti_dtype();
+static PyObject *create_vi_dtype();
+
+static PyObject *create_segment_dtype();
+static PyObject *create_channel_dtype();
+static PyObject *create_session_dtype();
+
+
 /* Specification of the members of the module */
 static PyMethodDef module_methods[] = {
     {"write_mef_data_records", write_mef_data_records, METH_VARARGS, write_mef_data_records_docstring},
@@ -174,6 +189,21 @@ static PyMethodDef module_methods[] = {
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
     {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
     {"check_mef_password", check_mef_password, METH_VARARGS, check_mef_password_docstring},
+
+    {"create_uh_dtype", create_uh_dtype, METH_VARARGS, NULL},
+    {"create_md1_dtype", create_md1_dtype, METH_VARARGS, NULL},
+    {"create_tmd2_dtype", create_tmd2_dtype, METH_VARARGS, NULL},
+    {"create_vmd2_dtype", create_vmd2_dtype, METH_VARARGS, NULL},
+    {"create_md3_dtype", create_md3_dtype, METH_VARARGS, NULL},
+    {"create_rh_dtype", create_rh_dtype, METH_VARARGS, NULL},
+    {"create_ri_dtype", create_ri_dtype, METH_VARARGS, NULL},
+    {"create_ti_dtype", create_ti_dtype, METH_VARARGS, NULL},
+    {"create_vi_dtype", create_vi_dtype, METH_VARARGS, NULL},
+
+    {"create_segment_dtype", create_segment_dtype, METH_VARARGS, NULL},
+    {"create_channel_dtype", create_channel_dtype, METH_VARARGS, NULL},
+    {"create_session_dtype", create_session_dtype, METH_VARARGS, NULL},
+
     {NULL, NULL, 0, NULL}
 };
 
@@ -238,19 +268,32 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
 
 // ---------- Mef3 to python dictionaries -----------
 PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh);
+PyObject *map_mef3_uh_npy(UNIVERSAL_HEADER *uh);
 
 PyObject *map_mef3_md1(METADATA_SECTION_1 *md1);
+PyObject *map_mef3_md1_npy(METADATA_SECTION_1 *md1);
 PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd);
+PyObject *map_mef3_tmd2_npy(TIME_SERIES_METADATA_SECTION_2 *tmd);
 PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd);
+PyObject *map_mef3_vmd2_npy(VIDEO_METADATA_SECTION_2 *vmd);
 PyObject *map_mef3_md3(METADATA_SECTION_3 *md3);
+PyObject *map_mef3_md3_npy(METADATA_SECTION_3 *md3);
+
 
 PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti);
+PyObject *map_mef3_ti_npy(TIME_SERIES_INDEX *ti, si8 number_of_entries);
 PyObject *map_mef3_vi(VIDEO_INDEX *vi);
+PyObject *map_mef3_vi_npy(VIDEO_INDEX *vi, si8 number_of_entries);
 PyObject *create_mef3_TOC(SEGMENT *segment);
 
 PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag);
+PyObject *map_mef3_segment_npy(SEGMENT *segment, si1 map_indices_flag);
+
 PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag);
+PyObject *map_mef3_channel_npy(CHANNEL *channel, si1 map_indices_flag);
+
 PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag);
+PyObject *map_mef3_session_npy(SESSION *session, si1 map_indices_flag);
 
 // Mef record structures
 PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps);
@@ -273,5 +316,3 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel);
 si8 uutc_for_sample_c(si8 sample, CHANNEL *channel);
 void memset_int(si4 *ptr, si4 value, size_t num);
 void init_numpy(void);
-
-
