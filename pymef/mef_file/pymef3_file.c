@@ -2238,7 +2238,7 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
 
     descr = (PyArray_Descr *) create_uh_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) uh, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) uh, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2254,7 +2254,7 @@ PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
 
     descr = (PyArray_Descr *) create_md1_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md1, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md1, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2270,7 +2270,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd2)
 
     descr = (PyArray_Descr *) create_tmd2_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) tmd2, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) tmd2, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2286,7 +2286,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd2)
 
     descr = (PyArray_Descr *) create_vmd2_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vmd2, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vmd2, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2302,7 +2302,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
 
     descr = (PyArray_Descr *) create_md3_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md3, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) md3, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2319,7 +2319,7 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries)
 
     descr = (PyArray_Descr *) create_ti_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) ti, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) ti, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2336,7 +2336,7 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries)
 
     descr = (PyArray_Descr *) create_vi_dtype();
 
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vi, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) vi, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2443,7 +2443,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
     
     /* SEGMENT SPECIFIC */
     descr = (PyArray_Descr *) create_segment_dtype();
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) segment, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) segment, NPY_ARRAY_DEFAULT, Py_None);
     
     // Create specific dictionary
     PyDict_SetItemString(metadata_dict, "segment_specific_metadata", py_array_out); 
@@ -2585,7 +2585,7 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
     
     /* CHANNEL SPECIFIC */
     descr = (PyArray_Descr *) create_channel_dtype();
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) channel, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) channel, NPY_ARRAY_DEFAULT, Py_None);
     
     // Create specific dictionary
     PyDict_SetItemString(metadata_dict, "channel_specific_metadata", py_array_out);
@@ -2688,7 +2688,7 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
     /* SESSION SPECIFIC */
     
     descr = (PyArray_Descr *) create_session_dtype();
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) session, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) session, NPY_ARRAY_DEFAULT, Py_None);
     
     // Create specific dictionary
     PyDict_SetItemString(metadata_dict, "session_specific_metadata", py_array_out);
@@ -2968,7 +2968,7 @@ PyObject *map_mef3_Note_type(RECORD_HEADER *rh)
     body_p = (si1 *) rh+MEFREC_Note_1_0_TEXT_OFFSET;
     str_len = (ui4) strlen(body_p);
     descr = (PyArray_Descr *) create_note_dtype_c(str_len);
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -2987,7 +2987,7 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh)
     body_p = (si1 *) rh+MEFREC_EDFA_1_0_OFFSET;
     str_len = (ui4) strlen(body_p+MEFREC_EDFA_1_0_BYTES);
     descr = (PyArray_Descr *) create_edfa_dtype_c(str_len);
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3007,7 +3007,7 @@ PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh)
 
     descr = (PyArray_Descr *) create_lntp_dtype_c(template_size);
     body_p = (si1 *) rh+MEFREC_LNTP_1_0_OFFSET;
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3025,7 +3025,7 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
 
     descr = (PyArray_Descr *) create_seiz_dtype();
     body_p = (si1 *) rh+MEFREC_Seiz_1_0_OFFSET;
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3043,7 +3043,7 @@ PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels)
 
     descr = (PyArray_Descr *) create_seiz_ch_dtype();
     body_p = (si1 *) rh+MEFREC_Seiz_1_0_CHANNELS_OFFSET;
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3060,7 +3060,7 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
 
     descr = (PyArray_Descr *) create_csti_dtype();
     body_p = (si1 *) rh+MEFREC_CSti_1_0_OFFSET;
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3077,7 +3077,7 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
 
     descr = (PyArray_Descr *) create_esti_dtype();
     body_p = (si1 *) rh+MEFREC_ESti_1_0_OFFSET;
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
@@ -3096,7 +3096,7 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     body_p = (si1 *) rh+MEFREC_SyLg_1_0_TEXT_OFFSET;
     str_len = (ui4) strlen(body_p);
     descr = (PyArray_Descr *) create_sylg_dtype_c(str_len);
-    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
