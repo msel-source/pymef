@@ -152,22 +152,39 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - read functions*/
 static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
-
 static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
 static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
+
+/* Pyhon object declaration - clean functions*/
+static PyObject *clean_mef_session_metadata(PyObject *self, PyObject *args);
+static PyObject *clean_mef_channel_metadata(PyObject *self, PyObject *args);
+static PyObject *clean_mef_segment_metadata(PyObject *self, PyObject *args);
 
 /* Python object declaration - helper functions */
 static PyObject *check_mef_password(PyObject *self, PyObject *args);
 
 /* Python object declaration - numpy data types */
+static PyObject *create_rh_dtype();
+static PyObject *create_ri_dtype();
+static PyObject *create_edfa_dtype(PyObject *self, PyObject *args);
+static PyObject *create_edfa_dtype_c(ui4 text_len);
+static PyObject *create_lntp_dtype(PyObject *self, PyObject *args);
+static PyObject *create_lntp_dtype_c(ui4 template_len);
+static PyObject *create_note_dtype(PyObject *self, PyObject *args);
+static PyObject *create_note_dtype_c(ui4 text_len);
+static PyObject *create_seiz_dtype();
+static PyObject *create_seiz_ch_dtype();
+static PyObject *create_sylg_dtype(PyObject *self, PyObject *args);
+static PyObject *create_sylg_dtype_c(ui4 text_len);
+static PyObject *create_csti_dtype();
+static PyObject *create_esti_dtype();
+
 static PyObject *create_uh_dtype();
 static PyObject *create_md1_dtype();
 static PyObject *create_tmd2_dtype();
 static PyObject *create_vmd2_dtype();
 static PyObject *create_md3_dtype();
-static PyObject *create_rh_dtype();
-static PyObject *create_ri_dtype();
 static PyObject *create_ti_dtype();
 static PyObject *create_vi_dtype();
 
@@ -188,15 +205,29 @@ static PyMethodDef module_methods[] = {
     {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
     {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
     {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
+    {"clean_mef_session_metadata", clean_mef_session_metadata, METH_VARARGS, NULL},
+    {"clean_mef_channel_metadata", clean_mef_channel_metadata, METH_VARARGS, NULL},
+    {"clean_mef_segment_metadata", clean_mef_segment_metadata, METH_VARARGS, NULL},
     {"check_mef_password", check_mef_password, METH_VARARGS, check_mef_password_docstring},
+
+    // New numpy stuff
+    {"create_rh_dtype", create_rh_dtype, METH_VARARGS, NULL},
+    {"create_ri_dtype", create_ri_dtype, METH_VARARGS, NULL},
+    {"create_edfa_dtype", create_edfa_dtype, METH_VARARGS, NULL},
+    {"create_lntp_dtype", create_lntp_dtype, METH_VARARGS, NULL},
+    {"create_note_dtype", create_note_dtype, METH_VARARGS, NULL},
+    {"create_seiz_dtype", create_seiz_dtype, METH_VARARGS, NULL},
+    {"create_seiz_ch_dtype", create_seiz_ch_dtype, METH_VARARGS, NULL},
+    {"create_sylg_dtype", create_sylg_dtype, METH_VARARGS, NULL},
+    {"create_csti_dtype", create_csti_dtype, METH_VARARGS, NULL},
+    {"create_esti_dtype", create_esti_dtype, METH_VARARGS, NULL},
+
 
     {"create_uh_dtype", create_uh_dtype, METH_VARARGS, NULL},
     {"create_md1_dtype", create_md1_dtype, METH_VARARGS, NULL},
     {"create_tmd2_dtype", create_tmd2_dtype, METH_VARARGS, NULL},
     {"create_vmd2_dtype", create_vmd2_dtype, METH_VARARGS, NULL},
     {"create_md3_dtype", create_md3_dtype, METH_VARARGS, NULL},
-    {"create_rh_dtype", create_rh_dtype, METH_VARARGS, NULL},
-    {"create_ri_dtype", create_ri_dtype, METH_VARARGS, NULL},
     {"create_ti_dtype", create_ti_dtype, METH_VARARGS, NULL},
     {"create_vi_dtype", create_vi_dtype, METH_VARARGS, NULL},
 
@@ -207,42 +238,29 @@ static PyMethodDef module_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-//  Fork for python 3 and python 2
-#if PY_MAJOR_VERSION >= 3
+/* Definition of struct for python 3 */
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "pymef.mef_file.pymef3_file",     /* m_name */
+    pymef3_file_docstring,  /* m_doc */
+    -1,                  /* m_size */
+    module_methods,    /* m_methods */
+    NULL,                /* m_reload */
+    NULL,                /* m_traverse */
+    NULL,                /* m_clear */
+    NULL,                /* m_free */
+};
 
-    /* Definition of struct for python 3 */
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "pymef.mef_file.pymef3_file",     /* m_name */
-        pymef3_file_docstring,  /* m_doc */
-        -1,                  /* m_size */
-        module_methods,    /* m_methods */
-        NULL,                /* m_reload */
-        NULL,                /* m_traverse */
-        NULL,                /* m_clear */
-        NULL,                /* m_free */
-    };
+/* Module initialisation */
+PyObject * PyInit_pymef3_file(void)
+{
+    PyObject *m = PyModule_Create(&moduledef);
 
-    /* Module initialisation */
-    PyObject * PyInit_pymef3_file(void)
-    {
-        PyObject *m = PyModule_Create(&moduledef);
+    if (m == NULL)
+        return NULL;
 
-        if (m == NULL)
-            return NULL;
-
-        return m;
-    }
-#else
-    /* Module initialisation */
-    PyMODINIT_FUNC initpymef3_file(void)
-    {
-        PyObject *m = Py_InitModule3("pymef3_file", module_methods, pymef3_file_docstring);
-        if (m == NULL)
-            return;
-
-    }
-#endif
+    return m;
+}
 
 /* Function declarations */
 
@@ -250,17 +268,18 @@ static PyMethodDef module_methods[] = {
 // UNIVERSAL_HEADER *map_python_uh(PyObject *);
 
 // METADATA_SECTION_1 *map_python_md1(PyObject *);
-void    map_python_tmd2(PyObject *tmd2_dict, TIME_SERIES_METADATA_SECTION_2 *tmd2);
-void    map_python_vmd2(PyObject *vmd2_dict, VIDEO_METADATA_SECTION_2 *vmd2);
-void    map_python_vi(PyObject *vi_dict, VIDEO_INDEX *vi);
-void    map_python_md3(PyObject *md3_dict, METADATA_SECTION_3 *md3);
+void    map_python_tmd2(PyObject *tmd2_arr, TIME_SERIES_METADATA_SECTION_2 *tmd2);
+void    map_python_vmd2(PyObject *vmd2_arr, VIDEO_METADATA_SECTION_2 *vmd2);
+void    map_python_vi(PyObject *vi_arr, VIDEO_INDEX *vi);
+void    map_python_md3(PyObject *md3_arr, METADATA_SECTION_3 *md3);
+
 
 // Mef record structures
 void    map_python_rh(PyObject *rh_dict, RECORD_HEADER  *rh);
 void    map_python_EDFA_type(PyObject *EDFA_type_dict, MEFREC_EDFA_1_0  *r_type);
 void    map_python_LNTP_type(PyObject *LNTP_type_dict, MEFREC_LNTP_1_0  *r_type);
 void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type);
-void    map_python_Siez_type_channel(PyObject *Siez_ch_type_dict, MEFREC_Seiz_1_0_CHANNEL *r_type);
+void    map_python_Siez_ch_type(PyObject *Siez_ch_type_dict, si1 *r_type);
 void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type);
 void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type);
 void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type);
@@ -268,43 +287,33 @@ void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type)
 
 // ---------- Mef3 to python dictionaries -----------
 PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh);
-PyObject *map_mef3_uh_npy(UNIVERSAL_HEADER *uh);
 
 PyObject *map_mef3_md1(METADATA_SECTION_1 *md1);
-PyObject *map_mef3_md1_npy(METADATA_SECTION_1 *md1);
 PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd);
-PyObject *map_mef3_tmd2_npy(TIME_SERIES_METADATA_SECTION_2 *tmd);
 PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd);
-PyObject *map_mef3_vmd2_npy(VIDEO_METADATA_SECTION_2 *vmd);
 PyObject *map_mef3_md3(METADATA_SECTION_3 *md3);
-PyObject *map_mef3_md3_npy(METADATA_SECTION_3 *md3);
 
 
-PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti);
-PyObject *map_mef3_ti_npy(TIME_SERIES_INDEX *ti, si8 number_of_entries);
-PyObject *map_mef3_vi(VIDEO_INDEX *vi);
-PyObject *map_mef3_vi_npy(VIDEO_INDEX *vi, si8 number_of_entries);
+PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries);
+PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries);
 PyObject *create_mef3_TOC(SEGMENT *segment);
 
 PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag);
-PyObject *map_mef3_segment_npy(SEGMENT *segment, si1 map_indices_flag);
-
 PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag);
-PyObject *map_mef3_channel_npy(CHANNEL *channel, si1 map_indices_flag);
-
 PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag);
-PyObject *map_mef3_session_npy(SESSION *session, si1 map_indices_flag);
 
 // Mef record structures
 PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps);
 
 PyObject *map_mef3_rh(RECORD_HEADER *rh);
+PyObject *map_mef3_rh_npy(RECORD_HEADER *rh);
 PyObject *map_mef3_ri(RECORD_INDEX *ri);
 
 PyObject *map_mef3_Note_type(RECORD_HEADER *rh);
 PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh);
 PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh);
 PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh);
+PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels);
 PyObject *map_mef3_CSti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_ESti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
