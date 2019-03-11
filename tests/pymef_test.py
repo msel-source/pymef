@@ -27,6 +27,7 @@ import warnings
 import numpy as np
 
 # Local imports
+from pymef.mef_session import MefSession
 from pymef import pymef3_file
 
 
@@ -56,11 +57,13 @@ class TestStringMethods(unittest.TestCase):
         self.rec_offset = int(self.start_time - 1e6)
 
         # Create paths for channels and segments
+        self.ts_channel = 'ts_channel'
         self.ts_channel_path = self.mef_session_path+'/ts_channel.timd'
 
         self.ts_seg1_path = self.ts_channel_path+'/ts_channel-000000.segd'
         self.ts_seg2_path = self.ts_channel_path+'/ts_channel-000001.segd'
 
+        self.vid_channel = 'vid_channel'
         self.vid_channel_path = self.mef_session_path+'/vid_channel.vidd'
 
         self.vid_seg1_path = self.vid_channel_path+'/vid_channel-000000.segd'
@@ -69,88 +72,132 @@ class TestStringMethods(unittest.TestCase):
 
         self.record_list = []
 
+        hdr_dtype = pymef3_file.create_rh_dtype()
+
         # Create Note
-        note_dict = {'type_string': 'Note',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': self.record_time_1,
-                     'note': 'Note_test'}
+        
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'Note'
+        hdr_arr['time'] = self.record_time_1
+
+        note_str = 'Note_test'
+        body_dtype = pymef3_file.create_note_dtype(len(note_str))
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['text'] = note_str
+
+        note_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
 
         # Create SyLg
-        sylg_dict = {'type_string': 'SyLg',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': self.record_time_1,
-                     'text': 'SyLg_test'}
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'SyLg'
+        hdr_arr['time'] = self.record_time_1
+
+        sylg_str = 'SyLg_test'
+        body_dtype = pymef3_file.create_sylg_dtype(len(sylg_str))
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['text'] = sylg_str
+
+        sylg_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
 
         # Create EDFA
-        edfa_dict = {'type_string': 'EDFA',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': self.record_time_1,
-                     'duration': 1000000,
-                     'annotation': 'EDFA_test'}
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'EDFA'
+        hdr_arr['time'] = self.record_time_1
 
-        # Not sure what is the template, ask Matt
-        # lntp_dict = {'type_string':'LNTP',
-        # 			 'version_major':1,
-        # 			 'version_minor':0,
-        # 			 'time':int(946684800000000 + 2*1e6),
-        # 			 'length':1000000,
-        # 			 'template':20}
+        edfa_str = 'EDFA_test'
+        body_dtype = pymef3_file.create_edfa_dtype(len(edfa_str))
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['duration'] = 10
+        body_arr['text'] = edfa_str
+
+        edfa_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
+
+        # Create LNTP
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'LNTP'
+        hdr_arr['time'] = self.record_time_1
+
+        template = np.array([1,2,3,4,5])
+        body_dtype = pymef3_file.create_lntp_dtype(len(template))
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['length'] = len(template)
+        body_arr['template'] = template
+
+        lntp_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
 
         # Create Seiz
-        seiz_chans = []
-        seiz_chan_dict_1 = {'name': 'msel',
-                            'onset': self.record_time_1,
-                            'offset': self.record_time_2}
-        seiz_chans.append(seiz_chan_dict_1)
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'Seiz'
+        hdr_arr['time'] = self.record_time_1
 
-        seiz_time = min([x['onset'] for x in seiz_chans])
-        earliest_onset = min([x['onset'] for x in seiz_chans])
-        latest_offset = max([x['offset'] for x in seiz_chans])
+        subbody_dtype = pymef3_file.create_seiz_ch_dtype()
+        subbody_arr = np.zeros(3, subbody_dtype)
+        subbody_arr['name'] = ['CH1', 'ch_2', 'ch3']
+        subbody_arr['onset'] = [self.record_time_1]*3
+        subbody_arr['offset'] = [int(self.record_time_1+1e6)]*3
 
-        seiz_dict = {'type_string': 'Seiz',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': seiz_time,
-                     'earliest_onset': earliest_onset,
-                     'latest_offset': latest_offset,
-                     'duration': latest_offset - earliest_onset,
-                     'number_of_channels': len(seiz_chans),
-                     'onset_code': 2,
-                     'marker_name_1': 'beer_tap',
-                     'marker_name_2': 'wine_tap',
-                     'annotation': 'test_seizure',
-                     'channels': seiz_chans}
+        seiz_time = min(subbody_arr['onset'])
+        earliest_onset = min(subbody_arr['onset'])
+        latest_offset = max(subbody_arr['offset'])
 
-        csti_dict = {'type_string': 'CSti',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': self.record_time_1,
-                     'task_type': 'beerdrink',
-                     'stimulus_duration': 1000000,
-                     'stimulus_type': 'pilsner',
-                     'patient_response': 'hmmm'}
+        body_dtype = pymef3_file.create_seiz_dtype()
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['earliest_onset'] = earliest_onset
+        body_arr['latest_offset'] = latest_offset
+        body_arr['duration'] = latest_offset - earliest_onset
+        body_arr['number_of_channels'] = len(subbody_arr)
+        body_arr['onset_code'] = 2
+        body_arr['marker_name_1'] = 'beer_tap'
+        body_arr['marker_name_2'] = 'wine_tap'
+        body_arr['annotation'] = 'test_seizure'
 
-        esti_dict = {'type_string': 'ESti',
-                     'version_major': 1,
-                     'version_minor': 0,
-                     'time': self.record_time_1,
-                     'amplitude': 1.5,
-                     'frequency': 250.5,
-                     'pulse_width': 100,
-                     'ampunit_code': 1,
-                     'mode_code': 2,
-                     'waveform': 'nice',
-                     'anode': 'positive',
-                     'catode': 'negative'}
+        seiz_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr,
+                     'record_subbody': subbody_arr}
+
+        # Create CSti
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'CSti'
+        hdr_arr['time'] = self.record_time_1
+
+        body_dtype = pymef3_file.create_csti_dtype()
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['task_type'] = 'beerdrink'
+        body_arr['stimulus_duration'] = 1000000
+        body_arr['stimulus_type'] = 'pilsner'
+        body_arr['patient_response'] = 'hmmm'
+
+        csti_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
+
+        # Create ESti
+        hdr_arr = np.zeros(1, hdr_dtype)
+        hdr_arr['type_string'] = b'ESti'
+        hdr_arr['time'] = self.record_time_1
+
+        body_dtype = pymef3_file.create_esti_dtype()
+        body_arr = np.zeros(1, body_dtype)
+        body_arr['amplitude'] = 1.5
+        body_arr['frequency'] = 250.5
+        body_arr['pulse_width'] = 100
+        body_arr['ampunit_code'] = 1
+        body_arr['mode_code'] = 2
+        body_arr['waveform'] = 'nice'
+        body_arr['anode'] = 'positive'
+        body_arr['catode'] = 'negative'
+
+        esti_dict = {'record_header': hdr_arr,
+                     'record_body': body_arr}
 
         self.record_list.append(note_dict)
         self.record_list.append(sylg_dict)
         self.record_list.append(edfa_dict)
 
-        # record_list.append(lntp_dict)
+        self.record_list.append(lntp_dict)
 
         self.record_list.append(seiz_dict)
         self.record_list.append(csti_dict)
@@ -161,15 +208,15 @@ class TestStringMethods(unittest.TestCase):
                               'DST_start_time': 0,
                               'DST_end_time': 0,
                               'GMT_offset': 3600,
-                              'subject_name_1': 'Olaf',
-                              'subject_name_2': 'Mefson',
-                              'subject_ID': '2017',
-                              'recording_location': 'pub'}
+                              'subject_name_1': b'Olaf',
+                              'subject_name_2': b'Mefson',
+                              'subject_ID': b'2017',
+                              'recording_location': b'pub'}
 
-        self.section2_ts_dict = {'channel_description': 'Test_channel',
-                                 'session_description': 'Test_session',
+        self.section2_ts_dict = {'channel_description': b'Test_channel',
+                                 'session_description': b'Test_session',
                                  'recording_duration': 1,  # TODO:test 0 / None
-                                 'reference_description': 'wine',
+                                 'reference_description': b'wine',
                                  'acquisition_channel_number': 5,
                                  'sampling_frequency': self.sampling_frequency,
                                  'notch_filter_frequency_setting': 50.0,
@@ -177,7 +224,7 @@ class TestStringMethods(unittest.TestCase):
                                  'high_frequency_filter_setting': 10.0,
                                  'AC_line_frequency': 70,
                                  'units_conversion_factor': 1.5,
-                                 'units_description': 'uV',
+                                 'units_description': b'uV',
                                  'maximum_native_sample_value': 0.0,
                                  'minimum_native_sample_value': 0.0,
                                  'start_sample': 0,  # Different for segments
@@ -219,15 +266,15 @@ class TestStringMethods(unittest.TestCase):
 
         # Preapare dummy video metadata and indices
 
-        self.section2_v_dict = {'channel_description': 'Test_channel',
-                                'session_description': 'Test_session',
+        self.section2_v_dict = {'channel_description': b'Test_channel',
+                                'session_description': b'Test_session',
                                 'recording_duration': 1,
                                 'horizontal_resolution': 10,
                                 'vertical_resolution': 20,
                                 'frame_rate': 60.0,
                                 'number_of_clips': 1,
                                 'maximum_clip_bytes': 5000,
-                                'video_format': 'mpeg',
+                                'video_format': b'mpeg',
                                 'video_file_CRC': 111111}
 
         self.v_index_entry = {'start_time': self.start_time,
@@ -237,48 +284,68 @@ class TestStringMethods(unittest.TestCase):
                               'file_offset': 0,
                               'clip_bytes': 5000}
 
-        self.v_index_entries = [self.v_index_entry]
+        self.v_index_entries_list = [self.v_index_entry]
+
+        v_index_dtype = pymef3_file.create_vi_dtype()
+        self.v_index_entries = np.zeros(len(self.v_index_entries_list),
+                                        dtype=v_index_dtype)
+        for i, vi in enumerate(self.v_index_entries_list):
+            for key, value in vi.items():
+                self.v_index_entries[key][i] = value
+
+        # Create mef session object
+        ms = MefSession(self.mef_session_path, self.pwd_2, read_metadata=False)
 
         # Write dummy records
 
-        pymef3_file.write_mef_data_records(self.ts_seg1_path,
-                                           self.pwd_1,
-                                           self.pwd_2,
-                                           self.start_time,
-                                           self.end_time,
-                                           self.rec_offset,
-                                           self.record_list)
+        ms.write_mef_records(self.pwd_1,
+                             self.pwd_2,
+                             self.start_time,
+                             self.end_time,
+                             self.rec_offset,
+                             self.record_list,
+                             channel=self.ts_channel,
+                             segment_n=0)
 
 #        print("Records written at segment level")
 
-        pymef3_file.write_mef_data_records(self.ts_channel_path,
-                                           self.pwd_1,
-                                           self.pwd_2,
-                                           self.start_time,
-                                           self.end_time,
-                                           self.rec_offset,
-                                           self.record_list)
+        # ms.write_mef_records(self.pwd_1,
+        #                      self.pwd_2,
+        #                      self.start_time,
+        #                      self.end_time,
+        #                      self.rec_offset,
+        #                      self.record_list,
+        #                      channel=self.ts_channel)
 
 #        print("Records written at channel level")
-        pymef3_file.write_mef_data_records(self.mef_session_path,
-                                           self.pwd_1,
-                                           self.pwd_2,
-                                           self.start_time,
-                                           self.end_time,
-                                           self.rec_offset,
-                                           self.record_list)
+        # ms.write_mef_records(self.pwd_1,
+        #                      self.pwd_2,
+        #                      self.start_time,
+        #                      self.end_time,
+        #                      self.rec_offset,
+        #                      self.record_list)
 
 #        print("Records written at session level")
 
         # Write dummy time series metadata
         # Note: the rest of the tmd2 fileds is subject to discussion
-        pymef3_file.write_mef_ts_metadata(self.ts_seg1_path,
-                                          self.pwd_1,
-                                          self.pwd_2,
-                                          self.start_time,
-                                          self.end_time,
-                                          self.section2_ts_dict,
-                                          self.section3_dict)
+
+        ms.write_mef_ts_segment_metadata(self.ts_channel,
+                                         0,
+                                         self.pwd_1,
+                                         self.pwd_2,
+                                         self.start_time,
+                                         self.end_time,
+                                         self.section2_ts_dict,
+                                         self.section3_dict)
+
+        # pymef3_file.write_mef_ts_metadata(self.ts_seg1_path,
+        #                                   self.pwd_1,
+        #                                   self.pwd_2,
+        #                                   self.start_time,
+        #                                   self.end_time,
+        #                                   self.section2_ts_dict,
+        #                                   self.section3_dict)
 
         # Write second segment
         seg2_start = int(self.end_time
@@ -290,73 +357,130 @@ class TestStringMethods(unittest.TestCase):
                                                 + self.secs_to_append)
         self.section2_ts_dict_seg2['start_sample'] = start_samp
 
-        pymef3_file.write_mef_ts_metadata(self.ts_seg2_path,
-                                          self.pwd_1,
-                                          self.pwd_2,
-                                          seg2_start,
-                                          seg2_stop,
-                                          self.section2_ts_dict_seg2,
-                                          self.section3_dict)
+        # pymef3_file.write_mef_ts_metadata(self.ts_seg2_path,
+        #                                   self.pwd_1,
+        #                                   self.pwd_2,
+        #                                   seg2_start,
+        #                                   seg2_stop,
+        #                                   self.section2_ts_dict_seg2,
+        #                                   self.section3_dict)
+
+        ms.write_mef_ts_segment_metadata(self.ts_channel,
+                                         1,
+                                         self.pwd_1,
+                                         self.pwd_2,
+                                         seg2_start,
+                                         seg2_stop,
+                                         self.section2_ts_dict_seg2,
+                                         self.section3_dict)
 
 #        print("Time series metadata written")
 
         # Write dummy time series data
 
         # Write first segment
-        pymef3_file.write_mef_ts_data_and_indices(self.ts_seg1_path,
-                                                  self.pwd_1,
-                                                  self.pwd_2,
-                                                  self.samps_per_mef_block,
-                                                  self.raw_data,
-                                                  0)
+        # pymef3_file.write_mef_ts_data_and_indices(self.ts_seg1_path,
+        #                                           self.pwd_1,
+        #                                           self.pwd_2,
+        #                                           self.samps_per_mef_block,
+        #                                           self.raw_data,
+        #                                           0)
+
+        ms.write_mef_ts_segment_data(self.ts_channel,
+                                     0,
+                                     self.pwd_1,
+                                     self.pwd_2,
+                                     self.samps_per_mef_block,
+                                     self.raw_data)
 
         # Append time series data and modify files accordinglly,
         # but update metadata first
         append_start = self.end_time
         append_stop = int(append_start + (self.secs_to_append * 1e6))
-        pymef3_file.append_ts_data_and_indices(self.ts_seg1_path,
-                                               self.pwd_1,
-                                               self.pwd_2,
-                                               append_start,
-                                               append_stop,
-                                               self.samps_per_mef_block,
-                                               self.raw_data_to_append,
-                                               0)
+        # pymef3_file.append_ts_data_and_indices(self.ts_seg1_path,
+        #                                        self.pwd_1,
+        #                                        self.pwd_2,
+        #                                        append_start,
+        #                                        append_stop,
+        #                                        self.samps_per_mef_block,
+        #                                        self.raw_data_to_append,
+        #                                        0)
+
+        ms.append_mef_ts_segment_data(self.ts_channel,
+                                      0,
+                                      self.pwd_1,
+                                      self.pwd_2,
+                                      append_start,
+                                      append_stop,
+                                      self.samps_per_mef_block,
+                                      self.raw_data_to_append)
+
 
         # Write second segment
 
-        pymef3_file.write_mef_ts_data_and_indices(self.ts_seg2_path,
-                                                  self.pwd_1,
-                                                  self.pwd_2,
-                                                  self.samps_per_mef_block,
-                                                  self.raw_data_seg_2,
-                                                  0)
+        # pymef3_file.write_mef_ts_data_and_indices(self.ts_seg2_path,
+        #                                           self.pwd_1,
+        #                                           self.pwd_2,
+        #                                           self.samps_per_mef_block,
+        #                                           self.raw_data_seg_2,
+        #                                           0)
+
+        ms.write_mef_ts_segment_data(self.ts_channel,
+                                     1,
+                                     self.pwd_1,
+                                     self.pwd_2,
+                                     self.samps_per_mef_block,
+                                     self.raw_data_seg_2)
 
 #        print("Time series data and indices written")
 
         # Write dummy video metadata and indices
-        pymef3_file.write_mef_v_metadata(self.vid_seg1_path,
-                                         self.pwd_1,
-                                         self.pwd_2,
-                                         self.start_time,
-                                         self.end_time,
-                                         self.section2_v_dict,
-                                         self.section3_dict)
+        # pymef3_file.write_mef_v_metadata(self.vid_seg1_path,
+        #                                  self.pwd_1,
+        #                                  self.pwd_2,
+        #                                  self.start_time,
+        #                                  self.end_time,
+        #                                  self.section2_v_dict,
+        #                                  self.section3_dict)
 
-#        print("Video metadata written")
-
-        pymef3_file.write_mef_v_indices(self.vid_seg1_path,
+        ms.write_mef_v_segment_metadata(self.vid_channel,
+                                        0,
                                         self.pwd_1,
                                         self.pwd_2,
                                         self.start_time,
                                         self.end_time,
-                                        self.v_index_entries)
+                                        self.section2_v_dict,
+                                        self.section3_dict)
+
+#        print("Video metadata written")
+
+        # pymef3_file.write_mef_v_indices(self.vid_seg1_path,
+        #                                 self.pwd_1,
+        #                                 self.pwd_2,
+        #                                 self.start_time,
+        #                                 self.end_time,
+        #                                 self.v_index_entries)
+
+
+
+        ms.write_mef_v_segment_indices(self.vid_channel,
+                                       0,
+                                       self.pwd_1,
+                                       self.pwd_2,
+                                       self.start_time,
+                                       self.end_time,
+                                       self.v_index_entries)
+
+        ms.close()
 
 #        print("Video indices written")
 
         # Read back session metadata (avoids reading metadata in each function)
-        self.smd = pymef3_file.read_mef_session_metadata(self.mef_session_path,
-                                                         self.pwd_2)
+        # self.smd = pymef3_file.read_mef_session_metadata(self.mef_session_path,
+        #                                                  self.pwd_2)
+        print('Reading mef session')
+        self.ms = MefSession(self.mef_session_path, self.pwd_2)
+        self.smd = self.ms.session_md
 
     # ----- Read metadata tests -----
 
@@ -387,97 +511,100 @@ class TestStringMethods(unittest.TestCase):
         segments = self.smd['time_series_channels']['ts_channel']['segments']
         seg_md = segments['ts_channel-000000']
         read_records = seg_md['records_info']['records']
-
         self.assertEqual(len(self.record_list), len(read_records))
 
         for rec_id in range(len(self.record_list)):
             write_record = self.record_list[rec_id]
             read_record = read_records[rec_id]
 
+            write_header_arr = write_record.get('record_header')
+            write_body_arr = write_record.get('record_body')
+            write_subbody_arr = write_record.get('record_subbody')
+
+            read_header_arr = read_record.get('record_header')
+            read_body_arr = read_record.get('record_body')
+            read_subbody_arr = read_record.get('record_subbody')
+
 #            print('Record type: ---'+write_record['type_string']+'---')
 
             # Record header
-            self.assertEqual(write_record['time'],
-                             read_record['time'])
-            self.assertEqual(write_record['type_string'],
-                             read_record['type_string'])
+            self.assertEqual(write_header_arr['time'],
+                             read_header_arr['time'])
+            self.assertEqual(write_header_arr['type_string'],
+                             read_header_arr['type_string'])
 
             # Record body
-            if write_record['type_string'] == 'EDFA':
-                self.assertEqual(write_record['duration'],
-                                 read_record['record_body']['duration'])
-                self.assertEqual(write_record['annotation'],
-                                 read_record['record_body']['annotation'])
+            if write_header_arr['type_string'] == b'EDFA':
+                self.assertEqual(write_body_arr['duration'],
+                                 read_body_arr['duration'])
+                self.assertEqual(write_body_arr['text'],
+                                 read_body_arr['text'])
 
-            if write_record['type_string'] == 'Note':
-                self.assertEqual(write_record['note'],
-                                 read_record['record_body']['note'])
+            elif write_header_arr['type_string'] == b'Note':
+                self.assertEqual(write_body_arr['text'],
+                                 read_body_arr['text'])
 
-            if write_record['type_string'] == 'SyLg':
-                self.assertEqual(write_record['text'],
-                                 read_record['record_body']['text'])
+            elif write_header_arr['type_string'] == b'SyLg':
+                self.assertEqual(write_body_arr['text'],
+                                 read_body_arr['text'])
 
-            if write_record['type_string'] == 'Seiz':
-                self.assertEqual(write_record['earliest_onset'],
-                                 read_record['record_body']
-                                 ['earliest_onset_uUTC'])
-                self.assertEqual(write_record['latest_offset'],
-                                 read_record['record_body']
-                                 ['latest_offset_uUTC'])
-                self.assertEqual(write_record['duration'],
-                                 read_record['record_body']['duration'])
-                self.assertEqual(write_record['number_of_channels'],
-                                 read_record['record_body']
-                                 ['number_of_channels'])
-                self.assertEqual(write_record['onset_code'],
-                                 read_record['record_body']['onset_code'])
-                self.assertEqual(write_record['marker_name_1'],
-                                 read_record['record_body']['marker_name_1'])
-                self.assertEqual(write_record['marker_name_2'],
-                                 read_record['record_body']['marker_name_2'])
-                self.assertEqual(write_record['annotation'],
-                                 read_record['record_body']['annotation'])
+            elif write_header_arr['type_string'] == b'Seiz':
+                self.assertEqual(write_body_arr['earliest_onset'],
+                                 read_body_arr['earliest_onset'])
+                self.assertEqual(write_body_arr['latest_offset'],
+                                 read_body_arr['latest_offset'])
+                self.assertEqual(write_body_arr['duration'],
+                                 read_body_arr['duration'])
+                self.assertEqual(write_body_arr['number_of_channels'],
+                                 read_body_arr['number_of_channels'])
+                self.assertEqual(write_body_arr['onset_code'],
+                                 read_body_arr['onset_code'])
+                self.assertEqual(write_body_arr['marker_name_1'],
+                                 read_body_arr['marker_name_1'])
+                self.assertEqual(write_body_arr['marker_name_2'],
+                                 read_body_arr['marker_name_2'])
+                self.assertEqual(write_body_arr['annotation'],
+                                 read_body_arr['annotation'])
 
                 # Check the channel entries
-                for ci, write_channel in enumerate(write_record['channels']):
-                    read_channel = read_record['record_body']['channels'][ci]
+                for ci, write_channel in enumerate(write_subbody_arr):
+                    read_channel = read_subbody_arr[ci]
 
                     self.assertEqual(write_channel['name'],
                                      read_channel['name'])
                     self.assertEqual(write_channel['onset'],
-                                     read_channel['onset_uUTC'])
+                                     read_channel['onset'])
                     self.assertEqual(write_channel['offset'],
-                                     read_channel['offset_uUTC'])
+                                     read_channel['offset'])
 
-            if write_record['type_string'] == 'CSti':
-                self.assertEqual(write_record['task_type'],
-                                 read_record['record_body']['task_type'])
-                self.assertEqual(write_record['stimulus_duration'],
-                                 read_record['record_body']
-                                 ['stimulus_duration'])
-                self.assertEqual(write_record['stimulus_type'],
-                                 read_record['record_body']['stimulus_type'])
-                self.assertEqual(write_record['patient_response'],
-                                 read_record['record_body']
-                                 ['patient_response'])
+            elif write_header_arr['type_string'] == b'CSti':
+                self.assertEqual(write_body_arr['task_type'],
+                                 read_body_arr['task_type'])
+                self.assertEqual(write_body_arr['stimulus_duration'],
+                                 read_body_arr['stimulus_duration'])
+                self.assertEqual(write_body_arr['stimulus_type'],
+                                 read_body_arr['stimulus_type'])
+                self.assertEqual(write_body_arr['patient_response'],
+                                 read_body_arr['patient_response'])
 
-            if write_record['type_string'] == 'ESti':
-                self.assertEqual(write_record['amplitude'],
-                                 read_record['record_body']['amplitude'])
-                self.assertEqual(write_record['frequency'],
-                                 read_record['record_body']['frequency'])
-                self.assertEqual(write_record['pulse_width'],
-                                 read_record['record_body']['pulse_width'])
-                self.assertEqual(write_record['ampunit_code'],
-                                 read_record['record_body']['ampunit_code'])
-                self.assertEqual(write_record['mode_code'],
-                                 read_record['record_body']['mode_code'])
-                self.assertEqual(write_record['waveform'],
-                                 read_record['record_body']['waveform'])
-                self.assertEqual(write_record['anode'],
-                                 read_record['record_body']['anode'])
-                self.assertEqual(write_record['catode'],
-                                 read_record['record_body']['catode'])
+            elif write_header_arr['type_string'] == b'ESti':
+                self.assertEqual(write_body_arr['amplitude'],
+                                 read_body_arr['amplitude'])
+                self.assertEqual(write_body_arr['frequency'],
+                                 read_body_arr['frequency'])
+                self.assertEqual(write_body_arr['pulse_width'],
+                                 read_body_arr['pulse_width'])
+                self.assertEqual(write_body_arr['ampunit_code'],
+                                 read_body_arr['ampunit_code'])
+                self.assertEqual(write_body_arr['mode_code'],
+                                 read_body_arr['mode_code'])
+                self.assertEqual(write_body_arr['waveform'],
+                                 read_body_arr['waveform'])
+                self.assertEqual(write_body_arr['anode'],
+                                 read_body_arr['anode'])
+                self.assertEqual(write_body_arr['catode'],
+                                 read_body_arr['catode'])
+
 
     def test_time_series_metadata_section_2_usr(self):
 
@@ -499,7 +626,7 @@ class TestStringMethods(unittest.TestCase):
 
         for md2_user_key in section_2_usr_field_list:
             self.assertEqual(self.section2_ts_dict[md2_user_key],
-                             seg_md['section_2'][md2_user_key])
+                             seg_md['section_2'][md2_user_key][0])
 
     def test_time_series_metadata_section_2_auto(self):
 
@@ -510,16 +637,16 @@ class TestStringMethods(unittest.TestCase):
         max_sample_val = (np.max(self.raw_data_seg_1)
                           * self.section2_ts_dict['units_conversion_factor'])
         self.assertEqual(max_sample_val,
-                         seg_md['section_2']['maximum_native_sample_value'])
+                         seg_md['section_2']['maximum_native_sample_value'][0])
 
         min_sample_val = (np.min(self.raw_data_seg_1)
                           * self.section2_ts_dict['units_conversion_factor'])
         self.assertEqual(min_sample_val,
-                         seg_md['section_2']['minimum_native_sample_value'])
+                         seg_md['section_2']['minimum_native_sample_value'][0])
 
         # TODO: This field should be tested across segments
         self.assertEqual(self.section2_ts_dict['start_sample'],
-                         seg_md['section_2']['start_sample'])
+                         seg_md['section_2']['start_sample'][0])
 
         min_sample_val = (np.min(self.raw_data_seg_1)
                           * self.section2_ts_dict['units_conversion_factor'])
@@ -528,19 +655,19 @@ class TestStringMethods(unittest.TestCase):
                             * (self.secs_to_write + self.secs_to_append))
                            / self.samps_per_mef_block)
         self.assertEqual(N_blocks,
-                         seg_md['section_2']['number_of_blocks'])
+                         seg_md['section_2']['number_of_blocks'][0])
 
         self.assertEqual(self.samps_per_mef_block,
-                         seg_md['section_2']['maximum_block_samples'])
+                         seg_md['section_2']['maximum_block_samples'][0])
 
         N_samples = (self.sampling_frequency
                      * (self.secs_to_write + self.secs_to_append))
         self.assertEqual(N_samples,
-                         seg_md['section_2']['number_of_samples'])
+                         seg_md['section_2']['number_of_samples'][0])
 
         rec_duration = int((N_samples / self.sampling_frequency) * 1e6)
         self.assertEqual(rec_duration,
-                         seg_md['section_2']['recording_duration'])
+                         seg_md['section_2']['recording_duration'][0])
 
     def test_time_series_metadata_section_3(self):
 
@@ -549,7 +676,7 @@ class TestStringMethods(unittest.TestCase):
 
         for md3_key in self.section3_dict.keys():
             self.assertEqual(self.section3_dict[md3_key],
-                             seg_md['section_3'][md3_key])
+                             seg_md['section_3'][md3_key][0])
 
     def test_video_metadata_section_2(self):
 
@@ -558,7 +685,7 @@ class TestStringMethods(unittest.TestCase):
 
         for md2_key in self.section2_v_dict.keys():
             self.assertEqual(self.section2_v_dict[md2_key],
-                             seg_md['section_2'][md2_key])
+                             seg_md['section_2'][md2_key][0])
 
     def test_video_metadata_section_3(self):
         segments = self.smd['video_channels']['vid_channel']['segments']
@@ -566,14 +693,12 @@ class TestStringMethods(unittest.TestCase):
 
         for md3_key in self.section3_dict.keys():
             self.assertEqual(self.section3_dict[md3_key],
-                             seg_md['section_3'][md3_key])
+                             seg_md['section_3'][md3_key][0])
 
     def test_time_series_data(self):
 
-        read_data = pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                                 self.pwd_2,
-                                                 None,
-                                                 None)
+        read_data = self.ms.read_ts_channels_sample(self.ts_channel,
+                                                    [None, None])
 
         # Check the sums
         self.assertEqual(np.sum(self.raw_data_all),
@@ -589,17 +714,15 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = ch_md2['start_sample'] - self.samps_per_mef_block
-        end = ch_md2['start_sample'] + self.samps_per_mef_block
+        start = int(ch_md2['start_sample'] - self.samps_per_mef_block)
+        end = int(ch_md2['start_sample'] + self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             warning_text = ('Start sample smaller than 0. '
                             'Setting start sample to 0')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end)
+            self.ms.read_ts_channels_sample(self.ts_channel,
+                                            [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -611,18 +734,16 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = ch_md2['number_of_samples'] - self.samps_per_mef_block
-        end = ch_md2['number_of_samples'] + self.samps_per_mef_block
+        start = int(ch_md2['number_of_samples'] - self.samps_per_mef_block)
+        end = int(ch_md2['number_of_samples'] + self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             warning_text = ('Stop sample larger than number of samples. '
                             'Setting end sample to number of samples in '
                             'channel')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end)
+            self.ms.read_ts_channels_sample(self.ts_channel,
+                                            [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -634,17 +755,15 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = ch_md2['start_sample'] - (self.samps_per_mef_block * 2)
-        end = ch_md2['start_sample'] - self.samps_per_mef_block
+        start = int(ch_md2['start_sample'] - (self.samps_per_mef_block * 2))
+        end = int(ch_md2['start_sample'] - self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             warning_text = ('Start and stop samples are out of file. '
                             'Returning None')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end)
+            self.ms.read_ts_channels_sample(self.ts_channel,
+                                            [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -656,17 +775,15 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = ch_md2['number_of_samples'] + self.samps_per_mef_block
-        end = ch_md2['number_of_samples'] + (self.samps_per_mef_block * 2)
+        start = int(ch_md2['number_of_samples'] + self.samps_per_mef_block)
+        end = int(ch_md2['number_of_samples'] + (self.samps_per_mef_block * 2))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             warning_text = ('Start and stop samples are out of file. '
                             'Returning None')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end)
+            self.ms.read_ts_channels_sample(self.ts_channel,
+                                            [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -679,10 +796,8 @@ class TestStringMethods(unittest.TestCase):
         error_text = 'Start sample larger than end sample, exiting...'
 
         try:
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         10,
-                                         5)
+            self.ms.read_ts_channels_sample(self.ts_channel,
+                                            [5, 10])
         except Exception as e:
             self.assertEqual(error_text, str(e))
 
@@ -701,11 +816,8 @@ class TestStringMethods(unittest.TestCase):
             warnings.simplefilter("always")
             warning_text = ('Start uutc earlier than earliest start time. '
                             'Will insert NaNs')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end,
-                                         True)
+            self.ms.read_ts_channels_uutc(self.ts_channel,
+                                          [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -724,11 +836,8 @@ class TestStringMethods(unittest.TestCase):
             warnings.simplefilter("always")
             warning_text = ('Stop uutc later than latest end time. '
                             'Will insert NaNs')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end,
-                                         True)
+            self.ms.read_ts_channels_uutc(self.ts_channel,
+                                          [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -747,11 +856,8 @@ class TestStringMethods(unittest.TestCase):
             warnings.simplefilter("always")
             warning_text = ('Start and stop times are out of file. '
                             'Returning None')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end,
-                                         True)
+            self.ms.read_ts_channels_uutc(self.ts_channel,
+                                          [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -769,11 +875,8 @@ class TestStringMethods(unittest.TestCase):
             warnings.simplefilter("always")
             warning_text = ('Start and stop times are out of file. '
                             'Returning None')
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         start,
-                                         end,
-                                         True)
+            self.ms.read_ts_channels_uutc(self.ts_channel,
+                                          [start, end])
 
             self.assertEqual(len(w), 1)
             self.assertEqual(warning_text, str(w[-1].message))
@@ -787,11 +890,8 @@ class TestStringMethods(unittest.TestCase):
         start = int(discont_end_time - 5e5)
         end = int(discont_end_time + 5e5)
 
-        data = pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                            self.pwd_2,
-                                            start,
-                                            end,
-                                            True)
+        data = self.ms.read_ts_channels_uutc(self.ts_channel,
+                                             [start, end])
 
         # Check for the number of NaNs
         N_nans = (5e5 / 1e6) * self.sampling_frequency
@@ -801,16 +901,13 @@ class TestStringMethods(unittest.TestCase):
 
     def test_end_uutc_in_discontinuity(self):
 
-        discont_start_time = int(self.end_time + (1e6*self.secs_to_write))
+        discont_start_time = int(self.end_time) + int(1e6*self.secs_to_append)
+        
+        start = int(discont_start_time - 5e5)
+        end = int(discont_start_time +5e5)
 
-        start = int(discont_start_time - self.secs_to_append*1e6)
-        end = int(discont_start_time - self.secs_to_append*1e6 + 5e5)
-
-        data = pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                            self.pwd_2,
-                                            start,
-                                            end,
-                                            True)
+        data = self.ms.read_ts_channels_uutc(self.ts_channel,
+                                             [start, end])
 
         # Check for the number of NaNs
         N_nans = (5e5 / 1e6) * self.sampling_frequency
@@ -823,11 +920,9 @@ class TestStringMethods(unittest.TestCase):
         error_text = 'Start time later than end time, exiting...'
 
         try:
-            pymef3_file.read_mef_ts_data(self.ts_channel_path,
-                                         self.pwd_2,
-                                         self.start_time + int(2*1e6),
-                                         self.start_time + int(1*1e6),
-                                         True)
+            self.ms.read_ts_channels_uutc(self.ts_channel,
+                                          [self.start_time + int(2*1e6),
+                                           self.start_time + int(1*1e6)])
         except Exception as e:
             self.assertEqual(error_text, str(e))
 
