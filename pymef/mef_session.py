@@ -61,17 +61,18 @@ from .mef_constants import (
             TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_SAMPLES_NO_ENTRY,
             TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY,
             TIME_SERIES_METADATA_NUMBER_OF_DISCONTINUITIES_NO_ENTRY,
-            
+
             VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY,
             VIDEO_METADATA_VERTICAL_RESOLUTION_NO_ENTRY,
             VIDEO_METADATA_FRAME_RATE_NO_ENTRY,
             VIDEO_METADATA_VIDEO_FILE_CRC_NO_ENTRY,
-        
+
             METADATA_RECORDING_TIME_OFFSET_NO_ENTRY,
             METADATA_DST_START_TIME_NO_ENTRY,
             METADATA_DST_END_TIME_NO_ENTRY,
             GMT_OFFSET_NO_ENTRY
         )
+
 
 class MefSession():
     """
@@ -79,10 +80,10 @@ class MefSession():
 
     Parameters:
     -----------
-    session_path - path to mef session  
-    password - password for mef session  
-    read_metadata - whether to read metadata (default=True)  
-    new_session - whether this is a new session for writing (default=False)  
+    session_path - path to mef session
+    password - password for mef session
+    read_metadata - whether to read metadata (default=True)
+    new_session - whether this is a new session for writing (default=False)
     """
 
     def __init__(self, session_path, password, read_metadata=True,
@@ -222,7 +223,7 @@ class MefSession():
             TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY)
         tmd2['number_of_discontinuities'] = (
             TIME_SERIES_METADATA_NUMBER_OF_DISCONTINUITIES_NO_ENTRY)
-            
+
         return tmd2
 
     def _initialize_vmd2(self):
@@ -260,7 +261,7 @@ class MefSession():
 
         md3['recording_time_offset'] = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY
         md3['DST_start_time'] = METADATA_DST_START_TIME_NO_ENTRY
-        md3['DST_end_time'] = METADATA_DST_END_TIME_NO_ENTRY  
+        md3['DST_end_time'] = METADATA_DST_END_TIME_NO_ENTRY
         md3['GMT_offset'] = GMT_OFFSET_NO_ENTRY
         md3['subject_name_1'] = ""
         md3['subject_name_2'] = ""
@@ -277,18 +278,18 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name  
-        segment_n - segment number  
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        start_time - start time  
-        end time - end time  
-        section_2_dict - dictionary with user specified section_2 fileds  
-        section_3_dict - dictionary with user specified section_3 fileds  
+        channel - channel name
+        segment_n - segment number
+        password_1 - level 1 password
+        password_2 - level 2 password
+        start_time - start time
+        end time - end time
+        section_2_dict - dictionary with user specified section_2 fileds
+        section_3_dict - dictionary with user specified section_3 fileds
         """
 
         segment_path = (self.session_path+channel+'.timd/'
-                        +channel+'-'+str(segment_n).zfill(6)+'.segd/')
+                        + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tmet_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tmet'
 
@@ -322,21 +323,21 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name  
-        segment_n - segment number  
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        samps_per_mef_block - number of samples per mef block  
+        channel - channel name
+        segment_n - segment number
+        password_1 - level 1 password
+        password_2 - level 2 password
+        samps_per_mef_block - number of samples per mef block
         end data - numpy array of type int32
         """
 
         segment_path = (self.session_path+channel+'.timd/'
-                        +channel+'-'+str(segment_n).zfill(6)+'.segd/')
+                        + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tdat_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tdat'
 
         if not os.path.exists(segment_path
-                              +channel+'-'+str(segment_n).zfill(6)+'.tmet'):
+                              + channel+'-'+str(segment_n).zfill(6)+'.tmet'):
             raise RuntimeError('Please write the metadata file first!')
 
         if os.path.exists(tdat_path):
@@ -347,7 +348,7 @@ class MefSession():
                                       password_2,
                                       samps_per_mef_block,
                                       data,
-                                      0) # lossy compression flag - not used
+                                      0)  # lossy compression flag - not used
 
     def append_mef_ts_segment_data(self, channel, segment_n,
                                    password_1, password_2,
@@ -359,18 +360,18 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name  
-        segment_n - segment number  
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        start_time - start time  
-        end_time - end time  
-        samps_per_mef_block - number of samples per mef block  
+        channel - channel name
+        segment_n - segment number
+        password_1 - level 1 password
+        password_2 - level 2 password
+        start_time - start time
+        end_time - end time
+        samps_per_mef_block - number of samples per mef block
         end data - numpy array of type int32
         """
 
         segment_path = (self.session_path+channel+'.timd/'
-                        +channel+'-'+str(segment_n).zfill(6)+'.segd/')
+                        + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tdat_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tdat'
 
@@ -384,7 +385,7 @@ class MefSession():
                                    end_time,
                                    samps_per_mef_block,
                                    data,
-                                   0) # lossy compression flag - not used
+                                   0)  # lossy compression flag - not used
 
     def write_mef_v_segment_metadata(self, channel, segment_n,
                                      password_1, password_2,
@@ -395,18 +396,18 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name  
-        segment_n - segment number  
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        start_time - start time  
-        end time - end time  
-        section_2_dict - dictionary with user specified section_2 fileds  
-        section_3_dict - dictionary with user specified section_3 fileds  
+        channel - channel name
+        segment_n - segment number
+        password_1 - level 1 password
+        password_2 - level 2 password
+        start_time - start time
+        end time - end time
+        section_2_dict - dictionary with user specified section_2 fileds
+        section_3_dict - dictionary with user specified section_3 fileds
         """
 
         segment_path = (self.session_path+channel+'.vidd/'
-                        +channel+'-'+str(segment_n).zfill(6)+'.segd/')
+                        + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         vmet_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.vmet'
 
@@ -441,17 +442,17 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name  
-        segment_n - segment number  
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        start_time - start time  
-        end time - end time  
-        index_entries - numpy array with vi_dtype 
+        channel - channel name
+        segment_n - segment number
+        password_1 - level 1 password
+        password_2 - level 2 password
+        start_time - start time
+        end time - end time
+        index_entries - numpy array with vi_dtype
         """
 
         segment_path = (self.session_path+channel+'.vidd/'
-                        +channel+'-'+str(segment_n).zfill(6)+'.segd/')
+                        + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         write_mef_v_indices(segment_path,
                             password_1,
@@ -468,21 +469,21 @@ class MefSession():
 
         """
         TODO: - this funciton should use numpy arrays in the future
-        Writes new records on session level. If channel is specified, the  
+        Writes new records on session level. If channel is specified, the
         the records are written at channel level. If segment_n is sepcified,
         the recordes are written at segment level.
 
         Parameters:
-        ----------- 
-        password_1 - level 1 password  
-        password_2 - level 2 password  
-        start_time - start time  
-        end time - end time  
-        time_offset - time offset for records  
+        -----------
+        password_1 - level 1 password
+        password_2 - level 2 password
+        start_time - start time
+        end time - end time
+        time_offset - time offset for records
         record_list - python list with record dictionaries
         channel_type - 'ts' (time series) or 'v' (video), default='ts'
-        channel - channel name  
-        segment_n - segment number 
+        channel - channel name
+        segment_n - segment number
         """
 
         if channel is None and segment_n is not None:
@@ -509,6 +510,43 @@ class MefSession():
                                records_list)
 
     # ----- Data reading functions -----
+    def get_channel_toc(self, channel):
+
+        """
+        Returns discontinuities accross segments
+
+        Parameters:
+        -----------
+        channel_md - channel metadata dictionart\n
+
+        Returns:
+        --------
+        TOC - array with
+              - [0,:] = discontinuity flags
+              - [1,:] = discont lengths
+              - [2,:] = start samples
+              - [3,:] = start uutc times
+        """
+
+        channel_md = self.session_md['time_series_channels'][channel]
+        toc = np.empty([4, 0], dtype='int64')
+        fsamp = channel_md['section_2']['sampling_frequency']
+
+        # Sort the segments to eliminate dictionary randomness
+        segs = list(channel_md['segments'].keys())
+        segs.sort()
+        for segment_name in segs:
+            seg_toc = channel_md['segments'][segment_name]['TOC']
+
+            # Join into channel TOC
+            toc = np.concatenate([toc, seg_toc], axis=1)
+
+        # Once we have all segments get lenghts (differnces between segments)
+        toc[1, 1::] = (((np.diff(toc[3, :]) / 1e6)
+                        - (np.diff(toc[2, :]) / fsamp)) * 1e6)
+
+        return toc
+
     def read_ts_channels_sample(self, channel_map, sample_map, process_n=None):
         """
         Reads desired channels in desired sample segment
@@ -517,14 +555,14 @@ class MefSession():
         -----------
         channel_map - channel or list of channels to be read
         sample_map - list of [start,stop] samples to be loaded that correspond
-            to channel_map. if there is only one entry the same range is applied
-            to all channels
+            to channel_map. if there is only one entry the same range is
+            applied to all channels
         process_n - how many processes use for reading (defualt None)
 
         Returns:
         --------
         data - numpy array [channels,samples]
-        """   
+        """
 
         data_list = []
 
@@ -592,7 +630,7 @@ class MefSession():
         Returns:
         --------
         data - numpy array [channels,samples]
-        """   
+        """
 
         data_list = []
 
@@ -657,7 +695,6 @@ class MefSession():
         channel_list
         """
 
-
         channel_list = list(self.session_md['time_series_channels'].keys())
         channel_list.sort()
 
@@ -707,7 +744,7 @@ class MefSession():
             raise ValueError("Password provided for opening the session was \
                               level 1, please provide password level 2")
 
-        # Get individual metadata files and create a list matching the session md
+        # Get metadata files and create a list matching the session md
         md_file_list = []
         for root, _, files in os.walk(self.session_path):
             if root.endswith(".timd"):
@@ -857,7 +894,8 @@ class MefSession():
                             if idx['block_bytes'] == 0:
 
                                 if not os.path.exists(bup_idx_file):
-                                    shutil.copyfile(orig_idx_file, bup_idx_file)
+                                    shutil.copyfile(orig_idx_file,
+                                                    bup_idx_file)
 
                                 f_idx = open(orig_idx_file, 'r+b')
 
@@ -873,19 +911,22 @@ class MefSession():
                                 # Copy the start time
                                 f_idx.write(struct.pack('q', start_time))
 
-                                # Calculate / insert the start sample (in segment)
+                                # Calculate/insert the start sample (in seg)
                                 if i == 0:
                                     f_idx.write(struct.pack('q', 0))
                                 else:
                                     n_smples = (idcs[i-1]['start_sample']
-                                                + idcs[i-1]['number_of_samples'])
+                                                + idcs[i-1]
+                                                    ['number_of_samples'])
                                     f_idx.write(struct.pack('q', n_smples))
 
                                 # Copy number of samples
-                                f_idx.write(struct.pack('I', number_of_samples))
+                                f_idx.write(struct.pack('I',
+                                                        number_of_samples))
 
                                 # Copy blok bytes
-                                f_idx.write(struct.pack('I', block_bytes))
+                                f_idx.write(struct.pack('I',
+                                                        block_bytes))
 
                                 # Insert RED_NAN to the sample values
                                 f_idx.write(bytearray.fromhex("000000"))
@@ -916,7 +957,7 @@ class MefSession():
                 if f_size > f_size_md:
 
                     if repair:
-                        warn_str = ('Data file larger than metadata information,'
+                        warn_str = ('Data file larger than metadata info,'
                                     + 'cutting file ' + path_to_data)
                         warnings.warn(warn_str, RuntimeWarning)
 
@@ -931,7 +972,7 @@ class MefSession():
                         f_dat.write(whole_file)
 
                     else:
-                        warn_str = ("Data file larger than metadata information"
+                        warn_str = ("Data file larger than metadata info"
                                     + path_to_data)
                         warnings.warn(warn_str, RuntimeWarning)
 
