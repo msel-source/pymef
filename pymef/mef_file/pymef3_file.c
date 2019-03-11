@@ -230,11 +230,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rh->bytes += PyArray_ITEMSIZE((PyArrayObject *) temp_o);
                 MEF_strncpy(ri->type_string, MEFREC_EDFA_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_EDFA_TYPE_STRING, TYPE_BYTES);
-
-
-                // pad if needed - not useing MEF_pad since otherwise we loose \x00 termination
-                if (rh->bytes % 16 != 0)
-                    rh->bytes += 16 - (rh->bytes % 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_LNTP_TYPE_CODE:
@@ -266,9 +262,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_Note_TYPE_STRING, TYPE_BYTES);
                 temp_o = PyDict_GetItemString(py_record_dict,"record_body");
                 rh->bytes += MEF_strcpy((si1 *) rd, (si1 *) PyArray_DATA((PyArrayObject *) temp_o));
-                // pad if needed - not useing MEF_pad since otherwise we loose \x00 termination
-                if (rh->bytes % 16 != 0)
-                    rh->bytes += 16 - (rh->bytes % 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_CSti_TYPE_CODE:
@@ -295,9 +289,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(ri->type_string, MEFREC_SyLg_TYPE_STRING, TYPE_BYTES);
                 MEF_strncpy(rh->type_string, MEFREC_SyLg_TYPE_STRING, TYPE_BYTES);
                 rh->bytes += MEF_strcpy((si1 *) rd, (si1 *) PyArray_DATA((PyArrayObject *) temp_o));
-                // pad if needed - not useing MEF_pad since otherwise we loose \x00 termination
-                if (rh->bytes % 16 != 0)
-                    rh->bytes += 16 - (rh->bytes % 16);
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
             case MEFREC_UnRc_TYPE_CODE:
@@ -656,41 +648,24 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    #if PY_MAJOR_VERSION >= 3
-        if (PyUnicode_Check(py_pass_1_obj)){
-            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
-            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+    if (PyUnicode_Check(py_pass_1_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-        }else{
-            level_1_password = NULL;
-        }
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+    }else{
+        level_1_password = NULL;
+    }
 
-        if (PyUnicode_Check(py_pass_2_obj)){
-            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
-            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+    if (PyUnicode_Check(py_pass_2_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-        }else{
-            level_2_password = NULL;
-        }
-    #else
-        if (PyString_Check(py_pass_1_obj)){
-            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+    }else{
+        level_2_password = NULL;
+    }
 
-            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-        }else{
-            level_1_password = NULL;
-        }
-
-        if (PyString_Check(py_pass_2_obj)){
-            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
-
-            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-        }else{
-            level_2_password = NULL;
-        }
-    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -1081,41 +1056,24 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    #if PY_MAJOR_VERSION >= 3
-        if (PyUnicode_Check(py_pass_1_obj)){
-            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
-            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+    if (PyUnicode_Check(py_pass_1_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-        }else{
-            level_1_password = NULL;
-        }
+        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+    }else{
+        level_1_password = NULL;
+    }
 
-        if (PyUnicode_Check(py_pass_2_obj)){
-            temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
-            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+    if (PyUnicode_Check(py_pass_2_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-        }else{
-            level_2_password = NULL;
-        }
-    #else
-        if (PyString_Check(py_pass_1_obj)){
-            temp_str_bytes = PyString_AS_STRING(py_pass_1_obj);
+        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+    }else{
+        level_2_password = NULL;
+    }
 
-            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
-        }else{
-            level_1_password = NULL;
-        }
-
-        if (PyString_Check(py_pass_2_obj)){
-            temp_str_bytes = PyString_AS_STRING(py_pass_2_obj);
-
-            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
-        }else{
-            level_2_password = NULL;
-        }
-    #endif
 
     if ((level_1_password == NULL) && (level_2_password != NULL)){
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
@@ -3004,10 +2962,12 @@ PyObject *map_mef3_Note_type(RECORD_HEADER *rh)
     npy_intp strides[] = {rh->bytes};
     PyObject    *py_array_out;
     si1     *body_p;
+    ui4     str_len;
     PyArray_Descr    *descr;
 
-    descr = (PyArray_Descr *) create_note_dtype_c(rh->bytes);
     body_p = (si1 *) rh+MEFREC_Note_1_0_TEXT_OFFSET;
+    str_len = (ui4) strlen(body_p);
+    descr = (PyArray_Descr *) create_note_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
     return py_array_out;
 }
@@ -3021,11 +2981,12 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh)
     npy_intp strides[] = {rh->bytes};
     PyObject    *py_array_out;
     si1     *body_p;
+    ui4     str_len;
     PyArray_Descr    *descr;
 
-    // Calculate size of string
-    descr = (PyArray_Descr *) create_edfa_dtype_c(rh->bytes - MEFREC_EDFA_1_0_BYTES);
     body_p = (si1 *) rh+MEFREC_EDFA_1_0_OFFSET;
+    str_len = (ui4) strlen(body_p+MEFREC_EDFA_1_0_BYTES);
+    descr = (PyArray_Descr *) create_edfa_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
     return py_array_out;
 }
@@ -3129,10 +3090,12 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     npy_intp strides[] = {rh->bytes};
     PyObject    *py_array_out;
     si1     *body_p;
+    ui4     str_len;
     PyArray_Descr    *descr;
 
-    descr = (PyArray_Descr *) create_sylg_dtype_c(rh->bytes);
     body_p = (si1 *) rh+MEFREC_SyLg_1_0_TEXT_OFFSET;
+    str_len = (ui4) strlen(body_p);
+    descr = (PyArray_Descr *) create_sylg_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, 1, Py_None);
     return py_array_out;
 }
@@ -3200,7 +3163,6 @@ static PyObject *create_ri_dtype()
 
     return (PyObject *) descr;
 }
-
 
 static PyObject *create_edfa_dtype(PyObject *self, PyObject *args)
 {
