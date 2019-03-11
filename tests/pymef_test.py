@@ -75,7 +75,7 @@ class TestStringMethods(unittest.TestCase):
         hdr_dtype = pymef3_file.create_rh_dtype()
 
         # Create Note
-        
+
         hdr_arr = np.zeros(1, hdr_dtype)
         hdr_arr['type_string'] = b'Note'
         hdr_arr['time'] = self.record_time_1
@@ -120,7 +120,7 @@ class TestStringMethods(unittest.TestCase):
         hdr_arr['type_string'] = b'LNTP'
         hdr_arr['time'] = self.record_time_1
 
-        template = np.array([1,2,3,4,5])
+        template = np.array([1, 2, 3, 4, 5])
         body_dtype = pymef3_file.create_lntp_dtype(len(template))
         body_arr = np.zeros(1, body_dtype)
         body_arr['length'] = len(template)
@@ -140,7 +140,6 @@ class TestStringMethods(unittest.TestCase):
         subbody_arr['onset'] = [self.record_time_1]*3
         subbody_arr['offset'] = [int(self.record_time_1+1e6)]*3
 
-        seiz_time = min(subbody_arr['onset'])
         earliest_onset = min(subbody_arr['onset'])
         latest_offset = max(subbody_arr['offset'])
 
@@ -309,21 +308,21 @@ class TestStringMethods(unittest.TestCase):
 
 #        print("Records written at segment level")
 
-        # ms.write_mef_records(self.pwd_1,
-        #                      self.pwd_2,
-        #                      self.start_time,
-        #                      self.end_time,
-        #                      self.rec_offset,
-        #                      self.record_list,
-        #                      channel=self.ts_channel)
+        ms.write_mef_records(self.pwd_1,
+                             self.pwd_2,
+                             self.start_time,
+                             self.end_time,
+                             self.rec_offset,
+                             self.record_list,
+                             channel=self.ts_channel)
 
 #        print("Records written at channel level")
-        # ms.write_mef_records(self.pwd_1,
-        #                      self.pwd_2,
-        #                      self.start_time,
-        #                      self.end_time,
-        #                      self.rec_offset,
-        #                      self.record_list)
+        ms.write_mef_records(self.pwd_1,
+                             self.pwd_2,
+                             self.start_time,
+                             self.end_time,
+                             self.rec_offset,
+                             self.record_list)
 
 #        print("Records written at session level")
 
@@ -339,14 +338,6 @@ class TestStringMethods(unittest.TestCase):
                                          self.section2_ts_dict,
                                          self.section3_dict)
 
-        # pymef3_file.write_mef_ts_metadata(self.ts_seg1_path,
-        #                                   self.pwd_1,
-        #                                   self.pwd_2,
-        #                                   self.start_time,
-        #                                   self.end_time,
-        #                                   self.section2_ts_dict,
-        #                                   self.section3_dict)
-
         # Write second segment
         seg2_start = int(self.end_time
                          + (1e6*self.secs_to_append)
@@ -356,14 +347,6 @@ class TestStringMethods(unittest.TestCase):
         start_samp = self.sampling_frequency * (self.secs_to_write
                                                 + self.secs_to_append)
         self.section2_ts_dict_seg2['start_sample'] = start_samp
-
-        # pymef3_file.write_mef_ts_metadata(self.ts_seg2_path,
-        #                                   self.pwd_1,
-        #                                   self.pwd_2,
-        #                                   seg2_start,
-        #                                   seg2_stop,
-        #                                   self.section2_ts_dict_seg2,
-        #                                   self.section3_dict)
 
         ms.write_mef_ts_segment_metadata(self.ts_channel,
                                          1,
@@ -379,13 +362,6 @@ class TestStringMethods(unittest.TestCase):
         # Write dummy time series data
 
         # Write first segment
-        # pymef3_file.write_mef_ts_data_and_indices(self.ts_seg1_path,
-        #                                           self.pwd_1,
-        #                                           self.pwd_2,
-        #                                           self.samps_per_mef_block,
-        #                                           self.raw_data,
-        #                                           0)
-
         ms.write_mef_ts_segment_data(self.ts_channel,
                                      0,
                                      self.pwd_1,
@@ -397,14 +373,6 @@ class TestStringMethods(unittest.TestCase):
         # but update metadata first
         append_start = self.end_time
         append_stop = int(append_start + (self.secs_to_append * 1e6))
-        # pymef3_file.append_ts_data_and_indices(self.ts_seg1_path,
-        #                                        self.pwd_1,
-        #                                        self.pwd_2,
-        #                                        append_start,
-        #                                        append_stop,
-        #                                        self.samps_per_mef_block,
-        #                                        self.raw_data_to_append,
-        #                                        0)
 
         ms.append_mef_ts_segment_data(self.ts_channel,
                                       0,
@@ -415,16 +383,7 @@ class TestStringMethods(unittest.TestCase):
                                       self.samps_per_mef_block,
                                       self.raw_data_to_append)
 
-
         # Write second segment
-
-        # pymef3_file.write_mef_ts_data_and_indices(self.ts_seg2_path,
-        #                                           self.pwd_1,
-        #                                           self.pwd_2,
-        #                                           self.samps_per_mef_block,
-        #                                           self.raw_data_seg_2,
-        #                                           0)
-
         ms.write_mef_ts_segment_data(self.ts_channel,
                                      1,
                                      self.pwd_1,
@@ -435,14 +394,6 @@ class TestStringMethods(unittest.TestCase):
 #        print("Time series data and indices written")
 
         # Write dummy video metadata and indices
-        # pymef3_file.write_mef_v_metadata(self.vid_seg1_path,
-        #                                  self.pwd_1,
-        #                                  self.pwd_2,
-        #                                  self.start_time,
-        #                                  self.end_time,
-        #                                  self.section2_v_dict,
-        #                                  self.section3_dict)
-
         ms.write_mef_v_segment_metadata(self.vid_channel,
                                         0,
                                         self.pwd_1,
@@ -453,15 +404,6 @@ class TestStringMethods(unittest.TestCase):
                                         self.section3_dict)
 
 #        print("Video metadata written")
-
-        # pymef3_file.write_mef_v_indices(self.vid_seg1_path,
-        #                                 self.pwd_1,
-        #                                 self.pwd_2,
-        #                                 self.start_time,
-        #                                 self.end_time,
-        #                                 self.v_index_entries)
-
-
 
         ms.write_mef_v_segment_indices(self.vid_channel,
                                        0,
@@ -476,8 +418,6 @@ class TestStringMethods(unittest.TestCase):
 #        print("Video indices written")
 
         # Read back session metadata (avoids reading metadata in each function)
-        # self.smd = pymef3_file.read_mef_session_metadata(self.mef_session_path,
-        #                                                  self.pwd_2)
         print('Reading mef session')
         self.ms = MefSession(self.mef_session_path, self.pwd_2)
         self.smd = self.ms.session_md
@@ -604,7 +544,6 @@ class TestStringMethods(unittest.TestCase):
                                  read_body_arr['anode'])
                 self.assertEqual(write_body_arr['catode'],
                                  read_body_arr['catode'])
-
 
     def test_time_series_metadata_section_2_usr(self):
 
@@ -902,9 +841,9 @@ class TestStringMethods(unittest.TestCase):
     def test_end_uutc_in_discontinuity(self):
 
         discont_start_time = int(self.end_time) + int(1e6*self.secs_to_append)
-        
+
         start = int(discont_start_time - 5e5)
-        end = int(discont_start_time +5e5)
+        end = int(discont_start_time + 5e5)
 
         data = self.ms.read_ts_channels_uutc(self.ts_channel,
                                              [start, end])
