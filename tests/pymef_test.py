@@ -28,7 +28,7 @@ import numpy as np
 
 # Local imports
 from pymef.mef_session import MefSession
-from pymef import pymef3_file
+from pymef.mef_file import pymef3_file
 
 
 class TestStringMethods(unittest.TestCase):
@@ -80,7 +80,7 @@ class TestStringMethods(unittest.TestCase):
         hdr_arr['type_string'] = b'Note'
         hdr_arr['time'] = self.record_time_1
 
-        note_str = 'Note_test'
+        note_str = 'Note_test\0'
         body_dtype = pymef3_file.create_note_dtype(len(note_str))
         body_arr = np.zeros(1, body_dtype)
         body_arr['text'] = note_str
@@ -93,7 +93,7 @@ class TestStringMethods(unittest.TestCase):
         hdr_arr['type_string'] = b'SyLg'
         hdr_arr['time'] = self.record_time_1
 
-        sylg_str = 'SyLg_test'
+        sylg_str = 'SyLg_test\0'
         body_dtype = pymef3_file.create_sylg_dtype(len(sylg_str))
         body_arr = np.zeros(1, body_dtype)
         body_arr['text'] = sylg_str
@@ -106,7 +106,7 @@ class TestStringMethods(unittest.TestCase):
         hdr_arr['type_string'] = b'EDFA'
         hdr_arr['time'] = self.record_time_1
 
-        edfa_str = 'EDFA_test'
+        edfa_str = 'EDFA_test\0'
         body_dtype = pymef3_file.create_edfa_dtype(len(edfa_str))
         body_arr = np.zeros(1, body_dtype)
         body_arr['duration'] = 10
