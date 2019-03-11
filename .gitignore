@@ -75,5 +75,8 @@ test_session/
 # Windows wheel files
 *.whl
 
+# Meflib directory
+meflib/
+
 # My notes
 my_notes.txt
