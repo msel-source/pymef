@@ -3910,6 +3910,11 @@ static PyObject *create_session_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
                          (s, s, i)]",
                        "time_series_metadata", "V", sizeof (METADATA),
                        "number_of_time_series_channels", "i4", 1,
