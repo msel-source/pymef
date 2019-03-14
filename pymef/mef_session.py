@@ -80,10 +80,14 @@ class MefSession():
 
     Parameters:
     -----------
-    session_path - path to mef session
-    password - password for mef session
-    read_metadata - whether to read metadata (default=True)
-    new_session - whether this is a new session for writing (default=False)
+    session_path: str
+        path to mef session
+    password: str
+        password for mef session
+    read_metadata: bool
+        whether to read metadata (default=True)
+    new_session - bool
+        whether this is a new session for writing (default=False)
     """
 
     def __init__(self, session_path, password, read_metadata=True,
@@ -122,16 +126,18 @@ class MefSession():
     # ----- Helper functions -----
     def _check_password(self):
         """
-        Checks provided password on all files in the session
+        Checks provided password on all files in the session.
 
         Parameters:
         -----------
-        mefpath - path to mef3 direcory\n
-        password - mef3 data password\n
+        mefpath: str
+            path to mef3 direcory
+        password: str
+            mef3 data password
 
         Returns:
         --------
-        None on success]n
+        None on success
         """
         mef_files = []
         for path, subdirs, files in os.walk(self.session_path):
@@ -151,7 +157,8 @@ class MefSession():
         """
         Paramters:
         ----------
-        channel - required channel
+        channel: str
+            required channel
 
         Returns:
         --------
@@ -278,14 +285,22 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name
-        segment_n - segment number
-        password_1 - level 1 password
-        password_2 - level 2 password
-        start_time - start time
-        end time - end time
-        section_2_dict - dictionary with user specified section_2 fileds
-        section_3_dict - dictionary with user specified section_3 fileds
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        start_time: int
+            Start time
+        end time: int
+            End time
+        section_2_dict: dict
+            Dictionary with user specified section_2 fileds
+        section_3_dict: dict
+            Dictionary with user specified section_3 fileds
         """
 
         segment_path = (self.session_path+channel+'.timd/'
@@ -323,12 +338,18 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name
-        segment_n - segment number
-        password_1 - level 1 password
-        password_2 - level 2 password
-        samps_per_mef_block - number of samples per mef block
-        end data - numpy array of type int32
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        samps_per_mef_block: int
+            Number of samples per mef block
+        data: np.array
+            1-D numpy array of type int32
         """
 
         segment_path = (self.session_path+channel+'.timd/'
@@ -360,14 +381,22 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name
-        segment_n - segment number
-        password_1 - level 1 password
-        password_2 - level 2 password
-        start_time - start time
-        end_time - end time
-        samps_per_mef_block - number of samples per mef block
-        end data - numpy array of type int32
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        start_time: int
+            Start time of the appended data
+        end_time:
+            End time of the appended data
+        samps_per_mef_block: int
+            Number of samples per mef block
+        data: np.array
+            1-D numpy array of type int32
         """
 
         segment_path = (self.session_path+channel+'.timd/'
@@ -396,14 +425,22 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name
-        segment_n - segment number
-        password_1 - level 1 password
-        password_2 - level 2 password
-        start_time - start time
-        end time - end time
-        section_2_dict - dictionary with user specified section_2 fileds
-        section_3_dict - dictionary with user specified section_3 fileds
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        start_time: int
+            Start time of the data
+        end time: int
+            End time of the data
+        section_2_dict: dict
+            Dictionary with user specified section_2 fileds
+        section_3_dict: dict
+            Dictionary with user specified section_3 fileds
         """
 
         segment_path = (self.session_path+channel+'.vidd/'
@@ -442,13 +479,20 @@ class MefSession():
 
         Parameters:
         -----------
-        channel - channel name
-        segment_n - segment number
-        password_1 - level 1 password
-        password_2 - level 2 password
-        start_time - start time
-        end time - end time
-        index_entries - numpy array with vi_dtype
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        start_time: int
+            Start time of video indices
+        end time: int
+            End time of video indices
+        index_entries: np.array
+            Numpy array with vi_dtype
         """
 
         segment_path = (self.session_path+channel+'.vidd/'
@@ -475,15 +519,24 @@ class MefSession():
 
         Parameters:
         -----------
-        password_1 - level 1 password
-        password_2 - level 2 password
-        start_time - start time
-        end time - end time
-        time_offset - time offset for records
-        record_list - python list with record dictionaries
-        channel_type - 'ts' (time series) or 'v' (video), default='ts'
-        channel - channel name
-        segment_n - segment number
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        start_time: int
+            Records start time
+        end time: int
+            Records end time
+        time_offset: int
+            Time offset for records
+        record_list: list
+            List with record dictionaries
+        channel_type: str
+            Channel type: 'ts' (time series) or 'v' (video), default='ts'
+        channel: str
+            Channel name
+        segment_n: int
+            Segment number
         """
 
         if channel is None and segment_n is not None:
@@ -513,11 +566,12 @@ class MefSession():
     def get_channel_toc(self, channel):
 
         """
-        Returns discontinuities accross segments
+        Returns discontinuities accross segments.
 
         Parameters:
         -----------
-        channel_md - channel metadata dictionart\n
+        channel: str
+            Channel to calculate TOC on
 
         Returns:
         --------
@@ -553,11 +607,14 @@ class MefSession():
 
         Parameters:
         -----------
-        channel_map - channel or list of channels to be read
-        sample_map - list of [start,stop] samples to be loaded that correspond
+        channel_map: str or list
+            Channel or list of channels to be read
+        sample_map: list
+            List of [start, stop] samples to be loaded that correspond
             to channel_map. if there is only one entry the same range is
             applied to all channels
-        process_n - how many processes use for reading (defualt None)
+        process_n: int
+            How many processes use for reading (default=None)
 
         Returns:
         --------
@@ -621,11 +678,14 @@ class MefSession():
 
         Parameters:
         -----------
-        channel_map - channel or list of channels to be read
-        uutc_map - list of [start,stop] uutc times to be loaded that correspond
+        channel_map: str or list
+            Channel or list of channels to be read
+        uutc_map: list
+           List of [start,stop] uutc times to be loaded that correspond
            to channel_map. if there is only one entry the same range is applied
            to all channels
-        process_n - how many processes use for reading (defualt None)
+        process_n: int
+            How many processes use for reading (defualt = None)
 
         Returns:
         --------
@@ -685,14 +745,16 @@ class MefSession():
         """
         Reads session time series channel names
 
-        Parameters:
-        -----------
-        session_path - path to mef3 session
-        password - mef3 data password
-
         Returns:
         --------
-        channel_list
+        List of dictionaries with information about channels:
+            - Sampling frequency
+            - Number of samples
+            - Units conversion factor
+            - Units description
+            - Earliest start time
+            - Latest end time
+            - Channel description
         """
 
         channel_list = list(self.session_md['time_series_channels'].keys())
@@ -729,15 +791,18 @@ class MefSession():
 
         Parameters:
         -----------
-        session_path - path to the session.
-        password_1 - session password level 1
-        password_2 - session password level 2
-        new_name - new first name for the subject (default = None)
-        new_id - new subject id (default = None)
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        new_name: str
+            New first name for the subject (default = None)
+        new_id: str
+            New subject id (default = None)
 
         Returns:
         --------
-        0 - on success
+        None on success
         """
 
         if self.password == password_1:
@@ -817,7 +882,7 @@ class MefSession():
         # Reload the session metadata
         self.reload()
 
-        return 0
+        return None
 
     def detect_corrupt_data(self, repair=False):
         """
@@ -825,11 +890,12 @@ class MefSession():
 
         Parameters:
         -----------
-        repair(bool) - whether to try to repair data (default=False)
+        repair: bool
+            Whether to try to repair data (default=False)
 
         Returns:
         --------
-        0 - on success
+        None on success
         """
 
         tsd = self.session_md['time_series_channels']
@@ -980,3 +1046,5 @@ class MefSession():
 
         # Reload the session metadata
         self.reload()
+
+        return None
