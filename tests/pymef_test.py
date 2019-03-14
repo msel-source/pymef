@@ -75,122 +75,67 @@ class TestStringMethods(unittest.TestCase):
         hdr_dtype = pymef3_file.create_rh_dtype()
 
         # Create Note
-
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'Note'
-        hdr_arr['time'] = self.record_time_1
-
-        note_str = 'Note_test\0'
-        body_dtype = pymef3_file.create_note_dtype(len(note_str))
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['text'] = note_str
-
-        note_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
+        note_dict = {'type': 'Note',
+                     'time': self.record_time_1,
+                     'text': 'Note_test'}
 
         # Create SyLg
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'SyLg'
-        hdr_arr['time'] = self.record_time_1
-
-        sylg_str = 'SyLg_test\0'
-        body_dtype = pymef3_file.create_sylg_dtype(len(sylg_str))
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['text'] = sylg_str
-
-        sylg_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
+        sylg_dict = {'type': 'SyLg',
+                     'time': self.record_time_1,
+                     'text': 'SyLg_test'}
 
         # Create EDFA
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'EDFA'
-        hdr_arr['time'] = self.record_time_1
-
-        edfa_str = 'EDFA_test\0'
-        body_dtype = pymef3_file.create_edfa_dtype(len(edfa_str))
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['duration'] = 10
-        body_arr['text'] = edfa_str
-
-        edfa_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
+        edfa_dict = {'type': 'EDFA',
+                     'time': self.record_time_1,
+                     'duration': 1000000,
+                     'text': 'EDFA_test'}
 
         # Create LNTP
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'LNTP'
-        hdr_arr['time'] = self.record_time_1
-
-        template = np.array([1, 2, 3, 4, 5])
-        body_dtype = pymef3_file.create_lntp_dtype(len(template))
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['length'] = len(template)
-        body_arr['template'] = template
-
-        lntp_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
+        lntp_dict = {'type':'LNTP',
+                     'time': self.record_time_1,
+                     'length': 5,
+                     'template': np.array([1, 2, 3, 4, 5])}
 
         # Create Seiz
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'Seiz'
-        hdr_arr['time'] = self.record_time_1
+        seiz_chans = []
+        seiz_chan_dict_1 = {'name': 'msel',
+                            'onset': self.record_time_1,
+                            'offset': self.record_time_2}
+        seiz_chans.append(seiz_chan_dict_1)
 
-        subbody_dtype = pymef3_file.create_seiz_ch_dtype()
-        subbody_arr = np.zeros(3, subbody_dtype)
-        subbody_arr['name'] = ['CH1', 'ch_2', 'ch3']
-        subbody_arr['onset'] = [self.record_time_1]*3
-        subbody_arr['offset'] = [int(self.record_time_1+1e6)]*3
+        seiz_time = min([x['onset'] for x in seiz_chans])
+        earliest_onset = min([x['onset'] for x in seiz_chans])
+        latest_offset = max([x['offset'] for x in seiz_chans])
 
-        earliest_onset = min(subbody_arr['onset'])
-        latest_offset = max(subbody_arr['offset'])
+        seiz_dict = {'type': 'Seiz',
+                     'time': seiz_time,
+                     'earliest_onset': earliest_onset,
+                     'latest_offset': latest_offset,
+                     'duration': latest_offset - earliest_onset,
+                     'number_of_channels': len(seiz_chans),
+                     'onset_code': 2,
+                     'marker_name_1': 'beer_tap',
+                     'marker_name_2': 'wine_tap',
+                     'annotation': 'test_seizure',
+                     'channels': seiz_chans}
 
-        body_dtype = pymef3_file.create_seiz_dtype()
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['earliest_onset'] = earliest_onset
-        body_arr['latest_offset'] = latest_offset
-        body_arr['duration'] = latest_offset - earliest_onset
-        body_arr['number_of_channels'] = len(subbody_arr)
-        body_arr['onset_code'] = 2
-        body_arr['marker_name_1'] = 'beer_tap'
-        body_arr['marker_name_2'] = 'wine_tap'
-        body_arr['annotation'] = 'test_seizure'
+        csti_dict = {'type': 'CSti',
+                     'time': self.record_time_1,
+                     'task_type': 'beerdrink',
+                     'stimulus_duration': 1000000,
+                     'stimulus_type': 'pilsner',
+                     'patient_response': 'hmmm'}
 
-        seiz_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr,
-                     'record_subbody': subbody_arr}
-
-        # Create CSti
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'CSti'
-        hdr_arr['time'] = self.record_time_1
-
-        body_dtype = pymef3_file.create_csti_dtype()
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['task_type'] = 'beerdrink'
-        body_arr['stimulus_duration'] = 1000000
-        body_arr['stimulus_type'] = 'pilsner'
-        body_arr['patient_response'] = 'hmmm'
-
-        csti_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
-
-        # Create ESti
-        hdr_arr = np.zeros(1, hdr_dtype)
-        hdr_arr['type_string'] = b'ESti'
-        hdr_arr['time'] = self.record_time_1
-
-        body_dtype = pymef3_file.create_esti_dtype()
-        body_arr = np.zeros(1, body_dtype)
-        body_arr['amplitude'] = 1.5
-        body_arr['frequency'] = 250.5
-        body_arr['pulse_width'] = 100
-        body_arr['ampunit_code'] = 1
-        body_arr['mode_code'] = 2
-        body_arr['waveform'] = 'nice'
-        body_arr['anode'] = 'positive'
-        body_arr['catode'] = 'negative'
-
-        esti_dict = {'record_header': hdr_arr,
-                     'record_body': body_arr}
+        esti_dict = {'type': 'ESti',
+                     'time': self.record_time_1,
+                     'amplitude': 1.5,
+                     'frequency': 250.5,
+                     'pulse_width': 100,
+                     'ampunit_code': 1,
+                     'mode_code': 2,
+                     'waveform': 'nice',
+                     'anode': 'positive',
+                     'catode': 'negative'}
 
         self.record_list.append(note_dict)
         self.record_list.append(sylg_dict)
@@ -448,67 +393,58 @@ class TestStringMethods(unittest.TestCase):
 
     def test_record_reading(self):
 
-        segments = self.smd['time_series_channels']['ts_channel']['segments']
-        seg_md = segments['ts_channel-000000']
-        read_records = seg_md['records_info']['records']
+        read_records = self.ms.read_records('ts_channel', 0)
+
         self.assertEqual(len(self.record_list), len(read_records))
 
         for rec_id in range(len(self.record_list)):
             write_record = self.record_list[rec_id]
             read_record = read_records[rec_id]
 
-            write_header_arr = write_record.get('record_header')
-            write_body_arr = write_record.get('record_body')
-            write_subbody_arr = write_record.get('record_subbody')
-
-            read_header_arr = read_record.get('record_header')
-            read_body_arr = read_record.get('record_body')
-            read_subbody_arr = read_record.get('record_subbody')
-
-#            print('Record type: ---'+write_record['type_string']+'---')
+    #            print('Record type: ---'+write_record['type_string']+'---')
 
             # Record header
-            self.assertEqual(write_header_arr['time'],
-                             read_header_arr['time'])
-            self.assertEqual(write_header_arr['type_string'],
-                             read_header_arr['type_string'])
+            self.assertEqual(write_record['time'],
+                             read_record['time'])
+            self.assertEqual(write_record['type'],
+                             read_record['type'])
 
             # Record body
-            if write_header_arr['type_string'] == b'EDFA':
-                self.assertEqual(write_body_arr['duration'],
-                                 read_body_arr['duration'])
-                self.assertEqual(write_body_arr['text'],
-                                 read_body_arr['text'])
+            if write_record['type'] == 'EDFA':
+                self.assertEqual(write_record['duration'],
+                                 read_record['duration'])
+                self.assertEqual(write_record['text'],
+                                 read_record['text'])
 
-            elif write_header_arr['type_string'] == b'Note':
-                self.assertEqual(write_body_arr['text'],
-                                 read_body_arr['text'])
+            if write_record['type'] == 'Note':
+                self.assertEqual(write_record['text'],
+                                 read_record['text'])
 
-            elif write_header_arr['type_string'] == b'SyLg':
-                self.assertEqual(write_body_arr['text'],
-                                 read_body_arr['text'])
+            if write_record['type'] == 'SyLg':
+                self.assertEqual(write_record['text'],
+                                 read_record['text'])
 
-            elif write_header_arr['type_string'] == b'Seiz':
-                self.assertEqual(write_body_arr['earliest_onset'],
-                                 read_body_arr['earliest_onset'])
-                self.assertEqual(write_body_arr['latest_offset'],
-                                 read_body_arr['latest_offset'])
-                self.assertEqual(write_body_arr['duration'],
-                                 read_body_arr['duration'])
-                self.assertEqual(write_body_arr['number_of_channels'],
-                                 read_body_arr['number_of_channels'])
-                self.assertEqual(write_body_arr['onset_code'],
-                                 read_body_arr['onset_code'])
-                self.assertEqual(write_body_arr['marker_name_1'],
-                                 read_body_arr['marker_name_1'])
-                self.assertEqual(write_body_arr['marker_name_2'],
-                                 read_body_arr['marker_name_2'])
-                self.assertEqual(write_body_arr['annotation'],
-                                 read_body_arr['annotation'])
+            if write_record['type'] == 'Seiz':
+                self.assertEqual(write_record['earliest_onset'],
+                                 read_record['earliest_onset'])
+                self.assertEqual(write_record['latest_offset'],
+                                 read_record['latest_offset'])
+                self.assertEqual(write_record['duration'],
+                                 read_record['duration'])
+                self.assertEqual(write_record['number_of_channels'],
+                                 read_record['number_of_channels'])
+                self.assertEqual(write_record['onset_code'],
+                                 read_record['onset_code'])
+                self.assertEqual(write_record['marker_name_1'],
+                                 read_record['marker_name_1'])
+                self.assertEqual(write_record['marker_name_2'],
+                                 read_record['marker_name_2'])
+                self.assertEqual(write_record['annotation'],
+                                 read_record['annotation'])
 
                 # Check the channel entries
-                for ci, write_channel in enumerate(write_subbody_arr):
-                    read_channel = read_subbody_arr[ci]
+                for ci, write_channel in enumerate(write_record['channels']):
+                    read_channel = read_record['channels'][ci]
 
                     self.assertEqual(write_channel['name'],
                                      read_channel['name'])
@@ -517,33 +453,34 @@ class TestStringMethods(unittest.TestCase):
                     self.assertEqual(write_channel['offset'],
                                      read_channel['offset'])
 
-            elif write_header_arr['type_string'] == b'CSti':
-                self.assertEqual(write_body_arr['task_type'],
-                                 read_body_arr['task_type'])
-                self.assertEqual(write_body_arr['stimulus_duration'],
-                                 read_body_arr['stimulus_duration'])
-                self.assertEqual(write_body_arr['stimulus_type'],
-                                 read_body_arr['stimulus_type'])
-                self.assertEqual(write_body_arr['patient_response'],
-                                 read_body_arr['patient_response'])
+            if write_record['type'] == 'CSti':
+                self.assertEqual(write_record['task_type'],
+                                 read_record['task_type'])
+                self.assertEqual(write_record['stimulus_duration'],
+                                 read_record['stimulus_duration'])
+                self.assertEqual(write_record['stimulus_type'],
+                                 read_record['stimulus_type'])
+                self.assertEqual(write_record['patient_response'],
+                                 read_record['patient_response'])
 
-            elif write_header_arr['type_string'] == b'ESti':
-                self.assertEqual(write_body_arr['amplitude'],
-                                 read_body_arr['amplitude'])
-                self.assertEqual(write_body_arr['frequency'],
-                                 read_body_arr['frequency'])
-                self.assertEqual(write_body_arr['pulse_width'],
-                                 read_body_arr['pulse_width'])
-                self.assertEqual(write_body_arr['ampunit_code'],
-                                 read_body_arr['ampunit_code'])
-                self.assertEqual(write_body_arr['mode_code'],
-                                 read_body_arr['mode_code'])
-                self.assertEqual(write_body_arr['waveform'],
-                                 read_body_arr['waveform'])
-                self.assertEqual(write_body_arr['anode'],
-                                 read_body_arr['anode'])
-                self.assertEqual(write_body_arr['catode'],
-                                 read_body_arr['catode'])
+            if write_record['type'] == 'ESti':
+                self.assertEqual(write_record['amplitude'],
+                                 read_record['amplitude'])
+                self.assertEqual(write_record['frequency'],
+                                 read_record['frequency'])
+                self.assertEqual(write_record['pulse_width'],
+                                 read_record['pulse_width'])
+                self.assertEqual(write_record['ampunit_code'],
+                                 read_record['ampunit_code'])
+                self.assertEqual(write_record['mode_code'],
+                                 read_record['mode_code'])
+                self.assertEqual(write_record['waveform'],
+                                 read_record['waveform'])
+                self.assertEqual(write_record['anode'],
+                                 read_record['anode'])
+                self.assertEqual(write_record['catode'],
+                                 read_record['catode'])
+
 
     def test_time_series_metadata_section_2_usr(self):
 
