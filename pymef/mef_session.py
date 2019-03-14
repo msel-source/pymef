@@ -38,6 +38,15 @@ from .mef_file.pymef3_file import (read_mef_session_metadata,
                                    append_ts_data_and_indices,
                                    write_mef_v_indices,
                                    write_mef_data_records,
+                                   create_rh_dtype,
+                                   create_note_dtype,
+                                   create_sylg_dtype,
+                                   create_edfa_dtype,
+                                   create_lntp_dtype,
+                                   create_csti_dtype,
+                                   create_esti_dtype,
+                                   create_seiz_dtype,
+                                   create_seiz_ch_dtype,
                                    create_tmd2_dtype,
                                    create_vmd2_dtype,
                                    create_md3_dtype,
@@ -86,7 +95,7 @@ class MefSession():
         password for mef session
     read_metadata: bool
         whether to read metadata (default=True)
-    new_session - bool
+    new_session: bool
         whether this is a new session for writing (default=False)
     """
 
@@ -275,6 +284,136 @@ class MefSession():
         md3['recording_location'] = ""
 
         return md3
+
+    def _create_np_record(self, record):
+        """
+        Create record dictionary with numpy arrays from python dictionary.
+
+        Parameters:
+        -----------
+        record: dict
+            Python dictionary with record entries
+
+        Returns:
+        --------
+        Dictionary with numpy arrays record header, body, subbody
+        """
+
+        if not isinstance(record, dict):
+            raise ValueError("Record is not a dictionary")
+
+        record_type = record.get('type')
+
+        if record_type is None:
+            raise ValueError("Record does not contain 'type' field")
+
+        hdr_dtype = create_rh_dtype()
+        hdr_arr = np.zeros(1, hdr_dtype)
+
+        if record_type == 'Note':
+            hdr_arr['type_string'] = b'Note'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            if 'text' in record.keys():
+                record_str = record['text']+'\0'
+                body_dtype = create_note_dtype(len(record_str))
+                body_arr = np.zeros(1, body_dtype)
+                body_arr['text'] = record_str.encode()
+
+
+        elif record_type == 'SyLg':
+            hdr_arr['type_string'] = b'SyLg'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            if 'text' in record.keys():
+                record_str = record['text']+'\0'
+                body_dtype = create_sylg_dtype(len(record_str))
+                body_arr = np.zeros(1, body_dtype)
+                body_arr['text'] = record_str.encode()
+            
+        elif record_type == 'EDFA':
+            hdr_arr['type_string'] = b'EDFA'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            if 'text' in record.keys():
+                record_str = record['text']+'\0'
+                body_dtype = create_edfa_dtype(len(record_str))
+                body_arr = np.zeros(1, body_dtype)
+                body_arr['text'] = record_str.encode()
+            if 'duration' in record.keys():
+                body_arr['duration'] = record['duration']
+
+        elif record_type == 'LNTP':
+            hdr_arr['type_string'] = b'LNTP'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            template = record['template']
+            body_dtype = create_lntp_dtype(len(template))
+            body_arr = np.zeros(1, body_dtype)
+            body_arr['length'] = len(template)
+            body_arr['template'] = template
+
+        elif record_type == 'CSti':
+            hdr_arr['type_string'] = b'CSti'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            body_dtype = create_csti_dtype()
+            d_type_keys = [x[0] for x in body_dtype.descr]
+            body_arr = np.zeros(1, body_dtype)
+            for key in record.keys():
+                if key in ['type', 'time']:
+                    continue
+                body_arr[key] = record[key]
+
+        elif record_type == 'ESti':
+            hdr_arr['type_string'] = b'ESti'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            body_dtype = create_esti_dtype()
+            d_type_keys = [x[0] for x in body_dtype.descr]
+            body_arr = np.zeros(1, body_dtype)
+            for key in record.keys():
+                if key in ['type', 'time']:
+                    continue
+                body_arr[key] = record[key]
+
+        elif record_type == 'Seiz':
+            hdr_arr['type_string'] = b'Seiz'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            body_dtype = create_seiz_dtype()
+            body_arr = np.zeros(1, body_dtype)
+            for key in record.keys():
+                if key in ['type', 'time']:
+                    continue
+                if key == 'channels':
+                    channels = record['channels']
+                    subbody_dtype = create_seiz_ch_dtype()
+                    subbody_arr = np.zeros(len(record['channels']),
+                                           subbody_dtype)
+                    subbody_arr['name'] = [x['name'] for x in channels]
+                    subbody_arr['onset'] = [x['onset'] for x in channels]
+                    subbody_arr['offset'] = [x['offset'] for x in channels]
+                else:
+                    body_arr[key] = record[key]
+
+        else:
+            raise ValueError("Unrecognized record type:'%s'" % record_type)
+
+        record_np_dict = {'record_header': hdr_arr,
+                          'record_body': body_arr}
+
+        if 'subbody_arr' in locals():
+            record_np_dict['record_subbody'] = subbody_arr
+
+        return record_np_dict
 
     def write_mef_ts_segment_metadata(self, channel, segment_n,
                                       password_1, password_2,
@@ -512,7 +651,6 @@ class MefSession():
                           channel=None, segment_n=None):
 
         """
-        TODO: - this funciton should use numpy arrays in the future
         Writes new records on session level. If channel is specified, the
         the records are written at channel level. If segment_n is sepcified,
         the recordes are written at segment level.
@@ -537,6 +675,84 @@ class MefSession():
             Channel name
         segment_n: int
             Segment number
+
+        Record types:
+        -------------
+        Each entry in record list must be a dictionary and contain field "type".
+        The rest of the entries are optional. All times are in uUTC or us.
+        The following types are recognized:
+
+        Note - simple note:
+            - type - "Note"
+            - time - record time (int)
+            - text - note text (str)
+
+        SyLg - system log:
+            - type - "SyLg"
+            - time - record time (int)
+            - text - system log text
+
+        EDFA - EDF annotation record:
+            - type - "EDFA"
+            - time - record time (int)
+            - duration - duration of the event (int)
+            - text - annotation text (str)
+
+        LNTP - Line noise template:
+            - type - "LNTP"
+            - time - record time (int)
+            - length - template length (int)
+            - template - 1D numpy array of template itself (np.arry, dtype=int)
+
+        CSti - Cognitive stimulation:
+            - type - "CSti"
+            - time - record time (int)
+            - task_type - type of the task (str)
+            - stimulus_duration - duration of the stimulus (int)
+            - stimulus_type - type of the stimulus (str)
+            - patient_response - response of the patient (str)
+
+        ESti - Electrical stimulation:
+            - type - "Esti"
+            - time - record time (int)
+            - amplitude - stimulus amplitude (float)
+            - frequency - frequency of the stimulus (float)
+            - pulse_width - pulse width (int)
+            - ampunit_code - code of amplitude unit (int)
+                - -1 = no entry
+                - 0 = unknown
+                - 1 = mA
+                - 2 = V
+            - mode code - code of the stimulation mode (int)
+                - -1 = no entry
+                - 0 = unknown
+                - 1 = current
+                - 2 = voltage
+            - anode - stimulation anode (str)
+            - catode - stimulation catode (str)
+
+        Seiz - Seizure:
+            - type - "Seiz"
+            - time - record time (int)
+            - earliest_onset - earliest uUTC onset of the seizure (int)
+            - latest offset - latest uUTC offset of the seizure (int)
+            - duration - duration of the seizure (int)
+            - number_of_channels - number of seizure onset channels (int)
+            - onset_code - code for the onset
+                - -1 = no entry
+                - 0 - unknown
+                - 1 - docal
+                - 2 - generalized
+                - 3 -propagated
+                - 4 - mixed
+            - marker_name_1 - name of the marker 1 (str)
+            - marker_name_2 - name of the marker 2 (str)
+            - annotation - seizure annotation (str)
+            - channels - list of dictionaries with channel entries
+                - name - name of the channel (str)
+                - onset - seizure onset on this channel (int)
+                - offset - seizure offset on this channel (int)
+
         """
 
         if channel is None and segment_n is not None:
@@ -554,15 +770,181 @@ class MefSession():
         if segment_n is not None:
             dir_path += channel+'-'+str(segment_n).zfill(6)+'.segd/'
 
+        numpy_records_list = []
+        for record in records_list:
+            numpy_records_list.append(self._create_np_record(record))
+
         write_mef_data_records(dir_path,
                                password_1,
                                password_2,
                                start_time,
                                end_time,
                                time_offset,
-                               records_list)
+                               numpy_records_list)
 
     # ----- Data reading functions -----
+    def _create_dict_record(self, np_record):
+        """
+        Create python dictionary from record dictionary with numpy arrays.
+
+        Parameters:
+        -----------
+        np_record: dict
+            Dictionary with numpy arrays record header, body, subbody
+
+        Returns:
+        --------
+        Python dictionary with record entries
+        """
+
+        record_header = np_record.get('record_header')
+        record_body = np_record.get('record_body')
+        record_subbody = np_record.get('record_subbody')
+
+        d_type_keys = [x[0] for x in record_body.dtype.descr]
+
+        record_dict = {}
+
+        if record_header['type_string'] == b'Note':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'SyLg':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'EDFA':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+            
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'LNTP':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+            
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'CSti':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+            
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'ESti':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+            
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+            
+        elif record_header['type_string'] == b'Seiz':
+            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            record_dict['time'] = record_header['time'][0]
+            
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    record_dict[key] = value.decode('utf-8')
+                else:
+                    record_dict[key] = value
+
+            if record_subbody is not None:
+                ch_list = []
+                for ch_record in record_subbody:
+                    ch_dict = {'name': ch_record['name'].decode('utf-8'),
+                               'onset': ch_record['onset'],
+                               'offset': ch_record['offset']}
+                    ch_list.append(ch_dict)
+
+                record_dict['channels'] = ch_list
+            
+        else:
+            warn_string = ('Unrecognized record type: '
+                           + record_header['type_string'].decode('utf-8'))
+            warnings.warn(warn_string, RuntimeWarning)
+            record_dict['type'] = record_header['type_string'].decode('utf-8')
+
+        return record_dict
+
+    def read_records(self, channel=None, segment_n=None):
+        """
+        Returns list of dictionaries with MEF records.
+
+        Parameters:
+        -----------
+        channel: str
+            Session channel, if not specified, session records will be read
+            (default = None)
+        segment_n: int
+            Segment number, if not specified, channel records will be read
+            (default = None)
+
+        Returns:
+        --------
+        List of dictionaries with record entries
+        """
+
+        if channel is not None:
+            if channel in self.session_md['time_series_channels'].keys():
+                channel_md = self.session_md['time_series_channels'][channel]
+            elif channel in self.session_md['video_channels'].keys():
+                channel_md = self.session_md['video_channels'][channel]
+            else:
+                raise ValueError("No channel %s in this session" % channel)
+
+            if segment_n is not None:
+                segment = channel+'-'+str(segment_n).zfill(6)
+                if segment in channel_md['segments'].keys():
+                    segment_md = channel_md['segments'][segment]
+                    records_list = segment_md['records_info']['records']
+                else:
+                    raise ValueError("No segment %s in this session" % segment)
+            else:
+                record_list = channel_md['records_info']['records']
+        else:
+            record_list = self.session_md['records_info']['records']
+
+        python_dict_list = []
+
+        for record in records_list:
+            python_dict_list.append(self._create_dict_record(record))
+
+        return python_dict_list
+
     def get_channel_toc(self, channel):
 
         """
