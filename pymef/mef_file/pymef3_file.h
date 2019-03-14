@@ -16,8 +16,8 @@ static char pymef3_file_docstring[] =
 /* Documentation to be read in Python - write functions*/
 static char write_mef_data_records_docstring[] =
     "Function for writing MEF3 records at any level specified by path parameter.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path where record files will be written.\n\
      password_1: str\n\
@@ -35,8 +35,8 @@ static char write_mef_data_records_docstring[] =
 
 static char write_mef_ts_metadata_docstring[] =
     "Function to write MEF3 time series metadata file.\n\n\
-     Parameters:\n\
-     ----------- \n\
+     Parameters\n\
+     ---------- \n\
      target_path: str\n\
         Path to segment being written.\n\
      password_1: str\n\
@@ -54,8 +54,8 @@ static char write_mef_ts_metadata_docstring[] =
 
 static char write_mef_v_metadata_docstring[] =
     "Function to write MEF3 video metadata file.\n\n\
-     Parameters:\n \
-     -----------\n \
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to segment being written.\n\
      password_1: str\n\
@@ -73,8 +73,8 @@ static char write_mef_v_metadata_docstring[] =
 
 static char write_mef_ts_data_and_indices_docstring[] =
     "Function to write MEF3 time series data and indices file.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to segment being written.\n\
      password_1: str\n\
@@ -86,12 +86,12 @@ static char write_mef_ts_data_and_indices_docstring[] =
      raw_data: np.array\n\
         Numpy 1D array with raw data of dtype int32.\n\
      lossy_flag: bool\n\
-        Flag for optional lossy compression (default=False).\n";
+        Flag for optional lossy compression (default=False).";
 
 static char write_mef_v_indices_docstring[] =
     "Function to write MEF3 video indices file.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to segment being written.\n\
      password_1: str\n\
@@ -108,10 +108,10 @@ static char write_mef_v_indices_docstring[] =
 /* Documentation to be read in Python - append functions*/
 static char append_ts_data_and_indices_docstring[] =
     "Function to append MEF3 time series data and indices to existing segment files.\n\n\
-     Parameters:\n \
-     -----------\n \
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
-        Path to segment being appended\n \
+        Path to segment being appended\n\
      password_1: str\n\
         Level 1 password.\n\
      password_2: str\n\
@@ -123,74 +123,77 @@ static char append_ts_data_and_indices_docstring[] =
      discontinuity_flag: bool\n\
         Flag to mark discontinuity at the start of appended data (default=True)\n\
      lossy_flag: bool\n\
-        Flag for optional lossy compression (default=False).\n";
+        Flag for optional lossy compression (default=False).";
 
 /* Documentation to be read in Python - read functions*/
 static char read_mef_ts_data_docstring[] =
     "Function to read MEF3 time series data.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to time series channel being read.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
-     start_sample (uUTC time): int\n\
+     start: int\n\
         Start sample or uUTC time to be read.\n\
-     end_sample (uUTC time): int\n\
+     end: int\n\
         End sample or uUTC time to be read.\n\
      time_flag: bool\n\
         Flag to indicate if user is reading by samples or uUTC times (default=False - reading by sample)\n\n\
-     Returns:\n\
-     --------\n\
+     Returns\n\
+     -------\n\
      data: np.array\n\
         1D numpy array (dtype=float) with data. If the data is read by uUTC and a gap is present the missing values are filled with NaNs";
 
 static char read_mef_session_metadata_docstring[] =
     "Function to read MEF3 session metadata.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path - path to MEF3 session being read (str)\n \
      password: str\n\
         Level 1 or level 2 password.\n\
-     Returns:\n\
-     --------\n\
-     Session_metadata - dictionary with session metadata and all channels and segments metadata and records.";
+     Returns\n\
+     -------\n\
+     Session_metadata: dict\n\
+        Dictionary with session metadata and all channels and segments metadata and records.";
 
 static char read_mef_channel_metadata_docstring[] =
     "Function to read MEF3 channel metadata.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to MEF3 channel being read.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
-     Returns:\n\
-     --------\n\
-     Channel_metadata - dictionary with channel metadata and all segments metadata and records.";
+     Returns\n\
+     -------\n\
+     Channel_metadata: dict\n\
+        Dictionary with channel metadata and all segments metadata and records.";
 
 static char read_mef_segment_metadata_docstring[] =
     "Function to read MEF3 segment metadata.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to MEF3 segment being read.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
-     Returns:\n\
-     --------\n\
-     Segment_metadata - dictionary with segment metadata and records.";
+     Returns\n\
+     -------\n\
+     Segment_metadata: dict\n\
+        Dictionary with segment metadata and records.";
 
 /* Documentation to be read in Python - helper functions*/
 static char check_mef_password_docstring[] =
     "Function to check MEF3 password validity.\n\n\
-     Parameters:\n\
-     -----------\n\
+     Parameters\n\
+     ----------\n\
      target_path: str\n\
         Path to MEF3 metadata file.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
-     Returns:\n\
-     --------\n\
+     Returns\n\
+     -------\n\
      password_type: int\n\
         - 0 - incorrect password\n\
         - 1 - level 1 password\n\

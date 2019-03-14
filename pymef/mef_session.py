@@ -87,8 +87,8 @@ class MefSession():
     """
     Basic object for operations with mef sessions.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     session_path: str
         path to mef session
     password: str
@@ -137,16 +137,17 @@ class MefSession():
         """
         Checks provided password on all files in the session.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         mefpath: str
             path to mef3 direcory
         password: str
             mef3 data password
 
-        Returns:
-        --------
-        None on success
+        Returns
+        -------
+        result: object
+            None on success
         """
         mef_files = []
         for path, subdirs, files in os.walk(self.session_path):
@@ -164,14 +165,15 @@ class MefSession():
 
     def _get_channel_md(self, channel):
         """
-        Paramters:
-        ----------
+        Paramters
+        ---------
         channel: str
             required channel
 
-        Returns:
-        --------
-        channel metadata structure
+        Returns
+        -------
+        channel_md: dict
+            Channel metadata structure
         """
         ts_chs = self.session_md['time_series_channels']
         return ts_chs[channel]['channel_specific_metadata']
@@ -196,9 +198,10 @@ class MefSession():
         """
         Initialize time series metadata section 2 array with default values
 
-        Returns:
-        --------
-        Initialized numpy array of time series md2 dtype
+        Returns
+        -------
+        init_tmd2: np.array
+            Initialized numpy array of time series md2 dtype
         """
 
         tmd2 = np.zeros(1, create_tmd2_dtype())
@@ -246,9 +249,10 @@ class MefSession():
         """
         Initialize video metadata section 2 array with default values
 
-        Returns:
-        --------
-        Initialized numpy array of video md2 dtype
+        Returns
+        -------
+        init_vmd2: np.array
+            Initialized numpy array of video md2 dtype
         """
 
         vmd2 = np.zeros(1, create_vmd2_dtype())
@@ -268,9 +272,10 @@ class MefSession():
         """
         Initialize metadta section 3 array with default values
 
-        Returns:
-        --------
-        Initialized numpy array of md3 dtype
+        Returns
+        -------
+        init_md3: np.array
+            Initialized numpy array of md3 dtype
         """
 
         md3 = np.zeros(1, create_md3_dtype())
@@ -289,14 +294,15 @@ class MefSession():
         """
         Create record dictionary with numpy arrays from python dictionary.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         record: dict
             Python dictionary with record entries
 
-        Returns:
-        --------
-        Dictionary with numpy arrays record header, body, subbody
+        Returns
+        -------
+        record_dict: dict
+            Dictionary with numpy arrays record header, body, subbody
         """
 
         if not isinstance(record, dict):
@@ -422,8 +428,8 @@ class MefSession():
         """
         Writes new time series metadata in the specified segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel name
         segment_n: int
@@ -475,8 +481,8 @@ class MefSession():
         """
         Writes new time series metadata in the specified segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel name
         segment_n: int
@@ -518,8 +524,8 @@ class MefSession():
         """
         Appends new time series metadata in the specified segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel name
         segment_n: int
@@ -562,8 +568,8 @@ class MefSession():
         """
         Writes new video metadata in the specified segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel name
         segment_n: int
@@ -616,8 +622,8 @@ class MefSession():
         """
         Writes new video indices in the specified segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel name
         segment_n: int
@@ -655,8 +661,8 @@ class MefSession():
         the records are written at channel level. If segment_n is sepcified,
         the recordes are written at segment level.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         password_1: str
             Level 1 password
         password_2: str
@@ -676,8 +682,8 @@ class MefSession():
         segment_n: int
             Segment number
 
-        Record types:
-        -------------
+        Notes
+        -----
         Each entry in record list must be a dictionary and contain field "type".
         The rest of the entries are optional. All times are in uUTC or us.
         The following types are recognized:
@@ -787,14 +793,15 @@ class MefSession():
         """
         Create python dictionary from record dictionary with numpy arrays.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         np_record: dict
             Dictionary with numpy arrays record header, body, subbody
 
-        Returns:
-        --------
-        Python dictionary with record entries
+        Returns
+        -------
+        record_dict: dict
+            Python dictionary with record entries
         """
 
         record_header = np_record.get('record_header')
@@ -904,8 +911,8 @@ class MefSession():
         """
         Returns list of dictionaries with MEF records.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Session channel, if not specified, session records will be read
             (default = None)
@@ -913,9 +920,10 @@ class MefSession():
             Segment number, if not specified, channel records will be read
             (default = None)
 
-        Returns:
-        --------
-        List of dictionaries with record entries
+        Returns
+        -------
+        record_list: list
+            List of dictionaries with record entries
         """
 
         if channel is not None:
@@ -950,14 +958,15 @@ class MefSession():
         """
         Returns discontinuities accross segments.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel: str
             Channel to calculate TOC on
 
-        Returns:
-        --------
-        TOC - array with
+        Returns
+        -------
+        TOC: np.array
+            Array with
               - [0,:] = discontinuity flags
               - [1,:] = discont lengths
               - [2,:] = start samples
@@ -987,8 +996,8 @@ class MefSession():
         """
         Reads desired channels in desired sample segment
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel_map: str or list
             Channel or list of channels to be read
         sample_map: list
@@ -998,9 +1007,10 @@ class MefSession():
         process_n: int
             How many processes use for reading (default=None)
 
-        Returns:
-        --------
-        data - numpy array [channels,samples]
+        Returns
+        -------
+        data: np.array
+            Numpy array [channels,samples]
         """
 
         data_list = []
@@ -1058,8 +1068,8 @@ class MefSession():
         Reads desired channels in desired time segment. Missing data at
         discontinuities are filled with NaNs.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         channel_map: str or list
             Channel or list of channels to be read
         uutc_map: list
@@ -1069,9 +1079,10 @@ class MefSession():
         process_n: int
             How many processes use for reading (defualt = None)
 
-        Returns:
-        --------
-        data - numpy array [channels,samples]
+        Returns
+        -------
+        data: np.array
+            Numpy array [channels,samples]
         """
 
         data_list = []
@@ -1127,16 +1138,17 @@ class MefSession():
         """
         Reads session time series channel names
 
-        Returns:
-        --------
-        List of dictionaries with information about channels:
-            - Sampling frequency
-            - Number of samples
-            - Units conversion factor
-            - Units description
-            - Earliest start time
-            - Latest end time
-            - Channel description
+        Returns
+        -------
+        channel_list: list
+            List of dictionaries with information about channels:
+                - Sampling frequency
+                - Number of samples
+                - Units conversion factor
+                - Units description
+                - Earliest start time
+                - Latest end time
+                - Channel description
         """
 
         channel_list = list(self.session_md['time_series_channels'].keys())
@@ -1171,8 +1183,8 @@ class MefSession():
         """
         Anonymize mef session
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         password_1: str
             Level 1 password
         password_2: str
@@ -1182,9 +1194,10 @@ class MefSession():
         new_id: str
             New subject id (default = None)
 
-        Returns:
-        --------
-        None on success
+        Returns
+        -------
+        result: object
+            None on success
         """
 
         if self.password == password_1:
@@ -1270,14 +1283,15 @@ class MefSession():
         """
         Detects corrupt data
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         repair: bool
             Whether to try to repair data (default=False)
 
-        Returns:
-        --------
-        None on success
+        Returns
+        -------
+        result: object
+            None on success
         """
 
         tsd = self.session_md['time_series_channels']
