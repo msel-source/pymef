@@ -327,7 +327,6 @@ class MefSession():
                 body_arr = np.zeros(1, body_dtype)
                 body_arr['text'] = record_str.encode()
 
-
         elif record_type == 'SyLg':
             hdr_arr['type_string'] = b'SyLg'
             if 'time' in record.keys():
@@ -338,7 +337,7 @@ class MefSession():
                 body_dtype = create_sylg_dtype(len(record_str))
                 body_arr = np.zeros(1, body_dtype)
                 body_arr['text'] = record_str.encode()
-            
+
         elif record_type == 'EDFA':
             hdr_arr['type_string'] = b'EDFA'
             if 'time' in record.keys():
@@ -684,8 +683,9 @@ class MefSession():
 
         Notes
         -----
-        Each entry in record list must be a dictionary and contain field "type".
-        The rest of the entries are optional. All times are in uUTC or us.
+        Each entry in record list must be a dictionary and contain the field
+        "type". The rest of the entries are optional. All times are in uUTC or
+        us.
         The following types are recognized:
 
         Note - simple note:
@@ -810,84 +810,84 @@ class MefSession():
 
         d_type_keys = [x[0] for x in record_body.dtype.descr]
 
-        record_dict = {}
+        rec_dict = {}
 
         if record_header['type_string'] == b'Note':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
 
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'SyLg':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
 
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'EDFA':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
-            
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'LNTP':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
             
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'CSti':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
-            
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'ESti':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
-            
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
-            
+                    rec_dict[key] = value
+
         elif record_header['type_string'] == b'Seiz':
-            record_dict['type'] = record_header['type_string'][0].decode('utf-8')
-            record_dict['time'] = record_header['time'][0]
-            
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
-                    record_dict[key] = value.decode('utf-8')
+                    rec_dict[key] = value.decode('utf-8')
                 else:
-                    record_dict[key] = value
+                    rec_dict[key] = value
 
             if record_subbody is not None:
                 ch_list = []
@@ -897,15 +897,15 @@ class MefSession():
                                'offset': ch_record['offset']}
                     ch_list.append(ch_dict)
 
-                record_dict['channels'] = ch_list
-            
+                rec_dict['channels'] = ch_list
+
         else:
             warn_string = ('Unrecognized record type: '
                            + record_header['type_string'].decode('utf-8'))
             warnings.warn(warn_string, RuntimeWarning)
-            record_dict['type'] = record_header['type_string'].decode('utf-8')
+            rec_dict['type'] = record_header['type_string'].decode('utf-8')
 
-        return record_dict
+        return rec_dict
 
     def read_records(self, channel=None, segment_n=None):
         """
@@ -942,9 +942,9 @@ class MefSession():
                 else:
                     raise ValueError("No segment %s in this session" % segment)
             else:
-                record_list = channel_md['records_info']['records']
+                records_list = channel_md['records_info']['records']
         else:
-            record_list = self.session_md['records_info']['records']
+            records_list = self.session_md['records_info']['records']
 
         python_dict_list = []
 

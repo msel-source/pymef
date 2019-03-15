@@ -72,8 +72,6 @@ class TestStringMethods(unittest.TestCase):
 
         self.record_list = []
 
-        hdr_dtype = pymef3_file.create_rh_dtype()
-
         # Create Note
         note_dict = {'type': 'Note',
                      'time': self.record_time_1,
@@ -91,7 +89,7 @@ class TestStringMethods(unittest.TestCase):
                      'text': 'EDFA_test'}
 
         # Create LNTP
-        lntp_dict = {'type':'LNTP',
+        lntp_dict = {'type': 'LNTP',
                      'time': self.record_time_1,
                      'length': 5,
                      'template': np.array([1, 2, 3, 4, 5])}
@@ -480,7 +478,6 @@ class TestStringMethods(unittest.TestCase):
                                  read_record['anode'])
                 self.assertEqual(write_record['catode'],
                                  read_record['catode'])
-
 
     def test_time_series_metadata_section_2_usr(self):
 
