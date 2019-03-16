@@ -108,6 +108,9 @@ class MefSession():
         if '.mefd' != session_path[-6:-1]:
             raise ValueError("Session path must end with .mefd suffix!")
 
+        self.path = session_path
+        self.password = password
+
         if new_session:
             os.makedirs(session_path)
             self.session_md = None
@@ -115,9 +118,6 @@ class MefSession():
 
         if not os.path.exists(session_path):
             raise FileNotFoundError(session_path+' does not exist!')
-
-        self.session_path = session_path
-        self.password = password
 
         # Check if path exists
         if not os.path.exists(session_path):
@@ -131,6 +131,31 @@ class MefSession():
             self.session_md = None
 
         return
+
+    def __repr__(self):
+        return (f"MefSession(session_path={self.path}"
+                f", password={self.password})")
+
+    def __str__(self):
+        if self.session_md is None:
+            return f"Mef session: {self.path}"
+        else:
+            md = self.session_md['session_specific_metadata']
+            ts_ch_n = md['number_of_time_series_channels'][0]
+            v_ch_n = md['number_of_video_channels'][0]
+            descr_str = (f"Mef session: {self.path}\n"
+                         f"Start time: {md['earliest_start_time'][0]}\n"
+                         f"End time: {md['latest_end_time'][0]}\n"
+                         f"Number of time series channels: {ts_ch_n}\n"
+                         f"Number of video channels: {v_ch_n}\n")
+        return descr_str
+
+    def __len__(self):
+        if self.session_md is None:
+            return None
+        else:
+            md = self.session_md['session_specific_metadata']
+            return md['latest_end_time'][0] - md['earliest_start_time'][0]
 
     # ----- Helper functions -----
     def _check_password(self):
@@ -150,7 +175,7 @@ class MefSession():
             None on success
         """
         mef_files = []
-        for path, subdirs, files in os.walk(self.session_path):
+        for path, subdirs, files in os.walk(self.path):
             for name in files:
                 mef_files.append(os.path.join(path, name))
 
@@ -183,7 +208,7 @@ class MefSession():
 
     def reload(self):
         self.close()
-        self.session_md = read_mef_session_metadata(self.session_path,
+        self.session_md = read_mef_session_metadata(self.path,
                                                     self.password)
 
     def close(self):
@@ -447,7 +472,7 @@ class MefSession():
             Dictionary with user specified section_3 fileds
         """
 
-        segment_path = (self.session_path+channel+'.timd/'
+        segment_path = (self.path+channel+'.timd/'
                         + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tmet_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tmet'
@@ -496,7 +521,7 @@ class MefSession():
             1-D numpy array of type int32
         """
 
-        segment_path = (self.session_path+channel+'.timd/'
+        segment_path = (self.path+channel+'.timd/'
                         + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tdat_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tdat'
@@ -543,7 +568,7 @@ class MefSession():
             1-D numpy array of type int32
         """
 
-        segment_path = (self.session_path+channel+'.timd/'
+        segment_path = (self.path+channel+'.timd/'
                         + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         tdat_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tdat'
@@ -587,7 +612,7 @@ class MefSession():
             Dictionary with user specified section_3 fileds
         """
 
-        segment_path = (self.session_path+channel+'.vidd/'
+        segment_path = (self.path+channel+'.vidd/'
                         + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         vmet_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.vmet'
@@ -639,7 +664,7 @@ class MefSession():
             Numpy array with vi_dtype
         """
 
-        segment_path = (self.session_path+channel+'.vidd/'
+        segment_path = (self.path+channel+'.vidd/'
                         + channel+'-'+str(segment_n).zfill(6)+'.segd/')
 
         write_mef_v_indices(segment_path,
@@ -764,7 +789,7 @@ class MefSession():
         if channel is None and segment_n is not None:
             raise ValueError('Channel has to be set if segment is set')
 
-        dir_path = self.session_path
+        dir_path = self.path
         if channel is not None:
             if channel_type == 'ts':
                 dir_path += channel+'.timd/'
@@ -848,7 +873,7 @@ class MefSession():
         elif record_header['type_string'] == b'LNTP':
             rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
             rec_dict['time'] = record_header['time'][0]
-            
+
             for key in d_type_keys:
                 value = record_body[key][0]
                 if isinstance(value, bytes):
@@ -1206,7 +1231,7 @@ class MefSession():
 
         # Get metadata files and create a list matching the session md
         md_file_list = []
-        for root, _, files in os.walk(self.session_path):
+        for root, _, files in os.walk(self.path):
             if root.endswith(".timd"):
                 channel = root[root.rindex('/')+1:-5]
                 channel_md = self.session_md['time_series_channels'][channel]
@@ -1315,7 +1340,7 @@ class MefSession():
             for segment in segments:
                 idcs = tsd[channel]['segments'][segment]['indices']
 
-                path_to_data = (self.session_path + '/'
+                path_to_data = (self.path + '/'
                                 + channel + '.timd/'
                                 + segment + '.segd/'
                                 + segment + '.tdat')
@@ -1399,7 +1424,7 @@ class MefSession():
 
                             # RED_block header is zeroed out - invalidate seg
                             else:
-                                path_to_segment = (self.session_path + '/'
+                                path_to_segment = (self.path + '/'
                                                    + channel + '.timd/'
                                                    + segment + '.segd')
                                 warn_str = ('Data cannot be recovered,'
