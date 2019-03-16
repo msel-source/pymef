@@ -1,0 +1,235 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Getting started &#8212; PyMef 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PyMef API" href="api.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>There are two ways one can interact with PyMef wrapper. Either through High level API which is aimed at users with no experience of MEF format. Or through Low level API which is mainly meant for experienced users.</p>
+<div class="section" id="high-level-api-interaction">
+<h2>High level API interaction<a class="headerlink" href="#high-level-api-interaction" title="Permalink to this headline">¶</a></h2>
+<p>All operations are handled through <a class="reference internal" href="api.html#pymef.mef_session.MefSession" title="pymef.mef_session.MefSession"><code class="xref py py-class docutils literal notranslate"><span class="pre">pymef.mef_session.MefSession</span></code></a> class. To initialize a MefSession we can use following code:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">pymef.mef_session</span> <span class="kn">import</span> <span class="n">MefSession</span>
+
+<span class="n">session_path</span> <span class="o">=</span> <span class="s1">&#39;/path/to/session.mefd&#39;</span>
+<span class="n">password</span> <span class="o">=</span> <span class="s1">&#39;mef_password&#39;</span>
+
+<span class="n">ms</span> <span class="o">=</span> <span class="n">MefSession</span><span class="p">(</span><span class="n">session_path</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="writing-time-series-data">
+<h3>Writing time series data<a class="headerlink" href="#writing-time-series-data" title="Permalink to this headline">¶</a></h3>
+<p>To write time series data the time series metadata file has to be written first.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pwd_1</span> <span class="o">=</span> <span class="s1">&#39;table&#39;</span>
+<span class="n">pwd_2</span> <span class="o">=</span> <span class="s1">&#39;chair&#39;</span>
+
+<span class="n">start_time</span> <span class="o">=</span> <span class="mi">946684800000000</span>
+<span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="mi">1000000</span>
+
+<span class="n">sampling_frequency</span> <span class="o">=</span> <span class="mi">5000</span>
+
+<span class="n">channel_name</span> <span class="o">=</span> <span class="s1">&#39;test_channel&#39;</span>
+
+<span class="c1"># Section 3</span>
+<span class="n">section3_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;recording_time_offset&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="s1">&#39;DST_start_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="s1">&#39;DST_end_time&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="s1">&#39;GMT_offset&#39;</span><span class="p">:</span> <span class="mi">3600</span><span class="p">,</span>
+                 <span class="s1">&#39;subject_name_1&#39;</span><span class="p">:</span> <span class="s1">&#39;Olaf&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;subject_name_2&#39;</span><span class="p">:</span> <span class="s1">&#39;Mefson&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;subject_ID&#39;</span><span class="p">:</span> <span class="s1">&#39;2017&#39;</span><span class="p">,</span>
+                 <span class="s1">&#39;recording_location&#39;</span><span class="p">:</span> <span class="s1">&#39;pub&#39;</span><span class="p">}</span>
+
+<span class="c1"># Time series section 2 dictionry with ts section 2 fields</span>
+<span class="n">section2_ts_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;channel_description&#39;</span><span class="p">:</span> <span class="s1">&#39;Test_channel&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;session_description&#39;</span><span class="p">:</span> <span class="s1">&#39;Test_session&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;recording_duration&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="s1">&#39;reference_description&#39;</span><span class="p">:</span> <span class="s1">&#39;wine&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;acquisition_channel_number&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                    <span class="s1">&#39;sampling_frequency&#39;</span><span class="p">:</span> <span class="n">sampling_frequency</span><span class="p">,</span>
+                    <span class="s1">&#39;notch_filter_frequency_setting&#39;</span><span class="p">:</span> <span class="mf">50.0</span><span class="p">,</span>
+                    <span class="s1">&#39;low_frequency_filter_setting&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+                    <span class="s1">&#39;high_frequency_filter_setting&#39;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>
+                    <span class="s1">&#39;AC_line_frequency&#39;</span><span class="p">:</span> <span class="mi">70</span><span class="p">,</span>
+                    <span class="s1">&#39;units_conversion_factor&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>
+                    <span class="s1">&#39;units_description&#39;</span><span class="p">:</span> <span class="s1">&#39;uV&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;start_sample&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># Different for segments</span>
+                    <span class="s1">&#39;number_of_discontinuities&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="c1"># The following entries are filled automatically during data writing</span>
+                    <span class="s1">&#39;maximum_native_sample_value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s1">&#39;minimum_native_sample_value&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                    <span class="s1">&#39;number_of_blocks&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_block_bytes&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_block_samples&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_difference_bytes&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;block_interval&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_contiguous_blocks&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_contiguous_block_bytes&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;maximum_contiguous_samples&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="s1">&#39;number_of_samples&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+<span class="n">ms</span><span class="o">.</span><span class="n">write_mef_ts_segment_metadata</span><span class="p">(</span><span class="n">channel_name</span><span class="p">,</span>
+                                 <span class="n">segment_n</span><span class="p">,</span>
+                                 <span class="n">pwd_1</span><span class="p">,</span>
+                                 <span class="n">pwd_2</span><span class="p">,</span>
+                                 <span class="n">start_time</span><span class="p">,</span>
+                                 <span class="n">end_time</span><span class="p">,</span>
+                                 <span class="n">section2_ts_dict</span><span class="p">,</span>
+                                 <span class="n">section3_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>After the metadata file is in place the data itslef can be written:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">N</span> <span class="o">=</span> <span class="mi">20000</span>  <span class="c1"># Number of samples</span>
+<span class="n">samps_per_mef_block</span> <span class="o">=</span> <span class="mi">5000</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+<span class="n">ms</span><span class="o">.</span><span class="n">write_mef_ts_segment_data</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span>
+                             <span class="mi">0</span><span class="p">,</span>
+                             <span class="n">pwd_1</span><span class="p">,</span>
+                             <span class="n">pwd_2</span><span class="p">,</span>
+                             <span class="n">samps_per_mef_block</span><span class="p">,</span>
+                             <span class="n">raw_data</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reading-time-series-data">
+<h3>Reading time series data<a class="headerlink" href="#reading-time-series-data" title="Permalink to this headline">¶</a></h3>
+<p>To obtain information about time series channels the function <a class="reference internal" href="api.html#pymef.mef_session.MefSession.read_ts_channel_basic_info" title="pymef.mef_session.MefSession.read_ts_channel_basic_info"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_ts_channel_basic_info()</span></code></a> as in the following code snippet.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ms</span><span class="o">.</span><span class="n">read_ts_channel_basic_info</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>There are two options for reading time series data:</dt>
+<dd><ul class="first last simple">
+<li>By sample with function <a class="reference internal" href="api.html#pymef.mef_session.MefSession.read_ts_channels_sample" title="pymef.mef_session.MefSession.read_ts_channels_sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_ts_channels_sample()</span></code></a></li>
+<li>By uUTC with function <a class="reference internal" href="api.html#pymef.mef_session.MefSession.read_ts_channels_uutc" title="pymef.mef_session.MefSession.read_ts_channels_uutc"><code class="xref py py-meth docutils literal notranslate"><span class="pre">read_ts_channels_uutc()</span></code></a></li>
+</ul>
+</dd>
+</dl>
+<p>Both functions have similar API. The first argument is either a channel string or a list of channel strings. The secund argument consits of list of lists with start and stop sample or uutc. Both time entries can also be None in which case the recording start / stop is used. If only one entry for start and stop is provided the same span is applied to all channels in the channel list. There is one minor difference in returned data - when reading by uUTC the function returns NaNs if no data is available in the specified time span.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Returns 1D numpy array with data from recording start to recording stop</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">read_ts_channels_uutc</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="p">[[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">]])</span>
+
+<span class="c1"># Returns 1D numpy array with 2 1D numpy arrays with data from recording start to recording stop</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">read_ts_channels_uutc</span><span class="p">([</span><span class="n">channel</span><span class="p">,</span> <span class="n">channel</span><span class="p">],</span> <span class="p">[[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">]])</span>
+
+<span class="c1"># Returns 1D numpy array with data from sample 5 to sample 5000</span>
+<span class="n">ms</span><span class="o">.</span><span class="n">read_ts_channels_sample</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="p">[[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5000</span><span class="p">]])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyMef</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-api-interaction">High level API interaction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#writing-time-series-data">Writing time series data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reading-time-series-data">Reading time series data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">PyMef API</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+      <li>Next: <a href="api.html" title="next chapter">PyMef API</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Jan Cimbalnik.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/getting_started.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

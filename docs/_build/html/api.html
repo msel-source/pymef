@@ -1,0 +1,854 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>PyMef API &#8212; PyMef 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Getting started" href="getting_started.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pymef-api">
+<h1>PyMef API<a class="headerlink" href="#pymef-api" title="Permalink to this headline">¶</a></h1>
+<p>PyMef api consist of two parts.
+- High level API which should be used in most cases
+- Low level API which is aimed at users experienced with MEF library</p>
+<div class="section" id="high-level-api">
+<h2>High level API<a class="headerlink" href="#high-level-api" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pymef.mef_session.MefSession">
+<em class="property">class </em><code class="descclassname">pymef.mef_session.</code><code class="descname">MefSession</code><span class="sig-paren">(</span><em>session_path</em>, <em>password</em>, <em>read_metadata=True</em>, <em>new_session=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic object for operations with mef sessions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>session_path</strong> (<em>str</em>) – path to mef session</li>
+<li><strong>password</strong> (<em>str</em>) – password for mef session</li>
+<li><strong>read_metadata</strong> (<em>bool</em>) – whether to read metadata (default=True)</li>
+<li><strong>new_session</strong> (<em>bool</em>) – whether this is a new session for writing (default=False)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.annonymize_session">
+<code class="descname">annonymize_session</code><span class="sig-paren">(</span><em>password_1</em>, <em>password_2</em>, <em>new_name=None</em>, <em>new_id=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.annonymize_session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Anonymize mef session</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>new_name</strong> (<em>str</em>) – New first name for the subject (default = None)</li>
+<li><strong>new_id</strong> (<em>str</em>) – New subject id (default = None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>result</strong> – None on success</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.append_mef_ts_segment_data">
+<code class="descname">append_mef_ts_segment_data</code><span class="sig-paren">(</span><em>channel</em>, <em>segment_n</em>, <em>password_1</em>, <em>password_2</em>, <em>start_time</em>, <em>end_time</em>, <em>samps_per_mef_block</em>, <em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.append_mef_ts_segment_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends new time series metadata in the specified segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>start_time</strong> (<em>int</em>) – Start time of the appended data</li>
+<li><strong>end_time</strong> – End time of the appended data</li>
+<li><strong>samps_per_mef_block</strong> (<em>int</em>) – Number of samples per mef block</li>
+<li><strong>data</strong> (<em>np.array</em>) – 1-D numpy array of type int32</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.detect_corrupt_data">
+<code class="descname">detect_corrupt_data</code><span class="sig-paren">(</span><em>repair=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.detect_corrupt_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detects corrupt data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>repair</strong> (<em>bool</em>) – Whether to try to repair data (default=False)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>result</strong> – None on success</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.get_channel_toc">
+<code class="descname">get_channel_toc</code><span class="sig-paren">(</span><em>channel</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.get_channel_toc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns discontinuities accross segments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>channel</strong> (<em>str</em>) – Channel to calculate TOC on</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>TOC</strong> –<dl class="docutils">
+<dt>Array with</dt>
+<dd><ul class="first last simple">
+<li>[0,:] = discontinuity flags</li>
+<li>[1,:] = discont lengths</li>
+<li>[2,:] = start samples</li>
+<li>[3,:] = start uutc times</li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">np.array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.read_records">
+<code class="descname">read_records</code><span class="sig-paren">(</span><em>channel=None</em>, <em>segment_n=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.read_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of dictionaries with MEF records.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel</strong> (<em>str</em>) – Session channel, if not specified, session records will be read
+(default = None)</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number, if not specified, channel records will be read
+(default = None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>record_list</strong> – List of dictionaries with record entries</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.read_ts_channel_basic_info">
+<code class="descname">read_ts_channel_basic_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.read_ts_channel_basic_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads session time series channel names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>channel_list</strong> –<dl class="docutils">
+<dt>List of dictionaries with information about channels:</dt>
+<dd><ul class="first last simple">
+<li>Sampling frequency</li>
+<li>Number of samples</li>
+<li>Units conversion factor</li>
+<li>Units description</li>
+<li>Earliest start time</li>
+<li>Latest end time</li>
+<li>Channel description</li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.read_ts_channels_sample">
+<code class="descname">read_ts_channels_sample</code><span class="sig-paren">(</span><em>channel_map</em>, <em>sample_map</em>, <em>process_n=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.read_ts_channels_sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads desired channels in desired sample segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel_map</strong> (<em>str</em><em> or </em><em>list</em>) – Channel or list of channels to be read</li>
+<li><strong>sample_map</strong> (<em>list</em>) – List of [start, stop] samples to be loaded that correspond
+to channel_map. if there is only one entry the same range is
+applied to all channels</li>
+<li><strong>process_n</strong> (<em>int</em>) – How many processes use for reading (default=None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> – Numpy array [channels,samples]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">np.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.read_ts_channels_uutc">
+<code class="descname">read_ts_channels_uutc</code><span class="sig-paren">(</span><em>channel_map</em>, <em>uutc_map</em>, <em>process_n=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.read_ts_channels_uutc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads desired channels in desired time segment. Missing data at
+discontinuities are filled with NaNs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>channel_map</strong> (<em>str</em><em> or </em><em>list</em>) – Channel or list of channels to be read</li>
+<li><strong>uutc_map</strong> (<em>list</em>) – List of [start,stop] uutc times to be loaded that correspond
+to channel_map. if there is only one entry the same range is applied
+to all channels</li>
+<li><strong>process_n</strong> (<em>int</em>) – How many processes use for reading (defualt = None)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> – Numpy array [channels,samples]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">np.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.write_mef_records">
+<code class="descname">write_mef_records</code><span class="sig-paren">(</span><em>password_1</em>, <em>password_2</em>, <em>start_time</em>, <em>end_time</em>, <em>time_offset</em>, <em>records_list</em>, <em>channel_type='ts'</em>, <em>channel=None</em>, <em>segment_n=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.write_mef_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes new records on session level. If channel is specified, the
+the records are written at channel level. If segment_n is sepcified,
+the recordes are written at segment level.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>start_time</strong> (<em>int</em>) – Records start time</li>
+<li><strong>time</strong> (<em>end</em>) – Records end time</li>
+<li><strong>time_offset</strong> (<em>int</em>) – Time offset for records</li>
+<li><strong>record_list</strong> (<em>list</em>) – List with record dictionaries</li>
+<li><strong>channel_type</strong> (<em>str</em>) – Channel type: ‘ts’ (time series) or ‘v’ (video), default=’ts’</li>
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Each entry in record list must be a dictionary and contain the field
+“type”. The rest of the entries are optional. All times are in uUTC or
+us.
+The following types are recognized:</p>
+<dl class="docutils">
+<dt>Note - simple note:</dt>
+<dd><ul class="first last simple">
+<li>type - “Note”</li>
+<li>time - record time (int)</li>
+<li>text - note text (str)</li>
+</ul>
+</dd>
+<dt>SyLg - system log:</dt>
+<dd><ul class="first last simple">
+<li>type - “SyLg”</li>
+<li>time - record time (int)</li>
+<li>text - system log text</li>
+</ul>
+</dd>
+<dt>EDFA - EDF annotation record:</dt>
+<dd><ul class="first last simple">
+<li>type - “EDFA”</li>
+<li>time - record time (int)</li>
+<li>duration - duration of the event (int)</li>
+<li>text - annotation text (str)</li>
+</ul>
+</dd>
+<dt>LNTP - Line noise template:</dt>
+<dd><ul class="first last simple">
+<li>type - “LNTP”</li>
+<li>time - record time (int)</li>
+<li>length - template length (int)</li>
+<li>template - 1D numpy array of template itself (np.arry, dtype=int)</li>
+</ul>
+</dd>
+<dt>CSti - Cognitive stimulation:</dt>
+<dd><ul class="first last simple">
+<li>type - “CSti”</li>
+<li>time - record time (int)</li>
+<li>task_type - type of the task (str)</li>
+<li>stimulus_duration - duration of the stimulus (int)</li>
+<li>stimulus_type - type of the stimulus (str)</li>
+<li>patient_response - response of the patient (str)</li>
+</ul>
+</dd>
+<dt>ESti - Electrical stimulation:</dt>
+<dd><ul class="first last simple">
+<li>type - “Esti”</li>
+<li>time - record time (int)</li>
+<li>amplitude - stimulus amplitude (float)</li>
+<li>frequency - frequency of the stimulus (float)</li>
+<li>pulse_width - pulse width (int)</li>
+<li><dl class="first docutils">
+<dt>ampunit_code - code of amplitude unit (int)</dt>
+<dd><ul class="first last">
+<li>-1 = no entry</li>
+<li>0 = unknown</li>
+<li>1 = mA</li>
+<li>2 = V</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>mode code - code of the stimulation mode (int)</dt>
+<dd><ul class="first last">
+<li>-1 = no entry</li>
+<li>0 = unknown</li>
+<li>1 = current</li>
+<li>2 = voltage</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>anode - stimulation anode (str)</li>
+<li>catode - stimulation catode (str)</li>
+</ul>
+</dd>
+<dt>Seiz - Seizure:</dt>
+<dd><ul class="first last simple">
+<li>type - “Seiz”</li>
+<li>time - record time (int)</li>
+<li>earliest_onset - earliest uUTC onset of the seizure (int)</li>
+<li>latest offset - latest uUTC offset of the seizure (int)</li>
+<li>duration - duration of the seizure (int)</li>
+<li>number_of_channels - number of seizure onset channels (int)</li>
+<li><dl class="first docutils">
+<dt>onset_code - code for the onset</dt>
+<dd><ul class="first last">
+<li>-1 = no entry</li>
+<li>0 - unknown</li>
+<li>1 - docal</li>
+<li>2 - generalized</li>
+<li>3 -propagated</li>
+<li>4 - mixed</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li>marker_name_1 - name of the marker 1 (str)</li>
+<li>marker_name_2 - name of the marker 2 (str)</li>
+<li>annotation - seizure annotation (str)</li>
+<li><dl class="first docutils">
+<dt>channels - list of dictionaries with channel entries</dt>
+<dd><ul class="first last">
+<li>name - name of the channel (str)</li>
+<li>onset - seizure onset on this channel (int)</li>
+<li>offset - seizure offset on this channel (int)</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.write_mef_ts_segment_data">
+<code class="descname">write_mef_ts_segment_data</code><span class="sig-paren">(</span><em>channel</em>, <em>segment_n</em>, <em>password_1</em>, <em>password_2</em>, <em>samps_per_mef_block</em>, <em>data</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.write_mef_ts_segment_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes new time series metadata in the specified segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>samps_per_mef_block</strong> (<em>int</em>) – Number of samples per mef block</li>
+<li><strong>data</strong> (<em>np.array</em>) – 1-D numpy array of type int32</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.write_mef_ts_segment_metadata">
+<code class="descname">write_mef_ts_segment_metadata</code><span class="sig-paren">(</span><em>channel</em>, <em>segment_n</em>, <em>password_1</em>, <em>password_2</em>, <em>start_time</em>, <em>end_time</em>, <em>section_2_dict</em>, <em>section_3_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.write_mef_ts_segment_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes new time series metadata in the specified segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>start_time</strong> (<em>int</em>) – Start time</li>
+<li><strong>time</strong> (<em>end</em>) – End time</li>
+<li><strong>section_2_dict</strong> (<em>dict</em>) – Dictionary with user specified section_2 fileds</li>
+<li><strong>section_3_dict</strong> (<em>dict</em>) – Dictionary with user specified section_3 fileds</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.write_mef_v_segment_indices">
+<code class="descname">write_mef_v_segment_indices</code><span class="sig-paren">(</span><em>channel</em>, <em>segment_n</em>, <em>password_1</em>, <em>password_2</em>, <em>start_time</em>, <em>end_time</em>, <em>index_entries</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.write_mef_v_segment_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes new video indices in the specified segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>start_time</strong> (<em>int</em>) – Start time of video indices</li>
+<li><strong>time</strong> (<em>end</em>) – End time of video indices</li>
+<li><strong>index_entries</strong> (<em>np.array</em>) – Numpy array with vi_dtype</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pymef.mef_session.MefSession.write_mef_v_segment_metadata">
+<code class="descname">write_mef_v_segment_metadata</code><span class="sig-paren">(</span><em>channel</em>, <em>segment_n</em>, <em>password_1</em>, <em>password_2</em>, <em>start_time</em>, <em>end_time</em>, <em>section_2_dict</em>, <em>section_3_dict</em><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_session.MefSession.write_mef_v_segment_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes new video metadata in the specified segment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>channel</strong> (<em>str</em>) – Channel name</li>
+<li><strong>segment_n</strong> (<em>int</em>) – Segment number</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password</li>
+<li><strong>start_time</strong> (<em>int</em>) – Start time of the data</li>
+<li><strong>time</strong> (<em>end</em>) – End time of the data</li>
+<li><strong>section_2_dict</strong> (<em>dict</em>) – Dictionary with user specified section_2 fileds</li>
+<li><strong>section_3_dict</strong> (<em>dict</em>) – Dictionary with user specified section_3 fileds</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="low-level-api">
+<h2>Low level API<a class="headerlink" href="#low-level-api" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Use with caution! Improper use may lead to data corruption.</p>
+</div>
+<span class="target" id="module-pymef.mef_file.pymef3_file"></span><p>This submodule provides a wrapper around Mayo Electrophysiology Format (MEF) version 3.0 library.</p>
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.append_ts_data_and_indices">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">append_ts_data_and_indices</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.append_ts_data_and_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to append MEF3 time series data and indices to existing segment files.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to segment being appended</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>samples_per_mef_block</strong> (<em>int</em>) – Number of samples in one MEF RED block.</li>
+<li><strong>raw_data</strong> (<em>np.array</em>) – Numpy 1D array with raw data of dtype int32.</li>
+<li><strong>discontinuity_flag</strong> (<em>bool</em>) – Flag to mark discontinuity at the start of appended data (default=True)</li>
+<li><strong>lossy_flag</strong> (<em>bool</em>) – Flag for optional lossy compression (default=False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.check_mef_password">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">check_mef_password</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.check_mef_password" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to check MEF3 password validity.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to MEF3 metadata file.</li>
+<li><strong>password</strong> (<em>str</em>) – Level 1 or level 2 password.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><p><strong>password_type</strong> –</p>
+<ul class="simple">
+<li>0 - incorrect password</li>
+<li>1 - level 1 password</li>
+<li>2 - level 2 password</li>
+</ul>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.read_mef_channel_metadata">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">read_mef_channel_metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.read_mef_channel_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read MEF3 channel metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to MEF3 channel being read.</li>
+<li><strong>password</strong> (<em>str</em>) – Level 1 or level 2 password.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Channel_metadata</strong> – Dictionary with channel metadata and all segments metadata and records.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.read_mef_segment_metadata">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">read_mef_segment_metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.read_mef_segment_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read MEF3 segment metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to MEF3 segment being read.</li>
+<li><strong>password</strong> (<em>str</em>) – Level 1 or level 2 password.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>Segment_metadata</strong> – Dictionary with segment metadata and records.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.read_mef_session_metadata">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">read_mef_session_metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.read_mef_session_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read MEF3 session metadata.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>- path to MEF3 session being read</strong><strong> (</strong><strong>str</strong><strong>)</strong> (<em>target_path</em>) – <dl class="docutils">
+<dt>password: str</dt>
+<dd>Level 1 or level 2 password.</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>Session_metadata</strong> – Dictionary with session metadata and all channels and segments metadata and records.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.read_mef_ts_data">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">read_mef_ts_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.read_mef_ts_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to read MEF3 time series data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to time series channel being read.</li>
+<li><strong>password</strong> (<em>str</em>) – Level 1 or level 2 password.</li>
+<li><strong>start</strong> (<em>int</em>) – Start sample or uUTC time to be read.</li>
+<li><strong>end</strong> (<em>int</em>) – End sample or uUTC time to be read.</li>
+<li><strong>time_flag</strong> (<em>bool</em>) – Flag to indicate if user is reading by samples or uUTC times (default=False - reading by sample)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>data</strong> – 1D numpy array (dtype=float) with data. If the data is read by uUTC and a gap is present the missing values are filled with NaNs</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">np.array</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.write_mef_data_records">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">write_mef_data_records</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.write_mef_data_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function for writing MEF3 records at any level specified by path parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path where record files will be written.</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>start_time</strong> (<em>int</em>) – uUTC start time for universal header.</li>
+<li><strong>end_time</strong> (<em>int</em>) – uUTC end time for universal header.</li>
+<li><strong>recording_offset</strong> (<em>int</em>) – Offset for uUTC times.</li>
+<li><strong>record_list</strong> (<em>list</em>) – List of record dictionaries consisting of numpy arrays.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.write_mef_ts_data_and_indices">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">write_mef_ts_data_and_indices</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.write_mef_ts_data_and_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to write MEF3 time series data and indices file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to segment being written.</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>samples_per_mef_block</strong> (<em>int</em>) – Number of samples in one MEF RED block.</li>
+<li><strong>raw_data</strong> (<em>np.array</em>) – Numpy 1D array with raw data of dtype int32.</li>
+<li><strong>lossy_flag</strong> (<em>bool</em>) – Flag for optional lossy compression (default=False).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.write_mef_ts_metadata">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">write_mef_ts_metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.write_mef_ts_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to write MEF3 time series metadata file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to segment being written.</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>start_time</strong> (<em>int</em>) – uUTC recording start time - also used as recording time offset.</li>
+<li><strong>end_time</strong> (<em>int</em>) – uUTC recording end time.</li>
+<li><strong>section_2_arr</strong> (<em>np.array</em>) – Numpy array of time series metadata section 2 dtype.</li>
+<li><strong>section_3_arr</strong> (<em>np.array</em>) – Numpy array of metadata section 3 dtype.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.write_mef_v_indices">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">write_mef_v_indices</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.write_mef_v_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to write MEF3 video indices file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to segment being written.</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>start_time</strong> (<em>int</em>) – uUTC recording start time - minimum value of index entries.</li>
+<li><strong>end_time</strong> (<em>int</em>) – uUTC recording end time - maximum value of index entries.</li>
+<li><strong>index_entries</strong> (<em>list</em>) – List of numpy arrays with index entries.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pymef.mef_file.pymef3_file.write_mef_v_metadata">
+<code class="descclassname">pymef.mef_file.pymef3_file.</code><code class="descname">write_mef_v_metadata</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pymef.mef_file.pymef3_file.write_mef_v_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to write MEF3 video metadata file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>target_path</strong> (<em>str</em>) – Path to segment being written.</li>
+<li><strong>password_1</strong> (<em>str</em>) – Level 1 password.</li>
+<li><strong>password_2</strong> (<em>str</em>) – Level 2 password.</li>
+<li><strong>start_time</strong> (<em>int</em>) – uUTC recording start time - also used as recording time offset.</li>
+<li><strong>end_time</strong> (<em>int</em>) – uUTC recording end time.</li>
+<li><strong>section_2_arr</strong> (<em>np.array</em>) – Numpy array of video metadata section 2 dtype.</li>
+<li><strong>section_3_arr</strong> (<em>np.array</em>) – Numpy array of metadata section 3 dtype.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyMef</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PyMef API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-api">High level API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#low-level-api">Low level API</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="getting_started.html" title="previous chapter">Getting started</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Jan Cimbalnik.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
