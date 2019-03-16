@@ -1,22 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 5 14:21:39 2019
-
-Mef session object.
-
-Ing.,Mgr. (MSc.) Jan Cimbálník
-Biomedical engineering
-International Clinical Research Center
-St. Anne's University Hospital in Brno
-Czech Republic
-&
-Mayo systems electrophysiology lab
-Mayo Clinic
-200 1st St SW
-Rochester, MN
-United States
-"""
+# -----------------------------------------------------------------------------
+# Copyright (c) Jan Cimbalnik, Matt Stead, Ben Brinkmann, and Dan Crepeau.
+# All Rights Reserved.
+# Distributed under the (new) BSD License. See LICENSE.txt for more info.
+# -----------------------------------------------------------------------------
 
 # Standard library imports
 import os
@@ -1034,8 +1022,9 @@ class MefSession():
 
         Returns
         -------
-        data: np.array
-            Numpy array [channels,samples]
+        data: np.array(dtype=np.float32)
+            Numpy array of numpy array objects [channels,samples] or 1D numpy
+            array
         """
 
         data_list = []
@@ -1106,8 +1095,9 @@ class MefSession():
 
         Returns
         -------
-        data: np.array
-            Numpy array [channels,samples]
+        data: np.array(dtype=np.float32)
+            Numpy array of numpy array objects [channels,samples] or 1D numpy
+            array
         """
 
         data_list = []
