@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.com/msel-source/pymef.svg?branch=master)](https://travis-ci.com/msel-source/pymef)
+[![Documentation Status](https://readthedocs.org/projects/pymef/badge/?version=latest)](https://pymef.readthedocs.io/en/latest/?badge=latest)
 
 Pymef
 ====
