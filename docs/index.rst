@@ -1,8 +1,7 @@
 Welcome to PyMef's documentation!
 =================================
 
-Pymef is a wrapper library for Multiscale Electrophysiology Format developed by 
-[MSEL laboratory](http://msel.mayo.edu/).
+Pymef is a wrapper library for Multiscale Electrophysiology Format developed by `MSEL laboratory <http://msel.mayo.edu//>`_.
 
 Currently available for all major distributions (Linux, Mac OS, Windows). Only python 3 is supported.
 
