@@ -391,7 +391,7 @@ class TestStringMethods(unittest.TestCase):
     def test_record_reading(self):
 
         read_records = self.ms.read_records('ts_channel', 0)
-        rr = self.ms.read_records('ts_channel', 0)
+
         self.assertEqual(len(self.record_list), len(read_records))
 
         for rec_id in range(len(self.record_list)):
@@ -399,8 +399,7 @@ class TestStringMethods(unittest.TestCase):
             read_record = read_records[rec_id]
 
     #            print('Record type: ---'+write_record['type_string']+'---')
-            print('Write record', write_record['time'])
-            print('Read record',rr[rec_id]['time'])
+
             # Record header
             self.assertEqual(write_record['time'],
                              read_record['time'])
