@@ -312,9 +312,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     rec_data_fps->directives.io_bytes = file_offset;
 
     write_MEF_file(rec_data_fps);
-    free_file_processing_struct(rec_data_fps);
-
     write_MEF_file(rec_idx_fps);
+    free_file_processing_struct(rec_data_fps);
     free_file_processing_struct(rec_idx_fps);
     Py_INCREF(Py_None);
     return Py_None;
@@ -2831,7 +2830,7 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
 
     // Numpy array out
     npy_intp dims[] = {1};
-    npy_intp strides[] = {VIDEO_INDEX_BYTES};
+    npy_intp strides[] = {RECORD_HEADER_BYTES};
     PyObject    *py_array_out;
     PyArray_Descr    *descr;
 
@@ -4111,23 +4110,14 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     (void) initialize_meflib();
 
     // tak care of password entries
-    #if PY_MAJOR_VERSION >= 3
-        if (PyUnicode_Check(py_password_obj)){
-            temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
-            temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-            password = strcpy(password_arr,temp_str_bytes);
-        }else{
-            password = NULL;
-        }
-    #else
-        if (PyString_Check(py_password_obj)){
-            temp_str_bytes = PyString_AS_STRING(py_password_obj);
-
-            password = strcpy(password_arr,temp_str_bytes);
-        }else{
-            password = NULL;
-        }
-    #endif
+    if (PyUnicode_Check(py_password_obj)){
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        password = strcpy(password_arr,temp_str_bytes);
+    }else{
+        password = NULL;
+    }
+    
 
     // Allocate universal header
     uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
