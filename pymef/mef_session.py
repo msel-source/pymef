@@ -70,6 +70,11 @@ from .mef_constants import (
             GMT_OFFSET_NO_ENTRY
         )
 
+MEF_FILE_EXTENSIONS = ['mefd', 'segd',
+                       'rdat', 'ridx',
+                       'vidd', 'vmet', 'vidx',
+                       'timd', 'tmet', 'tdat', 'tidx']
+
 
 class MefSession():
     """
@@ -165,7 +170,8 @@ class MefSession():
         mef_files = []
         for path, subdirs, files in os.walk(self.path):
             for name in files:
-                mef_files.append(os.path.join(path, name))
+                if any([name.endswith(ext) for ext in MEF_FILE_EXTENSIONS]):
+                    mef_files.append(os.path.join(path, name))
 
         results = np.zeros(len(mef_files))
         for i, mef_file in enumerate(mef_files):
