@@ -90,10 +90,12 @@ class MefSession():
         whether to read metadata (default=True)
     new_session: bool
         whether this is a new session for writing (default=False)
+    check_all_passwords: bool
+        check all files or just the first one encoutered(default=True)
     """
 
     def __init__(self, session_path, password, read_metadata=True,
-                 new_session=False):
+                 new_session=False, check_all_passwords=True):
 
         if not session_path.endswith('/'):
             session_path += '/'
@@ -115,7 +117,7 @@ class MefSession():
         # Check if path exists
         if not os.path.exists(session_path):
             raise FileNotFoundError(session_path+' does not exist!')
-        self._check_password()
+        self._check_password(check_all_passwords)
 
         if read_metadata:
             self.session_md = read_mef_session_metadata(session_path,
@@ -151,16 +153,15 @@ class MefSession():
             return md['latest_end_time'][0] - md['earliest_start_time'][0]
 
     # ----- Helper functions -----
-    def _check_password(self):
+    def _check_password(self, check_all=True):
         """
         Checks provided password on all files in the session.
 
         Parameters
         ----------
-        mefpath: str
-            path to mef3 direcory
-        password: str
-            mef3 data password
+        check_all: bool
+            whether to check all files or just the first one encoutered,
+            checking just one file significantly improves speed.
 
         Returns
         -------
@@ -176,6 +177,8 @@ class MefSession():
         results = np.zeros(len(mef_files))
         for i, mef_file in enumerate(mef_files):
             results[i] = check_mef_password(mef_file, self.password)
+            if not check_all:
+                break
 
         if np.any(results < 0):
             raise RuntimeError('MEF password is invalid')
