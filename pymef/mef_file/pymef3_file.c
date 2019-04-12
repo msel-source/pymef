@@ -1030,7 +1030,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     si1     path_in[MEF_FULL_FILE_NAME_BYTES], path_out[MEF_FULL_FILE_NAME_BYTES], name[MEF_BASE_FILE_NAME_BYTES], type[TYPE_BYTES];
     si1     full_file_name[MEF_FULL_FILE_NAME_BYTES], file_path[MEF_FULL_FILE_NAME_BYTES], segment_name[MEF_BASE_FILE_NAME_BYTES];
     si4     max_samp, min_samp;
-    si8     start_sample, samps_remaining, block_samps, file_offset;
+    si8     start_sample, samps_remaining, block_samps, file_offset, ts_indices_file_bytes;
     sf8     curr_time, time_inc;
 
     // Optional arguments
@@ -1136,14 +1136,23 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     if (samps_per_mef_block > tmd2->maximum_block_samples)
         tmd2->maximum_block_samples = (ui4) samps_per_mef_block;
 
+    // Read only UH of indices and data files
+    gen_directives->io_bytes = UNIVERSAL_HEADER_BYTES;
+
     // Read in the indices file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
-    ts_idx_fps = read_MEF_file(NULL, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
+    ts_indices_file_bytes = (tmd2->number_of_blocks * TIME_SERIES_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
+    ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, gen_directives, NULL, 0);
+    ts_idx_fps = read_MEF_file(ts_idx_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
 
     // Read in the time series data file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
-    ts_data_fps = read_MEF_file(NULL, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
+    ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, gen_directives, NULL, 0);
+    ts_data_fps = read_MEF_file(ts_data_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
     
+    // Switch the directives back for wirting
+    gen_directives->io_bytes = FPS_FULL_FILE;
+
     // TODO optional filtration
     // use allocation below if lossy
     if (lossy_flag == 1){
@@ -1161,7 +1170,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     //rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
 
     rps->block_header = (RED_BLOCK_HEADER *) (rps->compressed_data = ts_data_fps->RED_blocks);
-
     // TODO - take care of discontinuity flags here!!!
     // create new RED blocks
     curr_time = (sf8) recording_start_uutc_time;
@@ -1176,14 +1184,12 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     min_samp = RED_POSITIVE_INFINITY;
     max_samp = RED_NEGATIVE_INFINITY;
     block_samps = samps_per_mef_block; 
-
     //Move file_offset to the end of RED blocks
-    file_offset = ts_data_fps->raw_data_bytes;
+    file_offset = ts_data_fps->file_length;
 
     // fseek to the end of data and indices file
     e_fseek(ts_data_fps->fp, 0, SEEK_END, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fseek(ts_idx_fps->fp, 0, SEEK_END, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
-
     // allocate time_series_index
     tsi = e_calloc(1, TIME_SERIES_INDEX_BYTES, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
 
@@ -1196,7 +1202,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         block_header->number_of_samples = (ui4) block_samps;
         block_header->start_time = (si8) (curr_time + 0.5);
         curr_time += time_inc;
-
         rps->original_data = rps->original_ptr = (si4 *) PyArray_DATA(raw_data) + ((si8) PyArray_SHAPE(raw_data)[0] - samps_remaining);
 
         // filter - comment out if don't want
@@ -1222,7 +1227,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         if (min_samp > tsi->minimum_sample_value)
             min_samp = tsi->minimum_sample_value;
         tsi->RED_block_flags = block_header->flags;
-
         // write the time index entry
         ts_idx_fps->universal_header->body_CRC = CRC_update((ui1 *) tsi, TIME_SERIES_INDEX_BYTES, ts_idx_fps->universal_header->body_CRC);
         e_fwrite((void *) tsi, TIME_SERIES_INDEX_BYTES, 1, ts_idx_fps->fp, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, EXIT_ON_FAIL);
@@ -1233,7 +1237,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         if (tmd2->maximum_difference_bytes < block_header->difference_bytes)
             tmd2->maximum_difference_bytes = block_header->difference_bytes;
     }
-
     // update metadata
     tmd2->maximum_contiguous_block_bytes = file_offset - UNIVERSAL_HEADER_BYTES;
     if (tmd2->units_conversion_factor >= 0.0) {
@@ -1243,7 +1246,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
     }
-
     // Update the header of data file
     uh = ts_data_fps->universal_header;
     uh->number_of_entries = tmd2->number_of_blocks;
@@ -1253,7 +1255,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
     e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
-    
     // Update the header of indices file
     uh = ts_idx_fps->universal_header;
     uh->number_of_entries = tmd2->number_of_blocks;
@@ -1263,14 +1264,11 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_idx_fps->universal_header->header_CRC = CRC_calculate(ts_idx_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
     e_fseek(ts_idx_fps->fp, 0, SEEK_SET, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_idx_fps->fp, ts_idx_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
-    
     // Update the metadta file
     write_MEF_file(metadata_fps);
-
     // Close the file pointers
     fclose(ts_data_fps->fp);
     fclose(ts_idx_fps->fp);
-
     // clean up
     free_file_processing_struct(metadata_fps);
     free_file_processing_struct(ts_data_fps);
@@ -1280,7 +1278,6 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     rps->compressed_data = NULL;
     rps->original_data = NULL;
     RED_free_processing_struct(rps);
-
     Py_INCREF(Py_None);
     return Py_None;
 }
