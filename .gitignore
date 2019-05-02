@@ -60,8 +60,10 @@ __pycache__
 # Cythonized files
 *.pyc
 
-# Extension debrie
+# Install debrie
 build/
+dist/
+*.egg-info
 
 # Spyder project files
 .spyproject/
@@ -78,5 +80,17 @@ test_session/
 # Meflib directory
 meflib/
 
-# My notes
+# My
 my_notes.txt
+extras/
+
+# mef client
+mef_client/
+
+# mef3.1
+mef3.1*
+
+# Sphinx dirs
+_build
+_static
+_templates
