@@ -542,7 +542,6 @@ class TestStringMethods(unittest.TestCase):
                          seg_md['section_2']['recording_duration'][0])
 
     def test_time_series_metadata_section_3(self):
-
         segments = self.smd['time_series_channels']['ts_channel']['segments']
         seg_md = segments['ts_channel-000000']
 
@@ -550,22 +549,21 @@ class TestStringMethods(unittest.TestCase):
             self.assertEqual(self.section3_dict[md3_key],
                              seg_md['section_3'][md3_key][0])
 
-    def test_video_metadata_section_2(self):
+    # def test_video_metadata_section_2(self):
+    #     segments = self.smd['video_channels']['vid_channel']['segments']
+    #     seg_md = segments['vid_channel-000000']
 
-        segments = self.smd['video_channels']['vid_channel']['segments']
-        seg_md = segments['vid_channel-000000']
+    #     for md2_key in self.section2_v_dict.keys():
+    #         self.assertEqual(self.section2_v_dict[md2_key],
+    #                          seg_md['section_2'][md2_key][0])
 
-        for md2_key in self.section2_v_dict.keys():
-            self.assertEqual(self.section2_v_dict[md2_key],
-                             seg_md['section_2'][md2_key][0])
+    # def test_video_metadata_section_3(self):
+    #     segments = self.smd['video_channels']['vid_channel']['segments']
+    #     seg_md = segments['vid_channel-000000']
 
-    def test_video_metadata_section_3(self):
-        segments = self.smd['video_channels']['vid_channel']['segments']
-        seg_md = segments['vid_channel-000000']
-
-        for md3_key in self.section3_dict.keys():
-            self.assertEqual(self.section3_dict[md3_key],
-                             seg_md['section_3'][md3_key][0])
+    #     for md3_key in self.section3_dict.keys():
+    #         self.assertEqual(self.section3_dict[md3_key],
+    #                          seg_md['section_3'][md3_key][0])
 
     def test_time_series_data(self):
 
