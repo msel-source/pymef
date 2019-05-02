@@ -361,7 +361,6 @@ class TestStringMethods(unittest.TestCase):
 #        print("Video indices written")
 
         # Read back session metadata (avoids reading metadata in each function)
-        print('Reading mef session')
         self.ms = MefSession(self.mef_session_path, self.pwd_2)
         self.smd = self.ms.session_md
 
