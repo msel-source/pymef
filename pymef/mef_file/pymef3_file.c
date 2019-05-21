@@ -1977,7 +1977,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
                 }
                 if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time)
                 {
-                    cdp += rps->block_header->block_bytes;
+                    // Comment this out for now, it creates a strange boundary condition
+                    // cdp += rps->block_header->block_bytes;
                     continue;
                 }
                 
