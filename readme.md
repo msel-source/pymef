@@ -9,6 +9,8 @@ Pymef is a wrapper library for Multiscale Electrophysiology Format developed by
 
 Currently available for all major distributions (Linux, Mac OS, Windows). Only python 3 is supported.
 
+For smooth usage plese see [documentation](https://pymef.readthedocs.io)
+
 Mef v 3.0 basic features
 ------------------------
 
