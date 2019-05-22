@@ -14,6 +14,10 @@ All operations are handled through :class:`pymef.mef_session.MefSession` class. 
     session_path = '/path/to/session.mefd'
     password = 'mef_password'
 	
+    # Either for reading
+    ms = MefSession(session_path, password)
+
+    # Or for writing
     ms = MefSession(session_path, password, False, True)
 	
 Writing time series data

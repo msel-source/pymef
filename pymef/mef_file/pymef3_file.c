@@ -1496,6 +1496,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     
     si4 offset_into_output_buffer;
     si8 block_start_time_offset;
+    
+    si1 py_warning_message[256];
+    si4 crc_block_failure, blocks_decoded;
+    si1 last_block_decoded_flag;
 
     npy_intp dims[1];
     
@@ -1796,11 +1800,8 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         #endif
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
         if (n_read != total_data_bytes){
-            PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
-            PyErr_Occurred();
-            free (compressed_data_buffer);
-            free (decomp_data);
-            return NULL;
+            sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", start_segment);
+            PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
     }
     // spans across segments
@@ -1816,13 +1817,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
         if (n_read != bytes_to_read){
-            PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
-            PyErr_Occurred();
-            free (compressed_data_buffer);
-            free (decomp_data);
-            return NULL;
+            sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", start_segment);
+            PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
-        cdp += bytes_to_read;
+        cdp += n_read;
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
@@ -1832,13 +1830,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
             if (n_read != bytes_to_read){
-                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
-                PyErr_Occurred();
-                free (compressed_data_buffer);
-                free (decomp_data);
-                return NULL;
+                sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", i);
+                PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
-            cdp += bytes_to_read;
+            cdp += n_read;
         }
         
         // then last segment
@@ -1850,14 +1845,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
             if (n_read != bytes_to_read){
-                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
-                PyErr_Occurred();
-
-                free (compressed_data_buffer);
-                free (decomp_data);
-                return NULL;
+                sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", end_segment);
+                PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
-            cdp += bytes_to_read;
+            cdp += n_read;
         }
         else {
             // case where end_idx is last block in segment
@@ -1867,13 +1858,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
             if (n_read != bytes_to_read){
-                PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
-                PyErr_Occurred();
-                free (compressed_data_buffer);
-                free (decomp_data);
-                return NULL;
+                sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", end_segment);
+                PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
-            cdp += bytes_to_read;
+            cdp += n_read;
         }
 
         // // then last segment
@@ -1904,51 +1892,56 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     
     cdp = compressed_data_buffer;
     
-    // TBD use real max block length
-    temp_data_buf = (int *) malloc(33000 * 4);
+    crc_block_failure = 0;
+    blocks_decoded = 0;
+    
+	// decode the first block
+    temp_data_buf = (int *) malloc((max_samps * 1.1) * sizeof(si4));
     rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
     rps->compressed_data = cdp;
     rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
     if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
     {
-        PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx);
-        PyErr_Occurred();
-        free (compressed_data_buffer);
-        free (decomp_data);
-        free (temp_data_buf);
-        return NULL;
+        crc_block_failure++;
+        last_block_decoded_flag = 0;
+        cdp += rps->block_header->block_bytes;
     }
-    RED_decode(rps);
-    cdp += rps->block_header->block_bytes;
-    
-
-    if (times_specified)
-        offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
     else
-        offset_into_output_buffer = (si4) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
-
-    // copy requested samples from first block to output buffer
-    // TBD this loop could be optimized
-    for (i=0;i<rps->block_header->number_of_samples;i++)
     {
-        if (offset_into_output_buffer < 0)
+        RED_decode(rps);
+        cdp += rps->block_header->block_bytes;
+        blocks_decoded++;
+        last_block_decoded_flag = 1;
+        
+        if (times_specified)
+            offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        else
+            offset_into_output_buffer = (si4) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
+        
+        // copy requested samples from first block to output buffer
+        // TBD this loop could be optimized
+        for (i=0;i<rps->block_header->number_of_samples;i++)
         {
+            if (offset_into_output_buffer < 0)
+            {
+                offset_into_output_buffer++;
+                continue;
+            }
+            
+            if ((ui4) offset_into_output_buffer >= num_samps)
+                break;
+            
+            *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
+            
             offset_into_output_buffer++;
-            continue;
         }
-        
-        if ((ui4) offset_into_output_buffer >= num_samps)
-            break;
-        
-        *(decomp_data + offset_into_output_buffer) = temp_data_buf[i];
-        
-        offset_into_output_buffer++;
+		sample_counter = offset_into_output_buffer;
     }
 
-
-    // decode bytes to samples
-    sample_counter = offset_into_output_buffer;
-    for (i=1;i<num_blocks-1;i++) {
+    
+    // decode blocks in between the first and the last
+    for (i=1;i<num_blocks-1;i++)
+    {
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         // check that block fits fully within output array
@@ -1957,53 +1950,74 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         // we need to manually remove offset, since we are using the time value of the block bevore decoding the block
         // (normally the offset is removed during the decoding process)
 
-        if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)){
-            PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx+i);
-            PyErr_Occurred();
-            free (compressed_data_buffer);
-            free (decomp_data);
-            free (temp_data_buf);
-            return NULL;
-        }
-
-        if (times_specified){
-
-            block_start_time_offset = rps->block_header->start_time;
-            remove_recording_time_offset( &block_start_time_offset );
+        if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
+        {
+            crc_block_failure++;
             
-            if (block_start_time_offset < start_time)
-                continue;
-            if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time)
-                continue;
-            rps->decompressed_ptr = rps->decompressed_data = decomp_data + (int)((((block_start_time_offset - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
-        
-        }else{
-            rps->decompressed_ptr = rps->decompressed_data = decomp_data + sample_counter;
+            // two-in-a-row bad block CRCs - this is probably an unrecoverable situation, so just stop decoding.
+            if (last_block_decoded_flag == 0)
+                goto done_decoding;
+            
+            // set a flag, and keep trying successive blocks.
+            last_block_decoded_flag = 0;
         }
-
-        RED_decode(rps);
+        else
+        {
+            if (times_specified)
+            {
+                block_start_time_offset = rps->block_header->start_time;
+                remove_recording_time_offset( &block_start_time_offset );
+                
+                // The next two checks see if the block contains out-of-bounds samples.
+                // In that case, skip the block and move on
+                if (block_start_time_offset < start_time)
+                {
+                    cdp += rps->block_header->block_bytes;
+                    continue;
+                }
+                if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time)
+                {
+                    // Comment this out for now, it creates a strange boundary condition
+                    // cdp += rps->block_header->block_bytes;
+                    continue;
+                }
+                
+                rps->decompressed_ptr = rps->decompressed_data = decomp_data + (int)((((block_start_time_offset - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+            }
+            else
+            {
+                // prevent buffer overflow
+                if ((sample_counter + rps->block_header->number_of_samples) >= num_samps)
+                    goto done_decoding;
+                
+                rps->decompressed_ptr = rps->decompressed_data = decomp_data + sample_counter;
+            }
+            
+            RED_decode(rps);
+            sample_counter += rps->block_header->number_of_samples;
+            blocks_decoded++;
+            last_block_decoded_flag = 1;
+        }
+		
         cdp += rps->block_header->block_bytes;
-        sample_counter += rps->block_header->number_of_samples;
     }
     
+	// decode last block to temp array
     if (num_blocks > 1)
     {
-        // decode last block to temp array
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
         if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
         {
-            PyErr_Format(PyExc_RuntimeError, "RED block %d has 0 bytes, or CRC failed, data likely corrupt...", start_idx+i);
-            PyErr_Occurred();
-            free (compressed_data_buffer);
-            free (decomp_data);
-            free (temp_data_buf);
-            return NULL;
+            crc_block_failure++;
+            
+            goto done_decoding;
         }
-        RED_decode(rps);
         
-        offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        RED_decode(rps);
+        blocks_decoded++;
+        last_block_decoded_flag = 1;
         
         if (times_specified)
             offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
@@ -2011,7 +2025,6 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             offset_into_output_buffer = sample_counter;
         
         // copy requested samples from last block to output buffer
-        // TBD this loop could be optimized
         for (i=0;i<rps->block_header->number_of_samples;i++)
         {
             if (offset_into_output_buffer < 0)
@@ -2029,10 +2042,20 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         }
     }
     
+done_decoding:
+    
+    if (crc_block_failure > 0)
+    {
+        if (start_segment != end_segment)
+            sprintf(py_warning_message, "CRC data block failure detected, %ld blocks skipped, in segments %d through %d.", num_blocks - blocks_decoded, start_segment, end_segment);
+        else
+            sprintf(py_warning_message, "CRC data block failure detected, %ld blocks skipped, in segment %d.", num_blocks - blocks_decoded, start_segment);
+        
+        PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
+    }
+    
     // Numpy double type specific - no need to do this if we use numpy integer array and
     // put the data directly into it
-    // DAN_CONSULT - is this efficient enough? I am basically reading the data into si4 array and copying it here
-    // it i the NaN causing trouble. Let me know if you can think of anything to make it mor efficient.
 
     // copy requested samples from last block to output buffer
     for (i=0;i<num_samps;i++){
