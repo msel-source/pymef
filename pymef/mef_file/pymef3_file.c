@@ -1987,7 +1987,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             else
             {
                 // prevent buffer overflow
-                if ((sample_counter + rps->block_header->number_of_samples) >= num_samps)
+                if ((sample_counter + rps->block_header->number_of_samples) > num_samps)
                     goto done_decoding;
                 
                 rps->decompressed_ptr = rps->decompressed_data = decomp_data + sample_counter;
