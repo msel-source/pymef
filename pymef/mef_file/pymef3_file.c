@@ -3987,6 +3987,10 @@ si4 check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 
     // check if size specified in header is absurdly large
     if (block_header->block_bytes > RED_MAX_COMPRESSED_BYTES(max_samps, 1))
         return 0;
+	
+    // check if size specified in header is too small to be valid
+    if (block_header->block_bytes < RED_BLOCK_HEADER_BYTES)
+        return 0;
     
     // at this point we know we have enough data to actually run the CRC calculation, so do it
     CRC_valid = CRC_validate((ui1*) block_header + CRC_BYTES, block_header->block_bytes - CRC_BYTES, block_header->block_CRC);
