@@ -78,7 +78,13 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    /// initialize MEF library
+    // Check if the list is empty
+    if (PyList_Size(py_record_list) == 0){
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+
+    // initialize MEF library
     (void) initialize_meflib();  
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_time_offset;
