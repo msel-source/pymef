@@ -530,12 +530,13 @@ class MefSession():
         if os.path.exists(tdat_path):
             raise RuntimeError('Data file '+tdat_path+' already exists!')
 
+        # lossy compression flag - not used
         write_mef_ts_data_and_indices(segment_path,
                                       password_1,
                                       password_2,
                                       samps_per_mef_block,
                                       data,
-                                      0)  # lossy compression flag - not used
+                                      0)
 
     def append_mef_ts_segment_data(self, channel, segment_n,
                                    password_1, password_2,
@@ -573,6 +574,7 @@ class MefSession():
         if not os.path.exists(tdat_path):
             raise RuntimeError('Data file does not exist!')
 
+        # lossy compression flag - not used
         append_ts_data_and_indices(segment_path,
                                    password_1,
                                    password_2,
@@ -580,7 +582,7 @@ class MefSession():
                                    end_time,
                                    samps_per_mef_block,
                                    data,
-                                   0)  # lossy compression flag - not used
+                                   0)
 
     def write_mef_v_segment_metadata(self, channel, segment_n,
                                      password_1, password_2,

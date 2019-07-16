@@ -609,6 +609,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
     si4    lossy_flag;
+    si4    array_type;
     
     PyObject *temp_UTF_str;
     si8    samps_per_mef_block;
@@ -647,6 +648,13 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
                           &raw_data,
                           &lossy_flag)){
         return NULL;
+    }
+
+    // check raw_data data type, convert if necessary
+    array_type = PyArray_TYPE(raw_data);
+    if (array_type != NPY_INT32){
+        PyErr_WarnEx(PyExc_RuntimeWarning, "Incorrect data type. The data will be convertent to int32. Data loss possible!!!", 1);
+        raw_data = (PyArrayObject *) PyArray_Cast(raw_data, NPY_INT32);
     }
 
     // initialize MEF library
