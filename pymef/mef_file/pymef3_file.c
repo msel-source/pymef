@@ -1806,7 +1806,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // read in RED data
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL){
+            channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
+            channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
+        }
         fp = channel->segments[start_segment].time_series_data_fps->fp;
+        
         #ifdef _WIN32
             _fseeki64(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         #else
@@ -1817,10 +1822,16 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", start_segment);
             PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
+        if (channel->segments[start_segment].time_series_data_fps->directives.close_file == MEF_TRUE)
+            fps_close(channel->segments[start_segment].time_series_data_fps);
     }
     // spans across segments
     else {
         // start with first segment
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL){
+            channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
+            channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
+        }
         fp = channel->segments[start_segment].time_series_data_fps->fp;
         #ifdef _WIN32
              _fseeki64(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
@@ -1835,9 +1846,15 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
         cdp += n_read;
+        if (channel->segments[start_segment].time_series_data_fps->directives.close_file == MEF_TRUE)
+            fps_close(channel->segments[start_segment].time_series_data_fps);
         
         // this loop will only run if there are segments in between the start and stop segments
         for (i = (start_segment + 1); i <= (end_segment - 1); i++) {
+            if (channel->segments[i].time_series_data_fps->fp == NULL){
+                channel->segments[i].time_series_data_fps->fp = fopen(channel->segments[i].time_series_data_fps->full_file_name, "rb");
+                channel->segments[i].time_series_data_fps->fd = fileno(channel->segments[i].time_series_data_fps->fp);
+            }
             fp = channel->segments[i].time_series_data_fps->fp;
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
             bytes_to_read = channel->segments[i].time_series_data_fps->file_length - 
@@ -1848,9 +1865,15 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
                 PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
             cdp += n_read;
+            if (channel->segments[i].time_series_data_fps->directives.close_file == MEF_TRUE)
+                fps_close(channel->segments[i].time_series_data_fps);
         }
         
         // then last segment
+        if (channel->segments[end_segment].time_series_data_fps->fp == NULL){
+            channel->segments[end_segment].time_series_data_fps->fp = fopen(channel->segments[end_segment].time_series_data_fps->full_file_name, "rb");
+            channel->segments[end_segment].time_series_data_fps->fd = fileno(channel->segments[end_segment].time_series_data_fps->fp);
+        }
         num_block_in_segment = channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
         if (end_idx < (ui8) (channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks - 1)) {
             fp = channel->segments[end_segment].time_series_data_fps->fp;
@@ -1877,6 +1900,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             }
             cdp += n_read;
         }
+
+        if (channel->segments[end_segment].time_series_data_fps->directives.close_file == MEF_TRUE)
+            fps_close(channel->segments[end_segment].time_series_data_fps);
 
         // // then last segment
         // fp = channel->segments[end_segment].time_series_data_fps->fp;
