@@ -49,6 +49,7 @@ matrix:
     script: ".ci/build_windows_wheels.sh"
     after_success:
       - export PATH="/c/Python36:/c/Python36/Scripts:$PATH"
+      - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
       - python -m pip install twine --user
     
     
