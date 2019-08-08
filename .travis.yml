@@ -31,7 +31,7 @@ matrix:
       - pip install twine --user
       
   - os: osx
-    osx_image: xcode8
+    osx_image: xcode8.2
     language: generic
     sudo: required
     before_install: chmod +x .ci/build_macos_wheels.sh
