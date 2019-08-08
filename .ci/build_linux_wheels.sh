@@ -2,7 +2,7 @@
 
 set -e
 
-for PYVER in "cp36-cp36m"; do
+for PYVER in "cp36-cp36m" "cp37-cp37m"; do
   PYBIN="/opt/python/${PYVER}/bin"
   "${PYBIN}/pip" install numpy
   "${PYBIN}/pip" install -I wheel==0.30.0 #due to bug in wheel (https://github.com/pypa/wheel/issues/235)
