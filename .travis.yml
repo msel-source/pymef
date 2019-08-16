@@ -5,6 +5,7 @@ matrix:
     python:
       - '3.5'
       - '3.6'
+      - '3.7'
     sudo: required
     before_install: chmod +x .ci/build_linux_wheels.sh
     env:
@@ -30,7 +31,7 @@ matrix:
       - pip install twine --user
       
   - os: osx
-    osx_image: xcode8
+    osx_image: xcode8.2
     language: generic
     sudo: required
     before_install: chmod +x .ci/build_macos_wheels.sh
@@ -48,13 +49,14 @@ matrix:
     script: ".ci/build_windows_wheels.sh"
     after_success:
       - export PATH="/c/Python36:/c/Python36/Scripts:$PATH"
+      - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
       - python -m pip install twine --user
     
     
 deploy:
   provider: script 
   script:
-    - python -m twine upload -u cimba -p cimbal1Pip $DIST_FOLD/*
+    - python -m twine upload -u cimba -p $TWINE_PASSWORD $DIST_FOLD/*
   skip_cleanup: true
   on:
     tags: true
