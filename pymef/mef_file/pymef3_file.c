@@ -1605,7 +1605,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // Determine the number of samples
     num_samps = 0;
     if (times_specified)
-        num_samps = (ui4)(((end_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency);
+        num_samps = (ui4)((((end_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
     else
         num_samps = (ui4) (end_samp - start_samp);
         
