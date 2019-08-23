@@ -30,17 +30,6 @@ matrix:
     after_success:
       - pip install twine --user
       
-  - os: osx
-    osx_image: xcode8.2
-    language: generic
-    sudo: required
-    before_install: chmod +x .ci/build_macos_wheels.sh
-    env:
-      - DIST_FOLD=dist
-    script: ".ci/build_macos_wheels.sh"
-    after_success:
-      - pip install twine --user
-      
   - os: windows
     language: sh
     before_install: chmod +x .ci/build_windows_wheels.sh
