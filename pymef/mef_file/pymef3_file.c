@@ -3668,6 +3668,7 @@ static PyObject *create_tmd2_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
+                         (s, s, i),\
                          (s, s, i)]",
                        // type-independent fields
                        "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
