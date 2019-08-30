@@ -94,7 +94,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -103,7 +107,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -368,7 +376,11 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -377,7 +389,11 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -506,7 +522,11 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -515,7 +535,11 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -665,7 +689,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -674,7 +702,11 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -921,7 +953,11 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -930,7 +966,11 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -1073,7 +1113,11 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_1_password = NULL;
+        }else{
+            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
+        }
     }else{
         level_1_password = NULL;
     }
@@ -1082,7 +1126,11 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+        if (!*temp_str_bytes){
+            level_2_password = NULL;
+        }else{
+            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
+        }
     }else{
         level_2_password = NULL;
     }
@@ -1354,8 +1402,11 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-
-        password = strcpy(password_arr,temp_str_bytes);
+        if (!*temp_str_bytes){
+            password = NULL;
+        }else{
+            password = strcpy(password_arr,temp_str_bytes);
+        }
     }else{
         password = NULL;
     }
@@ -1406,8 +1457,11 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-
-        password = strcpy(password_arr,temp_str_bytes);
+        if (!*temp_str_bytes){
+            password = NULL;
+        }else{
+            password = strcpy(password_arr,temp_str_bytes);
+        }
     }else{
         password = NULL;
     }
@@ -1457,8 +1511,11 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-
-        password = strcpy(password_arr,temp_str_bytes);
+        if (!*temp_str_bytes){
+            password = NULL;
+        }else{
+            password = strcpy(password_arr,temp_str_bytes);
+        }
     }else{
         password = NULL;
     }
@@ -3668,6 +3725,7 @@ static PyObject *create_tmd2_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
+                         (s, s, i),\
                          (s, s, i)]",
                        // type-independent fields
                        "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
@@ -4177,7 +4235,11 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     if (PyUnicode_Check(py_password_obj)){
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        password = strcpy(password_arr,temp_str_bytes);
+        if (!*temp_str_bytes){
+            password = NULL;
+        }else{
+            password = strcpy(password_arr,temp_str_bytes);
+        }
     }else{
         password = NULL;
     }
@@ -4195,6 +4257,27 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
         PyErr_Occurred();
         free(uh);
         return NULL;
+    }
+
+    // If password is NULL check if the file is not encrypted
+    if (password == NULL){
+        level_1_cumsum = 0;
+        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+            level_1_cumsum += uh->level_1_password_validation_field[i];
+        }
+        level_2_cumsum = 0;
+        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+            level_2_cumsum += uh->level_1_password_validation_field[i];
+        }
+
+        // Clean up
+        free(uh);
+        
+        if (level_1_cumsum | level_2_cumsum){
+            return PyLong_FromLong(-1); // Wrong password
+        }else{
+            return PyLong_FromLong(0); // Data not encrypted
+        } 
     }
 
     // Check the password - extracted from process_pasword_data
