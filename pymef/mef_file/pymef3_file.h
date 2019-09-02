@@ -131,7 +131,7 @@ static char read_mef_ts_data_docstring[] =
      Parameters\n\
      ----------\n\
      channel_specific_metadata: np.ndarray\n\
-        Channel metadata
+        Channel metadata\n\
      start: int\n\
         Start sample or uUTC time to be read.\n\
      end: int\n\
