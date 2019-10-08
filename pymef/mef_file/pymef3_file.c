@@ -3229,21 +3229,21 @@ static PyObject *create_rh_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i)]",
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s)]",
 
-                       "record_CRC", "u4", 1,
+                       "record_CRC", "u4",
                        "type_string", "S", TYPE_BYTES,
-                       "version_major", "u1", 1,
-                       "version_minor", "u1", 1,
-                       "encryption", "i1", 1,
-                       "bytes", "u4", 1,
-                       "time", "i8", 1);
+                       "version_major", "u1",
+                       "version_minor", "u1",
+                       "encryption", "i1",
+                       "bytes", "u4",
+                       "time", "i8");
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
@@ -3261,18 +3261,18 @@ static PyObject *create_ri_dtype()
     // Build dictionary
 
     op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i)]",
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s)]",
 
                        "type_string", "S", TYPE_BYTES,
-                       "version_major", "u1", 1,
-                       "version_minor", "u1", 1,
-                       "encryption", "i1", 1,
-                       "file_offset", "i8", 1,
-                       "time", "i8", 1);
+                       "version_major", "u1",
+                       "version_minor", "u1",
+                       "encryption", "i1",
+                       "file_offset", "i8",
+                       "time", "i8");
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
@@ -3298,10 +3298,10 @@ static PyObject *create_edfa_dtype(PyObject *self, PyObject *args)
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
-                       "duration", "i8", 1,
+                       "duration", "i8",
                        "text", "S", text_len);
 
     PyArray_DescrConverter(op, &descr);
@@ -3321,10 +3321,10 @@ static PyObject *create_edfa_dtype_c(ui4 text_len)
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
-                       "duration", "i8", 1,
+                       "duration", "i8",
                        "text", "S", text_len);
 
     PyArray_DescrConverter(op, &descr);
@@ -3351,10 +3351,10 @@ static PyObject *create_lntp_dtype(PyObject *self, PyObject *args)
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
-                       "length", "i8", 1,
+                       "length", "i8",
                        "template", "i8", template_len);
 
     PyArray_DescrConverter(op, &descr);
@@ -3374,10 +3374,10 @@ static PyObject *create_lntp_dtype_c(ui4 template_len)
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
-                       "length", "i8", 1,
+                       "length", "i8",
                        "template", "i8", template_len);
 
     PyArray_DescrConverter(op, &descr);
@@ -3443,20 +3443,20 @@ static PyObject *create_seiz_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i)]",
 
-                       "earliest_onset", "i8", 1,
-                       "latest_offset", "i8", 1,
-                       "duration", "i8", 1,
-                       "number_of_channels", "i4", 1,
-                       "onset_code", "i4", 1,
+                       "earliest_onset", "i8",
+                       "latest_offset", "i8",
+                       "duration", "i8",
+                       "number_of_channels", "i4",
+                       "onset_code", "i4",
                        "marker_name_1", "S", MEFREC_Seiz_1_0_MARKER_NAME_BYTES,
                        "marker_name_2", "S", MEFREC_Seiz_1_0_MARKER_NAME_BYTES,
                        "annotation", "S", MEFREC_Seiz_1_0_ANNOTATION_BYTES);
@@ -3479,12 +3479,12 @@ static PyObject *create_seiz_ch_dtype()
     // Build dictionary
 
     op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i)]",
+                         (s, s),\
+                         (s, s)]",
 
                        "name", "S", MEF_BASE_FILE_NAME_BYTES,
-                       "onset", "i8", 1,
-                       "offset", "i8", 1);
+                       "onset", "i8",
+                       "offset", "i8");
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
@@ -3551,12 +3551,12 @@ static PyObject *create_csti_dtype()
     // Build dictionary
 
     op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
 
                         "task_type", "S", MEFREC_CSti_1_0_TASK_TYPE_BYTES,
-                        "stimulus_duration", "i8", 1,
+                        "stimulus_duration", "i8",
                         "stimulus_type", "S", MEFREC_CSti_1_0_STIMULUS_TYPE_BYTES,
                         "patient_response", "S", MEFREC_CSti_1_0_PATIENT_RESPONSE_BYTES);
 
@@ -3576,20 +3576,20 @@ static PyObject *create_esti_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i)]",
 
-                        "amplitude", "f8", 1,
-                        "frequency", "f8", 1,
-                        "pulse_width", "i8", 1,
-                        "ampunit_code", "i4", 1,
-                        "mode_code", "i4", 1,
+                        "amplitude", "f8",
+                        "frequency", "f8",
+                        "pulse_width", "i8",
+                        "ampunit_code", "i4",
+                        "mode_code", "i4",
                         "waveform", "S", MEFREC_ESti_1_0_WAVEFORM_BYTES,
                         "anode", "S", MEFREC_ESti_1_0_ANODE_BYTES,
                         "catode", "S", MEFREC_ESti_1_0_CATODE_BYTES);
@@ -3611,17 +3611,17 @@ static PyObject *create_uh_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
@@ -3633,18 +3633,18 @@ static PyObject *create_uh_dtype()
                          (s, s, i),\
                          (s, s, i)]",
 
-                       "header_CRC", "u4", 1,
-                       "body_CRC", "u4", 1,
+                       "header_CRC", "u4",
+                       "body_CRC", "u4",
                        "file_type_string", "S", TYPE_BYTES,
-                       "mef_version_major", "u1", 1,
-                       "mef_version_minor", "u1", 1,
-                       "byte_order_code", "u1", 1,
+                       "mef_version_major", "u1",
+                       "mef_version_minor", "u1",
+                       "byte_order_code", "u1",
 
-                       "start_time", "i8", 1,
-                       "end_time", "i8", 1,
-                       "number_of_entries", "i8", 1,
-                       "maximum_entry_size", "i8", 1,
-                       "segment_number", "i4", 1,
+                       "start_time", "i8",
+                       "end_time", "i8",
+                       "number_of_entries", "i8",
+                       "maximum_entry_size", "i8",
+                       "segment_number", "i4",
 
                        "channel_name", "S", MEF_BASE_FILE_NAME_BYTES,
                        "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
@@ -3674,13 +3674,13 @@ static PyObject *create_md1_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
 
-                       "section_2_encryption", "i1", 1,
-                       "section_3_encryption", "i1", 1,
+                       "section_2_encryption", "i1",
+                       "section_3_encryption", "i1",
                        "protected_region", "V", METADATA_SECTION_1_PROTECTED_REGION_BYTES,
                        "discretionary_region", "V", METADATA_SECTION_1_DISCRETIONARY_REGION_BYTES);
 
@@ -3702,58 +3702,58 @@ static PyObject *create_tmd2_dtype()
 
     op = Py_BuildValue("[(s, s, i),\
                          (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
                        // type-independent fields
                        "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
                        "session_description", "S", METADATA_SESSION_DESCRIPTION_BYTES,
-                       "recording_duration", "i8", 1,
+                       "recording_duration", "i8",
                        // type-specific fields
                        "reference_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
-                       "acquisition_channel_number", "i8", 1,
-                       "sampling_frequency", "f8", 1,
-                       "low_frequency_filter_setting", "f8", 1,
-                       "high_frequency_filter_setting", "f8", 1,
-                       "notch_filter_frequency_setting", "f8", 1,
-                       "AC_line_frequency", "f8", 1,
-                       "units_conversion_factor", "f8", 1,
+                       "acquisition_channel_number", "i8",
+                       "sampling_frequency", "f8",
+                       "low_frequency_filter_setting", "f8",
+                       "high_frequency_filter_setting", "f8",
+                       "notch_filter_frequency_setting", "f8",
+                       "AC_line_frequency", "f8",
+                       "units_conversion_factor", "f8",
                        "units_description", "S", TIME_SERIES_METADATA_UNITS_DESCRIPTION_BYTES,
-                       "maximum_native_sample_value", "f8", 1,
-                       "minimum_native_sample_value", "f8", 1,
-                       "start_sample", "i8", 1,
-                       "number_of_samples", "i8", 1,
-                       "number_of_blocks", "i8", 1,
-                       "maximum_block_bytes", "i8", 1,
-                       "maximum_block_samples", "u4", 1,
-                       "maximum_difference_bytes", "u4", 1,
-                       "block_interval", "i8", 1,
-                       "number_of_discontinuities", "i8", 1,
-                       "maximum_contiguous_blocks", "i8", 1,
-                       "maximum_contiguous_block_bytes", "i8", 1,
-                       "maximum_contiguous_samples", "i8", 1,
+                       "maximum_native_sample_value", "f8",
+                       "minimum_native_sample_value", "f8",
+                       "start_sample", "i8",
+                       "number_of_samples", "i8",
+                       "number_of_blocks", "i8",
+                       "maximum_block_bytes", "i8",
+                       "maximum_block_samples", "u4",
+                       "maximum_difference_bytes", "u4",
+                       "block_interval", "i8",
+                       "number_of_discontinuities", "i8",
+                       "maximum_contiguous_blocks", "i8",
+                       "maximum_contiguous_block_bytes", "i8",
+                       "maximum_contiguous_samples", "i8",
                        "protected_region", "V", TIME_SERIES_METADATA_SECTION_2_PROTECTED_REGION_BYTES,
                        "discretionary_region", "V", TIME_SERIES_METADATA_SECTION_2_DISCRETIONARY_REGION_BYTES);
 
@@ -3775,28 +3775,28 @@ static PyObject *create_vmd2_dtype()
 
     op = Py_BuildValue("[(s, s, i),\
                          (s, s, i),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
                        // type-independent fields
                        "channel_description", "S", METADATA_CHANNEL_DESCRIPTION_BYTES,
                        "session_description", "S", METADATA_SESSION_DESCRIPTION_BYTES,
-                       "recording_duration", "i8", 1,
+                       "recording_duration", "i8",
                        // type-specific fields
-                       "horizontal_resolution", "i8", 1,
-                       "vertical_resolution", "i8", 1,
-                       "frame_rate", "f8", 1,
-                       "number_of_clips", "i8", 1,
-                       "maximum_clip_bytes", "i8", 1,
+                       "horizontal_resolution", "i8",
+                       "vertical_resolution", "i8",
+                       "frame_rate", "f8",
+                       "number_of_clips", "i8",
+                       "maximum_clip_bytes", "i8",
                        "video_format", "S", VIDEO_METADATA_VIDEO_FORMAT_BYTES,
-                       "video_file_CRC", "u4", 1,
+                       "video_file_CRC", "u4",
                        "protected_region", "V", VIDEO_METADATA_SECTION_2_PROTECTED_REGION_BYTES,
                        "discretionary_region", "V", VIDEO_METADATA_SECTION_2_DISCRETIONARY_REGION_BYTES);
 
@@ -3816,10 +3816,10 @@ static PyObject *create_md3_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
@@ -3827,10 +3827,10 @@ static PyObject *create_md3_dtype()
                          (s, s, i),\
                          (s, s, i)]",
 
-                       "recording_time_offset", "i8", 1,
-                       "DST_start_time", "i8", 1,
-                       "DST_end_time", "i8", 1,
-                       "GMT_offset", "i4", 1,
+                       "recording_time_offset", "i8",
+                       "DST_start_time", "i8",
+                       "DST_end_time", "i8",
+                       "GMT_offset", "i4",
                        "subject_name_1", "S", METADATA_SUBJECT_NAME_BYTES,
                        "subject_name_2", "S", METADATA_SUBJECT_NAME_BYTES,
                        "subject_ID", "S", METADATA_SUBJECT_ID_BYTES,
@@ -3854,27 +3854,27 @@ static PyObject *create_ti_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
-                       "file_offset", "i8", 1,
-                       "start_time", "i8", 1,
-                       "start_sample", "i8", 1,
-                       "number_of_samples", "u4", 1,
-                       "block_bytes", "u4", 1,
-                       "maximum_sample_value", "i4", 1,
-                       "minimum_sample_value", "i4", 1,
+                       "file_offset", "i8",
+                       "start_time", "i8",
+                       "start_sample", "i8",
+                       "number_of_samples", "u4",
+                       "block_bytes", "u4",
+                       "maximum_sample_value", "i4",
+                       "minimum_sample_value", "i4",
 
                        "protected_region", "V", TIME_SERIES_INDEX_PROTECTED_REGION_BYTES,
-                       "RED_block_flags", "V", 1,
+                       "RED_block_flags", "V",
                        "RED_block_protected_region", "V", RED_BLOCK_PROTECTED_REGION_BYTES,
                        "RED_block_discretionary_region", "V", RED_BLOCK_DISCRETIONARY_REGION_BYTES);
 
@@ -3894,20 +3894,20 @@ static PyObject *create_vi_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i)]",
-                       "start_time", "i8", 1,
-                       "end_time", "i8", 1,
-                       "start_frame", "u4", 1,
-                       "end_frame", "u4", 1,
-                       "file_offset", "i8", 1,
-                       "clip_bytes", "i8", 1,
+                       "start_time", "i8",
+                       "end_time", "i8",
+                       "start_frame", "u4",
+                       "end_frame", "u4",
+                       "file_offset", "i8",
+                       "clip_bytes", "i8",
                        "RED_block_protected_region", "V", VIDEO_INDEX_PROTECTED_REGION_BYTES,
                        "RED_block_discretionary_region", "V", VIDEO_INDEX_DISCRETIONARY_REGION_BYTES);
 
@@ -3927,7 +3927,7 @@ static PyObject *create_segment_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
@@ -3938,7 +3938,7 @@ static PyObject *create_segment_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i)]",
-                       "channel_type", "i4", 1,
+                       "channel_type", "i4",
                        "metadata_fps", "V", sizeof (void *),
                        "time_series_data_fps", "V", sizeof (void *),
                        "time_series_indices_fps", "V", sizeof (void *),
@@ -3967,7 +3967,11 @@ static PyObject *create_channel_dtype()
 
     // Build dictionary
 
-    op = Py_BuildValue("[(s, s, i),\
+    op = Py_BuildValue("[(s, s),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
@@ -3975,19 +3979,15 @@ static PyObject *create_channel_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i)]",
-                       "channel_type", "i4", 1,
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s)]",
+                       "channel_type", "i4",
                        "metadata", "V", sizeof (METADATA),
                        "record_data_fps", "V", sizeof (void *),
                        "record_indices_fps", "V", sizeof (void *),
-                       "number_of_segments", "i8", 1,
+                       "number_of_segments", "i8",
                        "segments", "V", sizeof (void *),
                        "path", "S", MEF_FULL_FILE_NAME_BYTES,
                        "name", "S", MEF_BASE_FILE_NAME_BYTES,
@@ -3995,10 +3995,10 @@ static PyObject *create_channel_dtype()
                        "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
                        "level_UUID", "i1", UUID_BYTES,
                        "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
-                       "maximum_number_of_records", "i8", 1,
-                       "maximum_record_bytes", "i8", 1,
-                       "earliest_start_time", "i8", 1,
-                       "latest_end_time", "i8", 1);
+                       "maximum_number_of_records", "i8",
+                       "maximum_record_bytes", "i8",
+                       "earliest_start_time", "i8",
+                       "latest_end_time", "i8");
 
 
     PyArray_DescrConverter(op, &descr);
@@ -4018,6 +4018,10 @@ static PyObject *create_session_dtype()
     // Build dictionary
 
     op = Py_BuildValue("[(s, s, i),\
+                         (s, s),\
+                         (s, s, i),\
+                         (s, s, i),\
+                         (s, s),\
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
@@ -4025,20 +4029,16 @@ static PyObject *create_session_dtype()
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i),\
-                         (s, s, i)]",
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s)]",
                        "time_series_metadata", "V", sizeof (METADATA),
-                       "number_of_time_series_channels", "i4", 1,
+                       "number_of_time_series_channels", "i4",
                        "time_series_channels", "V", sizeof (void *),
 
                        "video_metadata", "V", sizeof (METADATA),
-                       "number_of_video_channels", "i4", 1,
+                       "number_of_video_channels", "i4",
                        "video_channels", "V", sizeof (void *),
 
                        "record_data_fps", "V", sizeof (void *),
@@ -4049,10 +4049,10 @@ static PyObject *create_session_dtype()
                        "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
                        "level_UUID", "i1", UUID_BYTES,
 
-                       "maximum_number_of_records", "i8", 1,
-                       "maximum_record_bytes", "i8", 1,
-                       "earliest_start_time", "i8", 1,
-                       "latest_end_time", "i8", 1);
+                       "maximum_number_of_records", "i8",
+                       "maximum_record_bytes", "i8",
+                       "earliest_start_time", "i8",
+                       "latest_end_time", "i8");
 
 
     PyArray_DescrConverter(op, &descr);

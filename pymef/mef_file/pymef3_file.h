@@ -130,10 +130,8 @@ static char read_mef_ts_data_docstring[] =
     "Function to read MEF3 time series data.\n\n\
      Parameters\n\
      ----------\n\
-     target_path: str\n\
-        Path to time series channel being read.\n\
-     password: str\n\
-        Level 1 or level 2 password.\n\
+     channel_specific_metadata: np.ndarray\n\
+        Channel metadata\n\
      start: int\n\
         Start sample or uUTC time to be read.\n\
      end: int\n\
