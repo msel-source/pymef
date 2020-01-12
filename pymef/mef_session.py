@@ -831,6 +831,9 @@ class MefSession():
             frequency
         """
 
+        if not slice_session_path.endswith('/'):
+            slice_session_path += '/'
+
         if self.session_md is None:
             raise ValueError("Please read the session metadata first.")
 
