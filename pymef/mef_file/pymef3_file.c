@@ -1675,6 +1675,11 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     // Usnig doubles so we can use NaN values for discontinuities
     py_array_out = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    if (py_array_out == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "Memory allocation error, please try shortening the requested segment.");
+        PyErr_Occurred();
+        return NULL;
+    }
     numpy_arr_data = (sf8 *) PyArray_GETPTR1(py_array_out, 0);
     
     // Iterate through segments, looking for data that matches our criteria
