@@ -641,7 +641,6 @@ class MefSession():
                                     password_1, password_2,
                                     start_time, end_time,
                                     index_entries):
-
         """
         Writes new video indices in the specified segment
 
@@ -678,7 +677,6 @@ class MefSession():
                           time_offset, records_list,
                           channel_type='ts',
                           channel=None, segment_n=None):
-
         """
         Writes new records on session level. If channel is specified, the
         the records are written at channel level. If segment_n is sepcified,
@@ -811,6 +809,99 @@ class MefSession():
                                end_time,
                                time_offset,
                                numpy_records_list)
+
+    def create_slice_session(self, slice_session_path, slice_start_stop,
+                             password_1, password_2, samps_per_mef_block=None,
+                             time_unit='uutc'):
+        """
+        Function to create slice of the mef session (time series only).
+
+        Parameters
+        ----------
+        slice_session_path: str
+            Path to new sliced session (including .mefd suffix)
+        slice_start_stop: list
+            List containing 2 int with start and stop uutc times of the slice
+        password_1: str
+            Level 1 password
+        password_2: str
+            Level 2 password
+        samps_per_mef_block: int
+            Number of samples for mef block. Default=channel sampling
+            frequency
+        """
+
+        if not slice_session_path.endswith('/'):
+            slice_session_path += '/'
+
+        if self.session_md is None:
+            raise ValueError("Please read the session metadata first.")
+
+        if not any([isinstance(x, int) for x in slice_start_stop]):
+            raise ValueError("Start and stop must be integers.")
+
+        channels_dict = self.session_md['time_series_channels']
+
+        segment_n = 0
+        for channel, ch_md in channels_dict.items():
+
+            segment_path = (slice_session_path+channel+'.timd/'
+                            + channel+'-'+str(segment_n).zfill(6)+'.segd/')
+
+            tmet_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
+                         + '.tmet')
+
+            if os.path.exists(tmet_path):
+                raise RuntimeError('Metadata file '+tmet_path
+                                   + ' already exists!')
+
+            os.makedirs(segment_path, exist_ok=True)
+
+            section_2 = ch_md['section_2'].copy()
+
+            # Zero out the machine generated fields
+            section_2['maximum_native_sample_value'] = 0.0
+            section_2['minimum_native_sample_value'] = 0.0
+            section_2['number_of_blocks'] = 0
+            section_2['maximum_block_bytes'] = 0
+            section_2['maximum_block_samples'] = 0
+            section_2['maximum_difference_bytes'] = 0
+            section_2['block_interval'] = 0
+            section_2['maximum_contiguous_blocks'] = 0
+            section_2['maximum_contiguous_block_bytes'] = 0
+            section_2['maximum_contiguous_samples'] = 0
+            section_2['number_of_samples'] = 0
+
+            section_3 = ch_md['section_3'].copy()
+
+            write_mef_ts_metadata(segment_path,
+                                  password_1,
+                                  password_2,
+                                  slice_start_stop[0],
+                                  slice_start_stop[1],
+                                  section_2,
+                                  section_3)
+
+            data = self.read_ts_channels_uutc(channel, slice_start_stop)
+
+            tdat_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
+                         + '.tdat')
+
+            if os.path.exists(tdat_path):
+                raise RuntimeError('Data file '+tdat_path+' already exists!')
+
+            if samps_per_mef_block is None:
+                spmb = int(section_2['sampling_frequency'][0])
+            else:
+                spmb = samps_per_mef_block
+
+            # lossy compression flag - not used
+            write_mef_ts_data_and_indices(segment_path,
+                                          password_1,
+                                          password_2,
+                                          spmb,
+                                          data.astype('int32'),
+                                          0)
 
     # ----- Data reading functions -----
     def _create_dict_record(self, np_record):
@@ -978,7 +1069,6 @@ class MefSession():
         return python_dict_list
 
     def get_channel_toc(self, channel):
-
         """
         Returns discontinuities accross segments.
 
@@ -1088,7 +1178,8 @@ class MefSession():
         else:
             return data_list
 
-    def read_ts_channels_uutc(self, channel_map, uutc_map, process_n=None):
+    def read_ts_channels_uutc(self, channel_map, uutc_map, process_n=None,
+                              out_nans=True):
         """
         Reads desired channels in desired time segment. Missing data at
         discontinuities are filled with NaNs.
@@ -1098,11 +1189,14 @@ class MefSession():
         channel_map: str or list
             Channel or list of channels to be read
         uutc_map: list
-           List of [start,stop] uutc times to be loaded that correspond
-           to channel_map. if there is only one entry the same range is applied
-           to all channels
+            List of [start,stop] uutc times to be loaded that correspond
+            to channel_map. if there is only one entry the same range is
+            applied to all channels
         process_n: int
             How many processes use for reading (defualt = None)
+        out_nans: bool
+            Whether to return an array of np.nan if the uutc times for
+            channel are completely out of start and end times
 
         Returns
         -------
@@ -1153,6 +1247,12 @@ class MefSession():
         for channel, uutc_ss in zip(channel_map, uutc_map):
             data = read_mef_ts_data(self._get_channel_md(channel),
                                     uutc_ss[0], uutc_ss[1], True)
+            if out_nans and data is None:
+                channel_md = self.session_md['time_series_channels'][channel]
+                size = ((np.diff(uutc_ss)/1e6)
+                        * channel_md['section_2']['sampling_frequency'])
+                data = np.empty(int(size))
+                data[:] = np.nan
             data_list.append(data)
 
         if is_chan_str:
