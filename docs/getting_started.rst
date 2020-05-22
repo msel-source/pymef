@@ -91,7 +91,7 @@ After the metadata file is in place the data itslef can be written:
     samps_per_mef_block = 5000
     data = np.random.randint(-200, 200, N, dtype='int32')
 
-    ms.write_mef_ts_segment_data(channel,
+    ms.write_mef_ts_segment_data(channel_name,
                                  0,
                                  pwd_1,
                                  pwd_2,
