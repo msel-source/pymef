@@ -2,10 +2,10 @@
 
 set -e
 
-for PYVER in "cp36-cp36m" "cp37-cp37m"; do
+for PYVER in "cp36-cp36m" "cp37-cp37m" "cp38-cp38"; do
   PYBIN="/opt/python/${PYVER}/bin"
   "${PYBIN}/pip" install numpy
-  "${PYBIN}/pip" install -I wheel==0.30.0 #due to bug in wheel (https://github.com/pypa/wheel/issues/235)
+  "${PYBIN}/pip" install wheel
   "${PYBIN}/python" setup.py test
   "${PYBIN}/python" setup.py bdist_wheel
 done

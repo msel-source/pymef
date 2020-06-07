@@ -528,7 +528,7 @@ class MefSession():
             raise RuntimeError('Please write the metadata file first!')
 
         if os.path.exists(tdat_path):
-            raise RuntimeError('Data file '+tdat_path+' already exists!')
+            raise RuntimeError(f"Data file '{tdat_path}' already exists!")
 
         # lossy compression flag - not used
         write_mef_ts_data_and_indices(segment_path,
@@ -542,7 +542,7 @@ class MefSession():
                                    password_1, password_2,
                                    start_time, end_time,
                                    samps_per_mef_block,
-                                   data):
+                                   data, discontinuity_flag=False):
         """
         Appends new time series metadata in the specified segment
 
@@ -564,6 +564,8 @@ class MefSession():
             Number of samples per mef block
         data: np.array
             1-D numpy array of type int32
+        discontinuity_flag: bool
+            Discontinuity flag for appended data.
         """
 
         segment_path = (self.path+channel+'.timd/'
@@ -572,7 +574,13 @@ class MefSession():
         tdat_path = segment_path+channel+'-'+str(segment_n).zfill(6)+'.tdat'
 
         if not os.path.exists(tdat_path):
-            raise RuntimeError('Data file does not exist!')
+            raise RuntimeError(f"Data file '{tdat_path}' does not exist!")
+
+        # TODO - check for bool in C code
+        if discontinuity_flag is True:
+            discontinuity_flag = 1
+        else:
+            discontinuity_flag = 0
 
         # lossy compression flag - not used
         append_ts_data_and_indices(segment_path,
@@ -582,7 +590,7 @@ class MefSession():
                                    end_time,
                                    samps_per_mef_block,
                                    data,
-                                   0)
+                                   discontinuity_flag)
 
     def write_mef_v_segment_metadata(self, channel, segment_n,
                                      password_1, password_2,

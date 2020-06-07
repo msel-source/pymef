@@ -796,6 +796,24 @@ class TestStringMethods(unittest.TestCase):
         except Exception as e:
             self.assertEqual(error_text, str(e))
 
+    def test_append_nonexistent_segment(self):
+        error_text = "Data file '"+self.ms.path+"ts_channel.timd/ts_channel-000005.segd/ts_channel-000005.tdat' does not exist!"
+
+        append_start = self.end_time + (self.secs_to_append * 5 * 1e6)
+        append_stop = int(append_start + (self.secs_to_append * 1e6))
+
+        try:
+            self.ms.append_mef_ts_segment_data(self.ts_channel,
+                                               5,
+                                               self.pwd_1,
+                                               self.pwd_2,
+                                               append_start,
+                                               append_stop,
+                                               self.samps_per_mef_block,
+                                               self.raw_data_to_append)
+        except Exception as e:
+            self.assertEqual(error_text, str(e))
+
     # ----- Pymef helpers -----
 
     def test_wrong_password(self):

@@ -1170,6 +1170,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
             PyErr_Occurred();
+            free_file_processing_struct(gen_fps);
             return NULL;
         }
 
@@ -1177,6 +1178,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
+        free_file_processing_struct(gen_fps);
         return NULL;
     }
 
@@ -1188,6 +1190,14 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     // Read in the metadata file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_METADATA_FILE_TYPE_STRING);
     metadata_fps = read_MEF_file(NULL, full_file_name, level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
+    
+    if (metadata_fps == NULL){
+        PyErr_SetString(PyExc_FileNotFoundError, "Metadata file does not exist, exiting...");
+        PyErr_Occurred();
+        free_file_processing_struct(gen_fps);
+        return NULL;
+    }
+
     tmd2 = metadata_fps->metadata.time_series_section_2;
     // We are appending so get only the end time
     metadata_fps->universal_header->end_time = recording_stop_uutc_time;
@@ -1207,11 +1217,28 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_idx_fps = read_MEF_file(ts_idx_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
 
+    if (ts_idx_fps == NULL){
+        PyErr_SetString(PyExc_FileNotFoundError, "Index file does not exist, exiting...");
+        PyErr_Occurred();
+        free_file_processing_struct(gen_fps);
+        free_file_processing_struct(metadata_fps);
+        return NULL;
+    }
+
     // Read in the time series data file
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_data_fps = read_MEF_file(ts_data_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
     
+    if (ts_data_fps == NULL){
+        PyErr_SetString(PyExc_FileNotFoundError, "Data file does not exist, exiting...");
+        PyErr_Occurred();
+        free_file_processing_struct(gen_fps);
+        free_file_processing_struct(metadata_fps);
+        free_file_processing_struct(ts_idx_fps);
+        return NULL;
+    }
+
     // Switch the directives back for wirting
     gen_directives->io_bytes = FPS_FULL_FILE;
 

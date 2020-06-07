@@ -3,9 +3,9 @@ matrix:
   - os: linux
     language: python
     python:
-      - '3.5'
       - '3.6'
       - '3.7'
+      - '3.8'
     sudo: required
     before_install: chmod +x .ci/build_linux_wheels.sh
     env:
@@ -20,7 +20,7 @@ matrix:
       - pip install twine
    
   - os: osx
-    osx_image: xcode9.4
+    osx_image: xcode11.3
     language: generic
     sudo: required
     before_install: chmod +x .ci/build_macos_wheels.sh
@@ -39,6 +39,7 @@ matrix:
     after_success:
       - export PATH="/c/Python36:/c/Python36/Scripts:$PATH"
       - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+      - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
       - python -m pip install twine --user
     
     
