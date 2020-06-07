@@ -6,7 +6,7 @@ brew update
 brew list pyenv &>/dev/null || brew install pyenv
 brew outdated pyenv || brew upgrade pyenv
 export PATH=~/.pyenv/shims:$PATH
-for PYVER in "3.6.3" "3.7.4"; do
+for PYVER in "3.6.3" "3.7.4" "3.8.3"; do
   pyenv install ${PYVER}
   pyenv global ${PYVER}
   python -m pip install numpy wheel
