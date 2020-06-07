@@ -2,7 +2,7 @@
 
 set -e
 
-for PYVER in "cp36-cp36m" "cp37-cp37m" "cp38-cp38m"; do
+for PYVER in "cp36-cp36m" "cp37-cp37m" "cp38-cp38"; do
   PYBIN="/opt/python/${PYVER}/bin"
   "${PYBIN}/pip" install numpy
   "${PYBIN}/pip" install wheel

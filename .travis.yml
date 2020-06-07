@@ -5,7 +5,7 @@ matrix:
     python:
       - '3.6'
       - '3.7'
-      - '3.8-dev'
+      - '3.8'
     sudo: required
     before_install: chmod +x .ci/build_linux_wheels.sh
     env:
@@ -20,7 +20,7 @@ matrix:
       - pip install twine
    
   - os: osx
-    osx_image: xcode11
+    osx_image: xcode11.3
     language: generic
     sudo: required
     before_install: chmod +x .ci/build_macos_wheels.sh
