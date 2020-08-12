@@ -2013,7 +2013,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->compression.mode = RED_DECOMPRESSION;
     //rps->directives.return_block_extrema = MEF_TRUE;
     rps->decompressed_ptr = rps->decompressed_data = decomp_data;
-    rps->difference_buffer = (si1 *) e_calloc((size_t) RED_MAX_DIFFERENCE_BYTES(max_samps), sizeof(ui1), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
+    rps->difference_buffer = (si1 *) e_calloc((size_t) RED_MAX_DIFFERENCE_BYTES(max_samps) + 1, sizeof(ui1), __FUNCTION__, __LINE__, USE_GLOBAL_BEHAVIOR);
     
     // offset_to_start_samp = start_samp - channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
     
