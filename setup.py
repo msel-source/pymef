@@ -28,7 +28,7 @@ MEF_FILE_EXT = Extension("pymef.mef_file.pymef3_file",
                          extra_compile_args=['-O3'])
 
 setup(name="pymef",
-      version='1.1.6',
+      version='1.1.7',
       description='Wrapper for MEF (multiscale electrophysiology format)',
       url='https://github.com/msel-source/pymef',
       author='Jan Cimbalnik',
