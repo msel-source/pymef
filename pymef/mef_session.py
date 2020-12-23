@@ -12,6 +12,7 @@ import struct
 import shutil
 import warnings
 from multiprocessing import Pool
+from pathlib import Path
 
 # Third party imports
 import numpy as np
@@ -1575,6 +1576,59 @@ class MefSession():
                 f_dat.close()
 
         # Reload the session metadata
+        self.reload()
+
+        return None
+
+    def change_channel_name(self, change_dict):
+
+        """
+        Chnges name of one or more channels
+
+        Parameters
+        ----------
+        change_dict: dict
+            Dictionary with channels to be changed {old_name: new_name}
+
+        Returns
+        -------
+        result: object
+            None on success
+        """
+
+        # Find channel folder
+        for fold in os.listdir(self.path):
+            ch_name = os.path.splitext(fold)[0]
+            if ch_name in change_dict.keys():
+                chan_path = self.path + fold
+                
+                # Rename files first
+                for path in Path(chan_path).rglob('*'):
+                    if os.path.splitext(path)[1] == '.segd':
+                        continue
+                    abs_path = str(path.absolute())
+                    path, file_name = os.path.split(abs_path)
+                    new_file_name = file_name.replace(ch_name,
+                                                      change_dict[ch_name])
+                    new_abs_path = '/'.join([path, new_file_name])
+                    shutil.move(abs_path, new_abs_path)
+                
+                # Rename segment folders
+                for path in Path(chan_path).rglob('*.segd'):
+                    abs_path = str(path.absolute())
+                    path, fold_name = os.path.split(abs_path)
+                    new_fold_name = fold_name.replace(ch_name,
+                                                      change_dict[ch_name])
+                    new_abs_path = '/'.join([path, new_fold_name])
+                    shutil.move(abs_path, new_abs_path)
+                
+                # Rename channel folder
+                path, fold_name = os.path.split(chan_path)
+                new_fold_name = fold_name.replace(ch_name,
+                                                  change_dict[ch_name])
+                new_abs_path = '/'.join([path, new_fold_name])
+                shutil.move(chan_path, new_abs_path)
+
         self.reload()
 
         return None
