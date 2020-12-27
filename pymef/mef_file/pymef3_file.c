@@ -677,8 +677,9 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // check raw_data data type, convert if necessary
     array_type = PyArray_TYPE(raw_data);
     if (array_type != NPY_INT32){
-        PyErr_WarnEx(PyExc_RuntimeWarning, "Incorrect data type. The data will be convertent to int32. Data loss possible!!!", 1);
-        raw_data = (PyArrayObject *) PyArray_Cast(raw_data, NPY_INT32);
+        PyErr_SetString(PyExc_RuntimeError, "Incorrect data type. Please convert your NumPy array to Int32 data type!");
+        PyErr_Occurred();
+        return NULL;
     }
 
     // initialize MEF library
