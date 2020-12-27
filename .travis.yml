@@ -7,7 +7,9 @@ matrix:
       - '3.7'
       - '3.8'
     sudo: required
-    before_install: chmod +x .ci/build_linux_wheels.sh
+    before_install:
+      - chmod +x .ci/build_linux_wheels.sh
+      - python -m pip install --upgrade pip
     env:
       - DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
       - DIST_FOLD=wheelhouse
@@ -23,7 +25,9 @@ matrix:
     osx_image: xcode11.3
     language: generic
     sudo: required
-    before_install: chmod +x .ci/build_macos_wheels.sh
+    before_install:
+      - chmod +x .ci/build_macos_wheels.sh
+      - python -m pip install --upgrade pip
     env:
       - DIST_FOLD=dist
     script: ".ci/build_macos_wheels.sh"
@@ -32,7 +36,9 @@ matrix:
       
   - os: windows
     language: sh
-    before_install: chmod +x .ci/build_windows_wheels.sh
+    before_install:
+      - chmod +x .ci/build_windows_wheels.sh
+      - python -m pip install --upgrade pip
     env:
       - DIST_FOLD=dist
     script: ".ci/build_windows_wheels.sh"
