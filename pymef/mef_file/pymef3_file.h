@@ -236,6 +236,8 @@ static PyObject *create_sylg_dtype(PyObject *self, PyObject *args);
 static PyObject *create_sylg_dtype_c(ui4 text_len);
 static PyObject *create_csti_dtype();
 static PyObject *create_esti_dtype();
+static PyObject *create_curs_dtype();
+static PyObject *create_epoc_dtype();
 
 static PyObject *create_uh_dtype();
 static PyObject *create_md1_dtype();
@@ -278,6 +280,8 @@ static PyMethodDef module_methods[] = {
     {"create_sylg_dtype", create_sylg_dtype, METH_VARARGS, NULL},
     {"create_csti_dtype", create_csti_dtype, METH_VARARGS, NULL},
     {"create_esti_dtype", create_esti_dtype, METH_VARARGS, NULL},
+    {"create_curs_dtype", create_curs_dtype, METH_VARARGS, NULL},
+    {"create_epoc_dtype", create_epoc_dtype, METH_VARARGS, NULL},
 
 
     {"create_uh_dtype", create_uh_dtype, METH_VARARGS, NULL},
@@ -340,6 +344,8 @@ void    map_python_Siez_ch_type(PyObject *Siez_ch_type_dict, si1 *r_type);
 void    map_python_Siez_type(PyObject *Siez_type_dict, MEFREC_Seiz_1_0  *r_type);
 void    map_python_CSti_type(PyObject *CSti_type_dict, MEFREC_CSti_1_0  *r_type);
 void    map_python_ESti_type(PyObject *ESti_type_dict, MEFREC_ESti_1_0  *r_type);
+void    map_python_Curs_type(PyObject *Curs_type_dict, MEFREC_Curs_1_0  *r_type);
+void    map_python_Epoc_type(PyObject *Epoc_type_dict, MEFREC_Epoc_1_0  *r_type);
 
 
 // ---------- Mef3 to python dictionaries -----------
@@ -374,6 +380,8 @@ PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels);
 PyObject *map_mef3_CSti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_ESti_type(RECORD_HEADER *rh);
 PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
+PyObject *map_mef3_Curs_type(RECORD_HEADER *rh);
+PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh);
 
 // Helper functions
 si4 check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 total_data_bytes);

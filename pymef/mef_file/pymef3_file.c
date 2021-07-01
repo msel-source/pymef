@@ -306,6 +306,24 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
                 break;
 
+            case MEFREC_Curs_TYPE_CODE:
+                MEF_strncpy(ri->type_string, MEFREC_Curs_TYPE_STRING, TYPE_BYTES);
+                MEF_strncpy(rh->type_string, MEFREC_Curs_TYPE_STRING, TYPE_BYTES);
+                temp_o = PyDict_GetItemString(py_record_dict, "record_body");
+                map_python_Curs_type(temp_o, (MEFREC_Curs_1_0 *) rd);
+                rh->bytes += MEFREC_Curs_1_0_BYTES;
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
+                break;
+
+            case MEFREC_Epoc_TYPE_CODE:
+                MEF_strncpy(ri->type_string, MEFREC_Epoc_TYPE_STRING, TYPE_BYTES);
+                MEF_strncpy(rh->type_string, MEFREC_Epoc_TYPE_STRING, TYPE_BYTES);
+                temp_o = PyDict_GetItemString(py_record_dict, "record_body");
+                map_python_Epoc_type(temp_o, (MEFREC_Epoc_1_0 *) rd);
+                rh->bytes += MEFREC_Epoc_1_0_BYTES;
+                rh->bytes = (ui4) MEF_pad(rd, rh->bytes, 16);
+                break;
+
             case MEFREC_UnRc_TYPE_CODE:
                 rh->bytes = 0;
                 break;
@@ -2372,6 +2390,18 @@ void    map_python_ESti_type(PyObject *ESti_type_arr, MEFREC_ESti_1_0  *r_type)
     return;
 }
 
+void    map_python_Curs_type(PyObject *Curs_type_arr, MEFREC_Curs_1_0  *r_type)
+{
+    memcpy(r_type, PyArray_DATA((PyArrayObject *) Curs_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Curs_type_arr));
+    return;
+}
+
+void    map_python_Epoc_type(PyObject *Epoc_type_arr, MEFREC_Epoc_1_0  *r_type)
+{
+    memcpy(r_type, PyArray_DATA((PyArrayObject *) Epoc_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Epoc_type_arr));
+    return;
+}
+
 
 /*****************************  Mef struct to Python  *******************************/
 
@@ -3024,6 +3054,12 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
         case MEFREC_SyLg_TYPE_CODE:
             PyDict_SetItemString(rh_dict, "record_body", map_mef3_SyLg_type(rh));
             break;
+        case MEFREC_Curs_TYPE_CODE:
+            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Curs_type(rh));
+            break;
+        case MEFREC_Epoc_TYPE_CODE:
+            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Epoc_type(rh));
+            break;
         case MEFREC_UnRc_TYPE_CODE:
             //PyErr_SetString(PyExc_RuntimeError, "\"%s\" (0x%x) is an unrecognized record type\n", rh->type_string, type_code);
             PyErr_Format(PyExc_RuntimeError, "\"%s\" (0x%x) is an unrecognized record type\n", rh->type_string, type_code);
@@ -3245,6 +3281,40 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     body_p = (si1 *) rh+MEFREC_SyLg_1_0_TEXT_OFFSET;
     str_len = (ui4) strlen(body_p);
     descr = (PyArray_Descr *) create_sylg_dtype_c(str_len);
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
+    return py_array_out;
+}
+
+PyObject *map_mef3_Curs_type(RECORD_HEADER *rh)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {MEFREC_Curs_1_0_BYTES};
+    PyObject    *py_array_out;
+    si1     *body_p;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_curs_dtype();
+    body_p = (si1 *) rh+MEFREC_Curs_1_0_OFFSET;
+    py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
+    return py_array_out;
+}
+
+PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh)
+{
+    import_array();
+
+    // Numpy array out
+    npy_intp dims[] = {1};
+    npy_intp strides[] = {MEFREC_Epoc_1_0_BYTES};
+    PyObject    *py_array_out;
+    si1     *body_p;
+    PyArray_Descr    *descr;
+
+    descr = (PyArray_Descr *) create_epoc_dtype();
+    body_p = (si1 *) rh+MEFREC_Epoc_1_0_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
@@ -3626,6 +3696,64 @@ static PyObject *create_esti_dtype()
                         "waveform", "S", MEFREC_ESti_1_0_WAVEFORM_BYTES,
                         "anode", "S", MEFREC_ESti_1_0_ANODE_BYTES,
                         "catode", "S", MEFREC_ESti_1_0_CATODE_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_curs_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s, i)]",
+
+                        "id_number", "i8",
+                        "trace_timestamp", "i8",
+                        "latency", "i8",
+                        "value", "f8",
+                        "name", "S", MEFREC_Curs_1_0_NAME_BYTES);
+
+    PyArray_DescrConverter(op, &descr);
+    Py_DECREF(op);
+
+    return (PyObject *) descr;
+}
+
+static PyObject *create_epoc_dtype()
+{
+    import_array();
+
+    // Numpy array out
+    PyObject    *op;
+    PyArray_Descr    *descr;
+
+    // Build dictionary
+
+    op = Py_BuildValue("[(s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s),\
+                         (s, s, i),\
+                         (s, s, i)]",
+
+                        "id_number", "i8",
+                        "timestamp", "i8",
+                        "end_timestamp", "i8",
+                        "duration", "i8",
+                        "epoch_type", "S", MEFREC_Epoc_1_0_EPOCH_TYPE_BYTES,
+                        "text", "S", MEFREC_Epoc_1_0_TEXT_BYTES);
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
