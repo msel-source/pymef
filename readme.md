@@ -49,7 +49,7 @@ Documentation of mef library can be found [here](http://msel.mayo.edu/codes.html
 Support
 -------
 
-Please report problems to cimbalnik.jan@mayo.edu.
+Please report problems to jan.cimbalnik@fnusa.cz.
 
 License
 -------
