@@ -36,6 +36,8 @@ from .mef_file.pymef3_file import (read_mef_session_metadata,
                                    create_esti_dtype,
                                    create_seiz_dtype,
                                    create_seiz_ch_dtype,
+                                   create_curs_dtype,
+                                   create_epoc_dtype,
                                    create_tmd2_dtype,
                                    create_vmd2_dtype,
                                    create_md3_dtype,
@@ -432,6 +434,32 @@ class MefSession():
                 else:
                     body_arr[key] = record[key]
 
+        elif record_type == 'Curs':
+            hdr_arr['type_string'] = b'Curs'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            body_dtype = create_curs_dtype()
+            d_type_keys = [x[0] for x in body_dtype.descr]
+            body_arr = np.zeros(1, body_dtype)
+            for key in record.keys():
+                if key in ['type', 'time']:
+                    continue
+                body_arr[key] = record[key]
+
+        elif record_type == 'Epoc':
+            hdr_arr['type_string'] = b'Epoc'
+            if 'time' in record.keys():
+                hdr_arr['time'] = record['time']
+
+            body_dtype = create_epoc_dtype()
+            d_type_keys = [x[0] for x in body_dtype.descr]
+            body_arr = np.zeros(1, body_dtype)
+            for key in record.keys():
+                if key in ['type', 'time']:
+                    continue
+                body_arr[key] = record[key]
+
         else:
             raise ValueError("Unrecognized record type:'%s'" % record_type)
 
@@ -790,6 +818,24 @@ class MefSession():
                 - onset - seizure onset on this channel (int)
                 - offset - seizure offset on this channel (int)
 
+        Curs - Cursor record:
+            - type - "Curs"
+            - time - record time (int)
+            - id_record - id of the record (int)
+            - trace_timestamp - timestamp of the trace (int8)
+            - latency - latency of the record (int)
+            - name - name of the cursor record (str)
+
+        Epoc - Epoch record:
+            - type - "Epoc"
+            - time - record time (int)
+            - id_record - id of the record (int)
+            - timestamp - start timestamp of the epoch (int8)
+            - end_timestamp - end timestamp of the epoch (int8)
+            - duration - duration of the epoch
+            - type - epoch type (str)
+            - text - descriptive text of the epoch (str)
+
         """
 
         if channel is None and segment_n is not None:
@@ -1022,6 +1068,28 @@ class MefSession():
                     ch_list.append(ch_dict)
 
                 rec_dict['channels'] = ch_list
+
+        elif record_header['type_string'] == b'Curs':
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    rec_dict[key] = value.decode('utf-8')
+                else:
+                    rec_dict[key] = value
+
+        elif record_header['type_string'] == b'Epoc':
+            rec_dict['type'] = record_header['type_string'][0].decode('utf-8')
+            rec_dict['time'] = record_header['time'][0]
+
+            for key in d_type_keys:
+                value = record_body[key][0]
+                if isinstance(value, bytes):
+                    rec_dict[key] = value.decode('utf-8')
+                else:
+                    rec_dict[key] = value
 
         else:
             warn_string = ('Unrecognized record type: '

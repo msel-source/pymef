@@ -135,6 +135,23 @@ class TestStringMethods(unittest.TestCase):
                      'anode': 'positive',
                      'catode': 'negative'}
 
+        curs_dict = {'type': 'Curs',
+                     'time': self.record_time_1,
+                     'id_number': 5342,
+                     'trace_timestamp': self.record_time_1+1000,
+                     'latency': 1000000,
+                     'value': 35.4,
+                     'name': 'tequila'}
+
+        epoc_dict = {'type': 'Epoc',
+                     'time': self.record_time_1,
+                     'id_number': 8967,
+                     'timestamp': self.record_time_1+2000,
+                     'end_timestamp': self.record_time_1+10000,
+                     'duration': 8000,
+                     'epoch_type': 'straight',
+                     'text': 'vodka'}
+
         self.record_list.append(note_dict)
         self.record_list.append(sylg_dict)
         self.record_list.append(edfa_dict)
@@ -144,6 +161,8 @@ class TestStringMethods(unittest.TestCase):
         self.record_list.append(seiz_dict)
         self.record_list.append(csti_dict)
         self.record_list.append(esti_dict)
+        self.record_list.append(curs_dict)
+        self.record_list.append(epoc_dict)
 
         # Prepare dummy time series metadata
         self.section3_dict = {'recording_time_offset': self.rec_offset,
@@ -477,6 +496,32 @@ class TestStringMethods(unittest.TestCase):
                                  read_record['anode'])
                 self.assertEqual(write_record['catode'],
                                  read_record['catode'])
+
+            if write_record['type'] == 'Curs':
+                self.assertEqual(write_record['id_number'],
+                                 read_record['id_number'])
+                self.assertEqual(write_record['trace_timestamp'],
+                                 read_record['trace_timestamp'])
+                self.assertEqual(write_record['latency'],
+                                 read_record['latency'])
+                self.assertEqual(write_record['value'],
+                                 read_record['value']),
+                self.assertEqual(write_record['name'],
+                                 read_record['name'])
+
+            if write_record['type'] == 'Epoc':
+                self.assertEqual(write_record['id_number'],
+                                 read_record['id_number'])
+                self.assertEqual(write_record['timestamp'],
+                                 read_record['timestamp'])
+                self.assertEqual(write_record['end_timestamp'],
+                                 read_record['end_timestamp'])
+                self.assertEqual(write_record['duration'],
+                                 read_record['duration']),
+                self.assertEqual(write_record['epoch_type'],
+                                 read_record['epoch_type'])
+                self.assertEqual(write_record['text'],
+                                 read_record['text'])
 
     def test_time_series_metadata_section_2_usr(self):
 
