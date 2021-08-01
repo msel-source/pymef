@@ -6,7 +6,7 @@
 
 
 // Python wrapper for Multiscale Electrophysiology Format (MEF) version 3.0 library
-// Copyright 2017, Mayo Foundation, Rochester MN. All rights reserved.
+// Copyright 2021, Mayo Foundation, Rochester MN. All rights reserved.
 // Written by Jan Cimbalnik, Matt Stead, Ben Brinkmann, and Dan Crepeau.
 
 // Usage and modification of this source code is governed by the Apache 2.0 license.
@@ -2062,9 +2062,17 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         last_block_decoded_flag = 1;
         
         if (times_specified)
-            offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        {
+            // rps->block_header->start_time is already offset during RED_decode()
+            
+            if ((block_start_time_offset - start_time) >= 0)
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+            else
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
+        }
         else
-            offset_into_output_buffer = (si4) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
+            offset_into_output_buffer = (si4) (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample +
+                                               channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample) - start_samp;
         
         // copy requested samples from first block to output buffer
         // TBD this loop could be optimized
@@ -2168,7 +2176,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         last_block_decoded_flag = 1;
         
         if (times_specified)
-            offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        {
+            if ((block_start_time_offset - start_time) >= 0)
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+            else
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
+        }
         else
             offset_into_output_buffer = sample_counter;
         
