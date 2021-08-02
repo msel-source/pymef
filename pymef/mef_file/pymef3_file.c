@@ -4303,6 +4303,7 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     sf8 native_samp_freq;
     ui8 prev_sample_number;
     si8 prev_time, seg_start_sample;
+    si8 next_sample_number;
     
     native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
@@ -4311,16 +4312,28 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     for (j = 0; j < (ui8) channel->number_of_segments; j++)
     {
         seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
+        
+        // initialize next_sample_number to end of current segment, in case we're on the last segment and we
+        // go all the way to the end of the segment.
+        // Otherwise this value will get overridden later on
+        next_sample_number = seg_start_sample + channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_samples;
+        
         for (i = 0; i < (ui8) channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
             if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time > uutc)
+            {
+                next_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
                 goto done;
+            }
             prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
             prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
         }
     }
     
-    done:
-        sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+done:
+    
+    sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+    if (sample > next_sample_number)
+        sample = next_sample_number;  // prevent it from going too far
     
     return(sample);
 }
