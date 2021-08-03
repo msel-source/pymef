@@ -6,7 +6,7 @@
 
 
 // Python wrapper for Multiscale Electrophysiology Format (MEF) version 3.0 library
-// Copyright 2017, Mayo Foundation, Rochester MN. All rights reserved.
+// Copyright 2021, Mayo Foundation, Rochester MN. All rights reserved.
 // Written by Jan Cimbalnik, Matt Stead, Ben Brinkmann, and Dan Crepeau.
 
 // Usage and modification of this source code is governed by the Apache 2.0 license.
@@ -2062,9 +2062,17 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         last_block_decoded_flag = 1;
         
         if (times_specified)
-            offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        {
+            // rps->block_header->start_time is already offset during RED_decode()
+            
+            if ((block_start_time_offset - start_time) >= 0)
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+            else
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
+        }
         else
-            offset_into_output_buffer = (si4) channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample - start_samp;
+            offset_into_output_buffer = (si4) (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample +
+                                               channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample) - start_samp;
         
         // copy requested samples from first block to output buffer
         // TBD this loop could be optimized
@@ -2168,7 +2176,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         last_block_decoded_flag = 1;
         
         if (times_specified)
-            offset_into_output_buffer = (int)((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+        {
+            if ((block_start_time_offset - start_time) >= 0)
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
+            else
+                offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
+        }
         else
             offset_into_output_buffer = sample_counter;
         
@@ -4290,6 +4303,7 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     sf8 native_samp_freq;
     ui8 prev_sample_number;
     si8 prev_time, seg_start_sample;
+    si8 next_sample_number;
     
     native_samp_freq = channel->metadata.time_series_section_2->sampling_frequency;
     prev_sample_number = channel->segments[0].metadata_fps->metadata.time_series_section_2->start_sample;
@@ -4298,16 +4312,28 @@ si8 sample_for_uutc_c(si8 uutc, CHANNEL *channel)
     for (j = 0; j < (ui8) channel->number_of_segments; j++)
     {
         seg_start_sample = channel->segments[j].metadata_fps->metadata.time_series_section_2->start_sample;
+        
+        // initialize next_sample_number to end of current segment, in case we're on the last segment and we
+        // go all the way to the end of the segment.
+        // Otherwise this value will get overridden later on
+        next_sample_number = seg_start_sample + channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_samples;
+        
         for (i = 0; i < (ui8) channel->segments[j].metadata_fps->metadata.time_series_section_2->number_of_blocks; ++i) {
             if (channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time > uutc)
+            {
+                next_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
                 goto done;
+            }
             prev_sample_number = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_sample + seg_start_sample;
             prev_time = channel->segments[j].time_series_indices_fps->time_series_indices[i].start_time;
         }
     }
     
-    done:
-        sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+done:
+    
+    sample = prev_sample_number + (ui8) (((((sf8) (uutc - prev_time)) / 1000000.0) * native_samp_freq) + 0.5);
+    if (sample > next_sample_number)
+        sample = next_sample_number;  // prevent it from going too far
     
     return(sample);
 }
