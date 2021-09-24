@@ -826,7 +826,6 @@ class TestStringMethods(unittest.TestCase):
 
         # Check for the number of NaNs
         N_nans = (5e5 / 1e6) * self.sampling_frequency
-        N_nans -= 1  # End is not inclusive
         read_N_nans = np.sum(np.isnan(data))
 
         self.assertEqual(N_nans, read_N_nans)
