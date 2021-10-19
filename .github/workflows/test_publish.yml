@@ -1,0 +1,75 @@
+
+name: Test and Upload Python Package
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: '3.6'
+          - os: ubuntu-latest
+            python-version: '3.7'
+          - os: ubuntu-latest
+            python-version: '3.8'
+          - os: ubuntu-latest
+            python-version: '3.9'
+
+          - os: macos-latest
+            python-version: '3.6'
+          - os: macos-latest
+            python-version: '3.7'
+          - os: macos-latest
+            python-version: '3.8'
+          - os: macos-latest
+            python-version: '3.9'
+
+
+          - os: windows-latest
+            python-version: '3.6'
+          - os: windows-latest
+            python-version: '3.7'
+          - os: windows-latest
+            python-version: '3.8'
+          - os: windows-latest
+            python-version: '3.9'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install wheel setuptools
+        pip install numpy
+
+    - name: Test package
+      run:
+        python setup.py test
+
+    - name: Build python wheel
+      if: startsWith(github.ref, 'refs/tags')
+      run:
+        python setup.py bdist_wheel
+
+    - name: Publish package
+      if: startsWith(github.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
