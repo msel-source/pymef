@@ -2065,7 +2065,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         {
             // rps->block_header->start_time is already offset during RED_decode()
             
-            if ((block_start_time_offset - start_time) >= 0)
+            if ((rps->block_header->start_time - start_time) >= 0)
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
             else
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
@@ -2177,7 +2177,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         
         if (times_specified)
         {
-            if ((block_start_time_offset - start_time) >= 0)
+            if ((rps->block_header->start_time  - start_time) >= 0)
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
             else
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
