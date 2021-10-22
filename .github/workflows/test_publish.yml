@@ -63,7 +63,7 @@ jobs:
         python setup.py test
 
   release:
-    # if: contains(github.ref, 'refs/tags/')
+    if: contains(github.ref, 'refs/tags/')
     needs: test
 
     runs-on: ${{ matrix.os }}
@@ -147,15 +147,15 @@ jobs:
       if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows')
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TEST_API_TOKEN }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
-        twine upload --skip-existing --repository testpypi dist/pymef*
+        twine upload --skip-existing dist/pymef*
 
     - name: Publish package (Linux)
       if: startsWith(matrix.os, 'ubuntu')
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TEST_API_TOKEN }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
-        twine upload --skip-existing --repository testpypi dist/pymef*manylinux*
+        twine upload --skip-existing dist/pymef*manylinux*
 
