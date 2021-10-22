@@ -1,5 +1,5 @@
 
-name: Test and Upload Python Package
+name: Test Pymef
 
 on: [push, pull_request]
 
@@ -10,33 +10,32 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            python-version: '3.6'
-          - os: ubuntu-latest
-            python-version: '3.7'
-          - os: ubuntu-latest
-            python-version: '3.8'
-          - os: ubuntu-latest
-            python-version: '3.9'
+            - os: ubuntu-latest
+              python-version: '3.6'
+            - os: ubuntu-latest
+              python-version: '3.7'
+            - os: ubuntu-latest
+              python-version: '3.8'
+            - os: ubuntu-latest
+              python-version: '3.9'
 
-          - os: macos-latest
-            python-version: '3.6'
-          - os: macos-latest
-            python-version: '3.7'
-          - os: macos-latest
-            python-version: '3.8'
-          - os: macos-latest
-            python-version: '3.9'
+            - os: macos-latest
+              python-version: '3.6'
+            - os: macos-latest
+              python-version: '3.7'
+            - os: macos-latest
+              python-version: '3.8'
+            - os: macos-latest
+              python-version: '3.9'
 
-
-          - os: windows-latest
-            python-version: '3.6'
-          - os: windows-latest
-            python-version: '3.7'
-          - os: windows-latest
-            python-version: '3.8'
-          - os: windows-latest
-            python-version: '3.9'
+            - os: windows-latest
+              python-version: '3.6'
+            - os: windows-latest
+              python-version: '3.7'
+            - os: windows-latest
+              python-version: '3.8'
+            - os: windows-latest
+              python-version: '3.9'
 
     steps:
     - uses: actions/checkout@v2
@@ -56,23 +55,107 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install wheel setuptools twine
+        pip install setuptools
         pip install numpy
 
     - name: Test package
       run:
         python setup.py test
 
-    - name: Build python wheel
-      if: startsWith(github.ref, 'refs/tags')
-      run:
-        python setup.py bdist_wheel
+  release:
+    if: contains(github.ref, 'refs/tags/')
+    needs: test
 
-    - name: Publish package
-      if: startsWith(github.ref, 'refs/tags')
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+            - os: ubuntu-latest
+              python-version: '3.6'
+              docker_python_version: 'cp36-cp36m'
+            - os: ubuntu-latest
+              python-version: '3.7'
+              docker_python_version: 'cp37-cp37m'
+            - os: ubuntu-latest
+              python-version: '3.8'
+              docker_python_version: 'cp38-cp38'
+            - os: ubuntu-latest
+              python-version: '3.9'
+              docker_python_version: 'cp39-cp39'
+
+            - os: macos-latest
+              python-version: '3.6'
+            - os: macos-latest
+              python-version: '3.7'
+            - os: macos-latest
+              python-version: '3.8'
+            - os: macos-latest
+              python-version: '3.9'
+
+            - os: windows-latest
+              python-version: '3.6'
+            - os: windows-latest
+              python-version: '3.7'
+            - os: windows-latest
+              python-version: '3.8'
+            - os: windows-latest
+              python-version: '3.9'
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+
+    - name: Build wheels (Manylinux)
+      if: startsWith(matrix.os, 'ubuntu')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TEST_API_TOKEN }}
+      uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2010_x86_64
+      with:
+        python-versions: ${{ matrix.docker_python_version }}
+        build-requirements: 'numpy'
+        pip-wheel-args: '-w ./dist'
+
+    # Set up python after manylinux build otherwise it interferes with auditwheel in the image
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools
+        pip install numpy
+        pip install twine
+
+    - name: Build wheels (Windows and MacOS)
+      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows')
+      run: |
+        pip install wheel
+        python setup.py sdist bdist_wheel
+
+    - name: Publish package (Windows and MacOS)
+      if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'windows')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        TWINE_REPOSITORY: pymef
       run: |
-        twine upload dist/*
+        twine upload --skip-existing dist/pymef*
+
+    - name: Publish package (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        twine upload --skip-existing dist/pymef*manylinux*
+
