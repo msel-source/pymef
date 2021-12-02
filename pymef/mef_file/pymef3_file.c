@@ -347,6 +347,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_data_fps);
     free_file_processing_struct(rec_idx_fps);
+    free_file_processing_struct(gen_fps);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -491,7 +492,8 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
 
     write_MEF_file(metadata_fps);
-    free_file_processing_struct(metadata_fps); 
+    free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -639,6 +641,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     write_MEF_file(metadata_fps);
 
     free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1064,6 +1067,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // clean up
     free_file_processing_struct(v_idx_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
