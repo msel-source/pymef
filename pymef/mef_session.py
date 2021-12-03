@@ -543,7 +543,7 @@ class MefSession():
                                   samps_per_mef_block,
                                   data):
         """
-        Writes new time series metadata in the specified segment
+        Writes new time series data in the specified segment
 
         Parameters
         ----------

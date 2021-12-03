@@ -347,6 +347,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_data_fps);
     free_file_processing_struct(rec_idx_fps);
+    free_file_processing_struct(gen_fps);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -484,14 +485,15 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // Get time series metadata section 2 from python dict
     map_python_tmd2(py_tmd2_dict, metadata_fps->metadata.time_series_section_2);
 
-    // Get time series metadata section 2 from python dict
+    // Get metadata section 3 from python dict
     map_python_md3(py_md3_dict, metadata_fps->metadata.section_3);
 
     // Assign recording_time_offset
     MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
 
     write_MEF_file(metadata_fps);
-    free_file_processing_struct(metadata_fps); 
+    free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -584,7 +586,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     extract_path_parts(py_file_path, path_out, name, type);
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // Segment - OK - extract segment number and check for time series
+        // Segment - OK - extract segment number and check for video
         uh->segment_number = extract_segment_number(&name[0]);
 
         // Copy the segment name for later use
@@ -600,7 +602,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
             extract_path_parts(path_in, path_out, name, type);
             MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
         }else{
-            //Fire an error that this is not time series directory - hence makes no sense to write metadata
+            //Fire an error that this is not video directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a video channel, exiting...");
             PyErr_Occurred();
             return NULL;
@@ -616,7 +618,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     // generate level UUID into generic universal_header
     generate_UUID(gen_fps->universal_header->level_UUID);
 
-    // set up mef3 time series metadata file
+    // set up mef3 video metadata file
     metadata_fps = allocate_file_processing_struct(METADATA_FILE_BYTES, VIDEO_METADATA_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(metadata_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", py_file_path, segment_name, VIDEO_METADATA_FILE_TYPE_STRING);
     uh = metadata_fps->universal_header;
@@ -627,10 +629,10 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     metadata_fps->metadata.section_1->section_2_encryption = LEVEL_1_ENCRYPTION_DECRYPTED;
     metadata_fps->metadata.section_1->section_3_encryption = LEVEL_2_ENCRYPTION_DECRYPTED;
 
-    // Get time series metadata section 2 from python dict
+    // Get video metadata section 2 from python dict
     map_python_vmd2(py_vmd2_dict, metadata_fps->metadata.video_section_2);
 
-    // Get time series metadata section 2 from python dict
+    // Get metadata section 3 from python dict
     map_python_md3(py_md3_dict, metadata_fps->metadata.section_3);
 
     // Apply recording offset
@@ -639,6 +641,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     write_MEF_file(metadata_fps);
 
     free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -1064,6 +1067,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // clean up
     free_file_processing_struct(v_idx_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
