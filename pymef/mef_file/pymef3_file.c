@@ -821,7 +821,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(ts_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
 
-    // generate/update the ts-index file uuid and set some of the index entries fields
+    // generate/update the ts-index file uuid and set some of the entries fields
     generate_UUID(ts_idx_fps->universal_header->file_UUID);
     ts_idx_fps->universal_header->number_of_entries = tmd2->number_of_blocks;
     ts_idx_fps->universal_header->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
@@ -838,10 +838,12 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // point to the universal-header of the time-series data (file)
     ts_data_uh = ts_data_fps->universal_header;
 
-    // generate/update the ts-data file uuid and set some of the index entries fields
+    // generate/update the ts-data file uuid and set some of the entries fields
     generate_UUID(ts_data_uh->file_UUID);
     ts_data_uh->number_of_entries = tmd2->number_of_blocks;
     ts_data_uh->maximum_entry_size = samps_per_mef_block;
+
+    // write the universal header of the ts-data file
     ts_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
     ts_data_fps->directives.close_file = MEF_FALSE;
     write_MEF_file(ts_data_fps);
@@ -881,11 +883,12 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     start_sample = 0;
 
     // Write the data and update the metadata
-    while (samps_remaining) {
+    while (samps_remaining){
 
         // check
         if (samps_remaining < block_samps)
             block_samps = (ui4) samps_remaining;
+		
         block_header->number_of_samples = block_samps;
         block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
         curr_time += time_inc;
@@ -926,22 +929,27 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // update metadata
     tmd2->maximum_contiguous_block_bytes = file_offset - UNIVERSAL_HEADER_BYTES;
-    if (tmd2->units_conversion_factor >= 0.0) {
+    if (tmd2->units_conversion_factor >= 0.0){
         tmd2->maximum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
-    } else {
+    }else{
         tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
     }
     tmd2->maximum_contiguous_blocks = tmd2->number_of_blocks;
 
-    // Write the files
+    // calculate the CRC for the time-series data-file and set in the universal header
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
+
+    // re-write the universal header of the ts-data file (which now includes the CRC)
     e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     e_fwrite(ts_data_uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     fclose(ts_data_fps->fp);
-    // write out metadata & time series indices files
+
+    // write/update the time-series metadata file
     write_MEF_file(metadata_fps);
+
+    // write time-series indices (file)
     write_MEF_file(ts_idx_fps);
 
     // clean up
