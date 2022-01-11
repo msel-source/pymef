@@ -661,7 +661,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // Method specific
     PASSWORD_DATA           *pwd;
-    UNIVERSAL_HEADER    *uh;
+    UNIVERSAL_HEADER    *ts_data_uh;
     FILE_PROCESSING_STRUCT  *gen_fps, *metadata_fps, *ts_idx_fps, *ts_data_fps;
     TIME_SERIES_METADATA_SECTION_2  *tmd2;
     TIME_SERIES_INDEX   *tsi;
@@ -804,10 +804,10 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // Set up mef3 time series data file
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(ts_data_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
-    uh = ts_data_fps->universal_header;
-    generate_UUID(uh->file_UUID);
-    uh->number_of_entries = tmd2->number_of_blocks;
-    uh->maximum_entry_size = samps_per_mef_block;
+    ts_data_uh = ts_data_fps->universal_header;
+    generate_UUID(ts_data_uh->file_UUID);
+    ts_data_uh->number_of_entries = tmd2->number_of_blocks;
+    ts_data_uh->maximum_entry_size = samps_per_mef_block;
     ts_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
     ts_data_fps->directives.close_file = MEF_FALSE;
     write_MEF_file(ts_data_fps);
@@ -899,7 +899,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // Write the files
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
     e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
-    e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
+    e_fwrite(ts_data_uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     fclose(ts_data_fps->fp);
     // write out metadata & time series indices files
     write_MEF_file(metadata_fps);
