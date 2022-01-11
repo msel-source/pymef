@@ -748,7 +748,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     uh = gen_fps->universal_header;
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    pwd = process_password_data(NULL, level_1_password, level_2_password, uh);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
