@@ -752,7 +752,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-    // segment type/directory
+        // segment type/directory
 
         // copy the segment name for file name construction later
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
