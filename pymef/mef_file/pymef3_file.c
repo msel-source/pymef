@@ -804,10 +804,9 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_indices_file_bytes = (tmd2->number_of_blocks * TIME_SERIES_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(ts_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
-    uh = ts_idx_fps->universal_header;
-    generate_UUID(uh->file_UUID);
-    uh->number_of_entries = tmd2->number_of_blocks;
-    uh->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
+    generate_UUID(ts_idx_fps->universal_header->file_UUID);
+    ts_idx_fps->universal_header->number_of_entries = tmd2->number_of_blocks;
+    ts_idx_fps->universal_header->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
 
     // Set up mef3 time series data file
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
