@@ -754,30 +754,28 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // Check for directory type
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name[0]);
-
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
+		
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
 
-        // TODO - extact segment number
+        // 
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
-            MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
+        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)) {
+            
             // Get session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
-            MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
-        }else{
+            
+        } else {
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
             PyErr_Occurred();
             return NULL;
         }
 
-    }else{
+    } else {
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
