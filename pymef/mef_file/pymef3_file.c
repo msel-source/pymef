@@ -795,11 +795,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     tmd2->recording_duration = (si8) (((sf8)tmd2->number_of_samples / (sf8) tmd2->sampling_frequency) * 1e6);
     tmd2->number_of_blocks = (si8) ceil((sf8) tmd2->number_of_samples / (sf8) samps_per_mef_block);
     tmd2->maximum_block_samples = (ui4) samps_per_mef_block;
-
-    // Get the start time and end time from the metadata file
-    uh->start_time = metadata_fps->universal_header->start_time;
-    uh->end_time = metadata_fps->universal_header->end_time;
-    
+        
     // Set up mef3 time series indices file
     ts_indices_file_bytes = (tmd2->number_of_blocks * TIME_SERIES_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
