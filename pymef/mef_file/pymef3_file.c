@@ -745,10 +745,9 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // set up a generic mef3 fps for universal header and password data
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
     initialize_universal_header(gen_fps, MEF_TRUE, MEF_FALSE, MEF_TRUE);
-    uh = gen_fps->universal_header;
     
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = process_password_data(NULL, level_1_password, level_2_password, uh);
+    pwd = process_password_data(NULL, level_1_password, level_2_password, gen_fps->universal_header);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
     // Check for directory type
