@@ -347,6 +347,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     write_MEF_file(rec_idx_fps);
     free_file_processing_struct(rec_data_fps);
     free_file_processing_struct(rec_idx_fps);
+    free_file_processing_struct(gen_fps);
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -484,14 +485,15 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // Get time series metadata section 2 from python dict
     map_python_tmd2(py_tmd2_dict, metadata_fps->metadata.time_series_section_2);
 
-    // Get time series metadata section 2 from python dict
+    // Get metadata section 3 from python dict
     map_python_md3(py_md3_dict, metadata_fps->metadata.section_3);
 
     // Assign recording_time_offset
     MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
 
     write_MEF_file(metadata_fps);
-    free_file_processing_struct(metadata_fps); 
+    free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -584,7 +586,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     extract_path_parts(py_file_path, path_out, name, type);
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // Segment - OK - extract segment number and check for time series
+        // Segment - OK - extract segment number and check for video
         uh->segment_number = extract_segment_number(&name[0]);
 
         // Copy the segment name for later use
@@ -600,7 +602,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
             extract_path_parts(path_in, path_out, name, type);
             MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
         }else{
-            //Fire an error that this is not time series directory - hence makes no sense to write metadata
+            //Fire an error that this is not video directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a video channel, exiting...");
             PyErr_Occurred();
             return NULL;
@@ -616,7 +618,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     // generate level UUID into generic universal_header
     generate_UUID(gen_fps->universal_header->level_UUID);
 
-    // set up mef3 time series metadata file
+    // set up mef3 video metadata file
     metadata_fps = allocate_file_processing_struct(METADATA_FILE_BYTES, VIDEO_METADATA_FILE_TYPE_CODE, NULL, gen_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(metadata_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", py_file_path, segment_name, VIDEO_METADATA_FILE_TYPE_STRING);
     uh = metadata_fps->universal_header;
@@ -627,10 +629,10 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     metadata_fps->metadata.section_1->section_2_encryption = LEVEL_1_ENCRYPTION_DECRYPTED;
     metadata_fps->metadata.section_1->section_3_encryption = LEVEL_2_ENCRYPTION_DECRYPTED;
 
-    // Get time series metadata section 2 from python dict
+    // Get video metadata section 2 from python dict
     map_python_vmd2(py_vmd2_dict, metadata_fps->metadata.video_section_2);
 
-    // Get time series metadata section 2 from python dict
+    // Get metadata section 3 from python dict
     map_python_md3(py_md3_dict, metadata_fps->metadata.section_3);
 
     // Apply recording offset
@@ -639,6 +641,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     write_MEF_file(metadata_fps);
 
     free_file_processing_struct(metadata_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -658,7 +661,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // Method specific
     PASSWORD_DATA           *pwd;
-    UNIVERSAL_HEADER    *uh;
+    UNIVERSAL_HEADER    *ts_data_uh;
     FILE_PROCESSING_STRUCT  *gen_fps, *metadata_fps, *ts_idx_fps, *ts_data_fps;
     TIME_SERIES_METADATA_SECTION_2  *tmd2;
     TIME_SERIES_INDEX   *tsi;
@@ -737,37 +740,35 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
-
-    // set up a generic mef3 fps for universal header and password data
+    
+    // set up a generic mef3 fps and process the password data with it
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
     initialize_universal_header(gen_fps, MEF_TRUE, MEF_FALSE, MEF_TRUE);
-    uh = gen_fps->universal_header;
-    
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
-    pwd = gen_fps->password_data = process_password_data(NULL, level_1_password, level_2_password, uh);
+    pwd = process_password_data(NULL, level_1_password, level_2_password, gen_fps->universal_header);
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
-    // Check for directory type
+    // extract the segment name and check the firectory-type (if indeed segment)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
     if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
-        // Segment - OK - extract segment number and check for time series
-        uh->segment_number = extract_segment_number(&name[0]);
+        // segment type/directory
 
-        // Copy the segment name for later use
+        // copy the segment name for file name construction later
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
 
-        // TODO - extact segment number
+        // extract the channel name and check the type (if indeed time-series)
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
         if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
-            MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
-            // Get session name
+            // correct/corresponding directory-type
+            
+            // extract the session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
-            MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
+            
         }else{
+            
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
             PyErr_Occurred();
@@ -775,47 +776,82 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         }
 
     }else{
+
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
         return NULL;
     }
 
-    // Get the metadata and update some fields - update the rest when processing RED
+
+    // 
+    // Read the existing time-series metadata file
+    //
     MEF_snprintf(full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_METADATA_FILE_TYPE_STRING);
     metadata_fps = read_MEF_file(NULL, full_file_name, level_1_password, pwd, NULL, USE_GLOBAL_BEHAVIOR);
 
+    // 
     MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
 
+
+    //
+    // Point to and update the time-series section 2 of the metadata struct (from the .tmet file)
+    // 
+    // The fields in this section 2 struct will be updated her and later to reflect the
+    // data (that we will be writing), in the end the updated metadata will be written (to the .tmet file)
+    // 
+    //
+
+    // create a pointer to the existing time-series section 2 metadata (from the .tmet file)
     tmd2 = metadata_fps->metadata.time_series_section_2;
+
+    // update fields in the time-series section 2 metadata based on the data (to be written)    
     tmd2->number_of_samples = (si8) PyArray_SHAPE(raw_data)[0];
     tmd2->recording_duration = (si8) (((sf8)tmd2->number_of_samples / (sf8) tmd2->sampling_frequency) * 1e6);
     tmd2->number_of_blocks = (si8) ceil((sf8) tmd2->number_of_samples / (sf8) samps_per_mef_block);
-    tmd2->maximum_block_samples = (ui4) samps_per_mef_block;
+    tmd2->maximum_block_samples = (ui4) samps_per_mef_block;       
 
-    // Get the start time and end time from the metadata file
-    uh->start_time = metadata_fps->universal_header->start_time;
-    uh->end_time = metadata_fps->universal_header->end_time;
-    
-    // Set up mef3 time series indices file
+
+    // 
+    // Set up a file-processing-struct and universal-header for the time-series indices (file)
+    //
+
+    // allocate a fps and univeral header for the ts-indices (file), based on the ts-metadata (copying the directives, password data, and raw data)
     ts_indices_file_bytes = (tmd2->number_of_blocks * TIME_SERIES_INDEX_BYTES) + UNIVERSAL_HEADER_BYTES;
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(ts_idx_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_INDICES_FILE_TYPE_STRING);
-    uh = ts_idx_fps->universal_header;
-    generate_UUID(uh->file_UUID);
-    uh->number_of_entries = tmd2->number_of_blocks;
-    uh->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
 
-    // Set up mef3 time series data file
+    // generate/update the ts-index file uuid and set some of the entries fields
+    generate_UUID(ts_idx_fps->universal_header->file_UUID);
+    ts_idx_fps->universal_header->number_of_entries = tmd2->number_of_blocks;
+    ts_idx_fps->universal_header->maximum_entry_size = TIME_SERIES_INDEX_BYTES;
+
+
+    // 
+    // Set up a file-processing-struct and universal-header for the time-series data and write to a file
+    //	
+
+    // allocate a fps and univeral header for the ts-data, based on the ts-metadata (copying the directives, password data, and raw data, including start_)
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, NULL, metadata_fps, UNIVERSAL_HEADER_BYTES);
     MEF_snprintf(ts_data_fps->full_file_name, MEF_FULL_FILE_NAME_BYTES, "%s/%s.%s", file_path, segment_name, TIME_SERIES_DATA_FILE_TYPE_STRING);
-    uh = ts_data_fps->universal_header;
-    generate_UUID(uh->file_UUID);
-    uh->number_of_entries = tmd2->number_of_blocks;
-    uh->maximum_entry_size = samps_per_mef_block;
+
+    // point to the universal-header of the time-series data (file)
+    ts_data_uh = ts_data_fps->universal_header;
+
+    // generate/update the ts-data file uuid and set some of the entries fields
+    generate_UUID(ts_data_uh->file_UUID);
+    ts_data_uh->number_of_entries = tmd2->number_of_blocks;
+    ts_data_uh->maximum_entry_size = samps_per_mef_block;
+
+    // write the universal header of the ts-data file
     ts_data_fps->directives.io_bytes = UNIVERSAL_HEADER_BYTES;
     ts_data_fps->directives.close_file = MEF_FALSE;
     write_MEF_file(ts_data_fps);
+
+
+    //
+    //
+    //
 
     // TODO optional filtration
     // use allocation below if lossy
@@ -847,11 +883,12 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     start_sample = 0;
 
     // Write the data and update the metadata
-    while (samps_remaining) {
+    while (samps_remaining){
 
         // check
         if (samps_remaining < block_samps)
             block_samps = (ui4) samps_remaining;
+		
         block_header->number_of_samples = block_samps;
         block_header->start_time = (si8) (curr_time + 0.5); // ASK Why 0.5 here?
         curr_time += time_inc;
@@ -892,22 +929,27 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // update metadata
     tmd2->maximum_contiguous_block_bytes = file_offset - UNIVERSAL_HEADER_BYTES;
-    if (tmd2->units_conversion_factor >= 0.0) {
+    if (tmd2->units_conversion_factor >= 0.0){
         tmd2->maximum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
-    } else {
+    }else{
         tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
     }
     tmd2->maximum_contiguous_blocks = tmd2->number_of_blocks;
 
-    // Write the files
+    // calculate the CRC for the time-series data-file and set in the universal header
     ts_data_fps->universal_header->header_CRC = CRC_calculate(ts_data_fps->raw_data + CRC_BYTES, UNIVERSAL_HEADER_BYTES - CRC_BYTES);
+
+    // re-write the universal header of the ts-data file (which now includes the CRC)
     e_fseek(ts_data_fps->fp, 0, SEEK_SET, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
-    e_fwrite(uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
+    e_fwrite(ts_data_uh, sizeof(ui1), UNIVERSAL_HEADER_BYTES, ts_data_fps->fp, ts_data_fps->full_file_name, __FUNCTION__, __LINE__, MEF_globals->behavior_on_fail);
     fclose(ts_data_fps->fp);
-    // write out metadata & time series indices files
+
+    // write/update the time-series metadata file
     write_MEF_file(metadata_fps);
+
+    // write time-series indices (file)
     write_MEF_file(ts_idx_fps);
 
     // clean up
@@ -1064,6 +1106,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 
     // clean up
     free_file_processing_struct(v_idx_fps);
+    free_file_processing_struct(gen_fps);
 
     Py_INCREF(Py_None);
     return Py_None;

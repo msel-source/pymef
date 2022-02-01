@@ -56,15 +56,19 @@ from .mef_constants import (
             TIME_SERIES_METADATA_MINIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY,
             TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY,
             TIME_SERIES_METADATA_MAXIMUM_DIFFERENCE_BYTES_NO_ENTRY,
+            TIME_SERIES_METADATA_MAXIMUM_BLOCK_BYTES_NO_ENTRY,
             TIME_SERIES_METADATA_MAXIMUM_BLOCK_SAMPLES_NO_ENTRY,
             TIME_SERIES_METADATA_BLOCK_INTERVAL_NO_ENTRY,
             TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_SAMPLES_NO_ENTRY,
             TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY,
             TIME_SERIES_METADATA_NUMBER_OF_DISCONTINUITIES_NO_ENTRY,
+            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCKS_NO_ENTRY,
 
             VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY,
             VIDEO_METADATA_VERTICAL_RESOLUTION_NO_ENTRY,
             VIDEO_METADATA_FRAME_RATE_NO_ENTRY,
+            VIDEO_METADATA_NUMBER_OF_CLIPS_NO_ENTRY,
+            VIDEO_METADATA_MAXIMUM_CLIP_BYTES_NO_ENTRY,
             VIDEO_METADATA_VIDEO_FILE_CRC_NO_ENTRY,
 
             METADATA_RECORDING_TIME_OFFSET_NO_ENTRY,
@@ -255,18 +259,22 @@ class MefSession():
             TIME_SERIES_METADATA_MINIMUM_NATIVE_SAMPLE_VALUE_NO_ENTRY)
         tmd2['start_sample'] = (
             TIME_SERIES_METADATA_START_SAMPLE_NO_ENTRY)
-        tmd2['maximum_difference_bytes'] = (
-            TIME_SERIES_METADATA_MAXIMUM_DIFFERENCE_BYTES_NO_ENTRY)
+        tmd2['maximum_block_bytes'] = (
+            TIME_SERIES_METADATA_MAXIMUM_BLOCK_BYTES_NO_ENTRY)
         tmd2['maximum_block_samples'] = (
             TIME_SERIES_METADATA_MAXIMUM_BLOCK_SAMPLES_NO_ENTRY)
+        tmd2['maximum_difference_bytes'] = (
+            TIME_SERIES_METADATA_MAXIMUM_DIFFERENCE_BYTES_NO_ENTRY)
         tmd2['block_interval'] = (
             TIME_SERIES_METADATA_BLOCK_INTERVAL_NO_ENTRY)
-        tmd2['maximum_contiguous_samples'] = (
-            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_SAMPLES_NO_ENTRY)
-        tmd2['maximum_contiguous_block_bytes'] = (
-            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY)
         tmd2['number_of_discontinuities'] = (
             TIME_SERIES_METADATA_NUMBER_OF_DISCONTINUITIES_NO_ENTRY)
+        tmd2['maximum_contiguous_blocks'] = (
+            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCKS_NO_ENTRY)
+        tmd2['maximum_contiguous_block_bytes'] = (
+            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_BLOCK_BYTES_NO_ENTRY)
+        tmd2['maximum_contiguous_samples'] = (
+            TIME_SERIES_METADATA_MAXIMUM_CONTIGUOUS_SAMPLES_NO_ENTRY)
 
         return tmd2
 
@@ -282,12 +290,18 @@ class MefSession():
 
         vmd2 = np.zeros(1, create_vmd2_dtype())
 
+        vmd2['recording_duration'] = (
+            METADATA_RECORDING_DURATION_NO_ENTRY)
         vmd2['horizontal_resolution'] = (
             VIDEO_METADATA_HORIZONTAL_RESOLUTION_NO_ENTRY)
         vmd2['vertical_resolution'] = (
             VIDEO_METADATA_VERTICAL_RESOLUTION_NO_ENTRY)
         vmd2['frame_rate'] = (
             VIDEO_METADATA_FRAME_RATE_NO_ENTRY)
+        vmd2['number_of_clips'] = (
+            VIDEO_METADATA_NUMBER_OF_CLIPS_NO_ENTRY)
+        vmd2['maximum_clip_bytes'] = (
+            VIDEO_METADATA_MAXIMUM_CLIP_BYTES_NO_ENTRY)
         vmd2['video_file_CRC'] = (
             VIDEO_METADATA_VIDEO_FILE_CRC_NO_ENTRY)
 
@@ -529,7 +543,7 @@ class MefSession():
                                   samps_per_mef_block,
                                   data):
         """
-        Writes new time series metadata in the specified segment
+        Writes new time series data in the specified segment
 
         Parameters
         ----------

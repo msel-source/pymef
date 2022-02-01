@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/msel-source/pymef.svg?branch=master)](https://travis-ci.com/msel-source/pymef)
+![Tests](https://github.com/msel-source/pymef/actions/workflows/test_publish.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/pymef/badge/?version=latest)](https://pymef.readthedocs.io/en/latest/?badge=latest)
 
 Pymef

@@ -94,3 +94,4 @@ mef3.1*
 _build
 _static
 _templates
+*.directory
