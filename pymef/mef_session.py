@@ -412,7 +412,10 @@ class MefSession():
             for key in record.keys():
                 if key in ['type', 'time']:
                     continue
-                body_arr[key] = record[key]
+                if isinstance(record[key], str):
+                    body_arr[key] = record[key].encode()
+                else:
+                    body_arr[key] = record[key]
 
         elif record_type == 'ESti':
             hdr_arr['type_string'] = b'ESti'
@@ -425,7 +428,10 @@ class MefSession():
             for key in record.keys():
                 if key in ['type', 'time']:
                     continue
-                body_arr[key] = record[key]
+                if isinstance(record[key], str):
+                    body_arr[key] = record[key].encode()
+                else:
+                    body_arr[key] = record[key]
 
         elif record_type == 'Seiz':
             hdr_arr['type_string'] = b'Seiz'
@@ -446,7 +452,10 @@ class MefSession():
                     subbody_arr['onset'] = [x['onset'] for x in channels]
                     subbody_arr['offset'] = [x['offset'] for x in channels]
                 else:
-                    body_arr[key] = record[key]
+                    if isinstance(record[key], str):
+                        body_arr[key] = record[key].encode()
+                    else:
+                        body_arr[key] = record[key]
 
         elif record_type == 'Curs':
             hdr_arr['type_string'] = b'Curs'
@@ -459,7 +468,10 @@ class MefSession():
             for key in record.keys():
                 if key in ['type', 'time']:
                     continue
-                body_arr[key] = record[key]
+                if isinstance(record[key], str):
+                    body_arr[key] = record[key].encode()
+                else:
+                    body_arr[key] = record[key]
 
         elif record_type == 'Epoc':
             hdr_arr['type_string'] = b'Epoc'
@@ -472,7 +484,10 @@ class MefSession():
             for key in record.keys():
                 if key in ['type', 'time']:
                     continue
-                body_arr[key] = record[key]
+                if isinstance(record[key], str):
+                    body_arr[key] = record[key].encode()
+                else:
+                    body_arr[key] = record[key]
 
         else:
             raise ValueError("Unrecognized record type:'%s'" % record_type)
