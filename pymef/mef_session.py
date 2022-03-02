@@ -957,6 +957,7 @@ class MefSession():
             section_2['number_of_samples'] = 0
 
             section_3 = ch_md['section_3'].copy()
+            section_3['recording_time_offset'] = slice_start_stop[0]
 
             write_mef_ts_metadata(segment_path,
                                   password_1,
