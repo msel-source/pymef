@@ -364,7 +364,7 @@ class MefSession():
                 record_str = record['text']+'\0'
                 body_dtype = create_note_dtype(len(record_str))
                 body_arr = np.zeros(1, body_dtype)
-                body_arr['text'] = record_str.encode()
+                body_arr['text'] = record_str.encode('utf8') + b'\x00'
 
         elif record_type == 'SyLg':
             hdr_arr['type_string'] = b'SyLg'
@@ -375,7 +375,7 @@ class MefSession():
                 record_str = record['text']+'\0'
                 body_dtype = create_sylg_dtype(len(record_str))
                 body_arr = np.zeros(1, body_dtype)
-                body_arr['text'] = record_str.encode()
+                body_arr['text'] = record_str.encode('utf8') + b'\x00'
 
         elif record_type == 'EDFA':
             hdr_arr['type_string'] = b'EDFA'
@@ -386,7 +386,7 @@ class MefSession():
                 record_str = record['text']+'\0'
                 body_dtype = create_edfa_dtype(len(record_str))
                 body_arr = np.zeros(1, body_dtype)
-                body_arr['text'] = record_str.encode()
+                body_arr['text'] = record_str.encode('utf8') + b'\x00'
             if 'duration' in record.keys():
                 body_arr['duration'] = record['duration']
 
@@ -413,7 +413,7 @@ class MefSession():
                 if key in ['type', 'time']:
                     continue
                 if isinstance(record[key], str):
-                    body_arr[key] = record[key].encode()
+                    body_arr[key] = record[key].encode('utf8') + b'\x00'
                 else:
                     body_arr[key] = record[key]
 
@@ -429,7 +429,7 @@ class MefSession():
                 if key in ['type', 'time']:
                     continue
                 if isinstance(record[key], str):
-                    body_arr[key] = record[key].encode()
+                    body_arr[key] = record[key].encode('utf8') + b'\x00'
                 else:
                     body_arr[key] = record[key]
 
@@ -453,7 +453,7 @@ class MefSession():
                     subbody_arr['offset'] = [x['offset'] for x in channels]
                 else:
                     if isinstance(record[key], str):
-                        body_arr[key] = record[key].encode()
+                        body_arr[key] = record[key].encode('utf8') + b'\x00'
                     else:
                         body_arr[key] = record[key]
 
@@ -469,7 +469,7 @@ class MefSession():
                 if key in ['type', 'time']:
                     continue
                 if isinstance(record[key], str):
-                    body_arr[key] = record[key].encode()
+                    body_arr[key] = record[key].encode('utf8') + b'\x00'
                 else:
                     body_arr[key] = record[key]
 
@@ -485,7 +485,7 @@ class MefSession():
                 if key in ['type', 'time']:
                     continue
                 if isinstance(record[key], str):
-                    body_arr[key] = record[key].encode()
+                    body_arr[key] = record[key].encode('utf8') + b'\x00'
                 else:
                     body_arr[key] = record[key]
 
@@ -928,9 +928,25 @@ class MefSession():
 
         segment_n = 0
         for channel, ch_md in channels_dict.items():
+            
+            toc = self.get_channel_toc(channel)
+            
+            toc_start_idx = np.where(toc[0] == 1)[0]
+            toc_start_times = toc[-1, toc_start_idx]
+            toc_stop_times = toc[-1, toc_start_idx[1:]-1] + ((toc[1, toc_start_idx[1:]-1]/5000)*1e6).astype(int)
+            toc_stop_times = np.concatenate([toc_stop_times, self.session_md['session_specific_metadata']['latest_end_time']])
+            
+            toc_slices = np.stack([toc_start_times, toc_stop_times], axis=1)
+            toc_slices = toc_slices[((toc_slices[:, 1] > slice_start_stop[0])
+                                     & (toc_slices[:, 0] < slice_start_stop[1]))]
+            
+            toc_slices[0, 0] = slice_start_stop[0]
+            toc_slices[-1, 1] = slice_start_stop[1]
 
             segment_path = (slice_session_path+channel+'.timd/'
                             + channel+'-'+str(segment_n).zfill(6)+'.segd/')
+            
+            os.makedirs(segment_path, exist_ok=True)
 
             tmet_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
                          + '.tmet')
@@ -939,53 +955,74 @@ class MefSession():
                 raise RuntimeError('Metadata file '+tmet_path
                                    + ' already exists!')
 
-            os.makedirs(segment_path, exist_ok=True)
-
             section_2 = ch_md['section_2'].copy()
-
-            # Zero out the machine generated fields
-            section_2['maximum_native_sample_value'] = 0.0
-            section_2['minimum_native_sample_value'] = 0.0
-            section_2['number_of_blocks'] = 0
-            section_2['maximum_block_bytes'] = 0
-            section_2['maximum_block_samples'] = 0
-            section_2['maximum_difference_bytes'] = 0
-            section_2['block_interval'] = 0
-            section_2['maximum_contiguous_blocks'] = 0
-            section_2['maximum_contiguous_block_bytes'] = 0
-            section_2['maximum_contiguous_samples'] = 0
-            section_2['number_of_samples'] = 0
-
-            section_3 = ch_md['section_3'].copy()
-
-            write_mef_ts_metadata(segment_path,
-                                  password_1,
-                                  password_2,
-                                  slice_start_stop[0],
-                                  slice_start_stop[1],
-                                  section_2,
-                                  section_3)
-
-            data = self.read_ts_channels_uutc(channel, slice_start_stop)
-
-            tdat_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
-                         + '.tdat')
-
-            if os.path.exists(tdat_path):
-                raise RuntimeError('Data file '+tdat_path+' already exists!')
 
             if samps_per_mef_block is None:
                 spmb = int(section_2['sampling_frequency'][0])
             else:
                 spmb = samps_per_mef_block
 
-            # lossy compression flag - not used
-            write_mef_ts_data_and_indices(segment_path,
+            is_first_write = True
+            
+            for ss in toc_slices:
+
+                if is_first_write is True:
+                
+                    # Zero out the machine generated fields
+                    section_2['maximum_native_sample_value'] = 0.0
+                    section_2['minimum_native_sample_value'] = 0.0
+                    section_2['number_of_blocks'] = 0
+                    section_2['maximum_block_bytes'] = 0
+                    section_2['maximum_block_samples'] = 0
+                    section_2['maximum_difference_bytes'] = 0
+                    section_2['block_interval'] = 0
+                    section_2['maximum_contiguous_blocks'] = 0
+                    section_2['maximum_contiguous_block_bytes'] = 0
+                    section_2['maximum_contiguous_samples'] = 0
+                    section_2['number_of_samples'] = 0
+                
+                    section_3 = ch_md['section_3'].copy()
+                    section_3['recording_time_offset'] = slice_start_stop[0]    
+                
+                    write_mef_ts_metadata(segment_path,
                                           password_1,
                                           password_2,
-                                          spmb,
-                                          data.astype('int32'),
-                                          0)
+                                          slice_start_stop[0],
+                                          slice_start_stop[1],
+                                          section_2,
+                                          section_3)
+                
+                    data = self.read_ts_channels_uutc(channel, [int(x) for x in ss])
+                
+                    tdat_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
+                                 + '.tdat')
+                
+                    if os.path.exists(tdat_path):
+                        raise RuntimeError('Data file '+tdat_path+' already exists!')
+                
+                    
+                
+                    # lossy compression flag - not used
+                    write_mef_ts_data_and_indices(segment_path,
+                                                  password_1,
+                                                  password_2,
+                                                  spmb,
+                                                  data.astype('int32'),
+                                                  0)
+                    
+                    is_first_write = False
+                        
+                else:
+                    
+                    data = self.read_ts_channels_uutc(channel, [int(x) for x in ss])
+                    append_ts_data_and_indices(segment_path,
+                                               password_1,
+                                               password_2,
+                                               int(ss[0]),
+                                               int(ss[1]),
+                                               spmb,
+                                               data.astype('int32'),
+                                               True)
 
     # ----- Data reading functions -----
     def _create_dict_record(self, np_record):
@@ -1188,14 +1225,13 @@ class MefSession():
         TOC: np.array
             Array with
               - [0,:] = discontinuity flags
-              - [1,:] = discont lengths
+              - [1,:] = n block samples
               - [2,:] = start samples
               - [3,:] = start uutc times
         """
 
         channel_md = self.session_md['time_series_channels'][channel]
         toc = np.empty([4, 0], dtype='int64')
-        fsamp = channel_md['section_2']['sampling_frequency']
 
         # Sort the segments to eliminate dictionary randomness
         segs = list(channel_md['segments'].keys())
@@ -1206,9 +1242,6 @@ class MefSession():
             # Join into channel TOC
             toc = np.concatenate([toc, seg_toc], axis=1)
 
-        # Once we have all segments get lenghts (differnces between segments)
-        toc[1, 1::] = (((np.diff(toc[3, :]) / 1e6)
-                        - (np.diff(toc[2, :]) / fsamp)) * 1e6)
 
         return toc
 
