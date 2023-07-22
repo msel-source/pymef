@@ -2632,6 +2632,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
     PyObject *uh_dict;
     PyObject *uhs_dict;
     PyObject *TOC;
+	PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
     si8   number_of_entries;
 
     // create python output dictionary
@@ -2663,19 +2664,19 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
     }
 
     // create section 1 dictionary
-	PyObject* py_md1 = map_mef3_md1(segment->metadata_fps->metadata.section_1);
+	py_md1 = map_mef3_md1(segment->metadata_fps->metadata.section_1);
     PyDict_SetItemString(metadata_dict, "section_1", py_md1);
 	Py_DECREF(py_md1);	py_md1 = NULL;
 
     // Create section 2 dictionary
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
-			PyObject* py_tmd2 = map_mef3_tmd2(segment->metadata_fps->metadata.time_series_section_2);
+			py_tmd2 = map_mef3_tmd2(segment->metadata_fps->metadata.time_series_section_2);
             PyDict_SetItemString(metadata_dict, "section_2", py_tmd2);
 			Py_DECREF(py_tmd2);	py_tmd2 = NULL;
             break;
         case VIDEO_CHANNEL_TYPE:
-			PyObject* py_vmd2 = map_mef3_vmd2(segment->metadata_fps->metadata.video_section_2);
+			py_vmd2 = map_mef3_vmd2(segment->metadata_fps->metadata.video_section_2);
             PyDict_SetItemString(metadata_dict, "section_2", py_vmd2);
 			Py_DECREF(py_vmd2);	py_vmd2 = NULL;
             break;
@@ -2686,7 +2687,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
     }
     
     // create section 3 dictionary
-	PyObject* py_md3 = map_mef3_md3(segment->metadata_fps->metadata.section_3);
+	py_md3 = map_mef3_md3(segment->metadata_fps->metadata.section_3);
     PyDict_SetItemString(metadata_dict, "section_3", py_md3);
 	Py_DECREF(py_md3);	py_md3 = NULL;
 
@@ -2775,7 +2776,8 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
     PyObject *records_dict;
     PyObject *segment_dict;
     PyObject *segments_all_dict;
-    
+    PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
+	
     si4   i;
     SEGMENT *segment;
 
@@ -2814,7 +2816,7 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
     }
 
 	// create section 1 dictionary
-	PyObject* py_md1 = map_mef3_md1(channel->metadata.section_1);
+	py_md1 = map_mef3_md1(channel->metadata.section_1);
     PyDict_SetItemString(metadata_dict, "section_1", py_md1);
 	Py_DECREF(py_md1);	py_md1 = NULL;
     
@@ -2822,14 +2824,14 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
     switch (channel->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
 		
-			PyObject* py_tmd2 = map_mef3_tmd2(channel->metadata.time_series_section_2);
+			py_tmd2 = map_mef3_tmd2(channel->metadata.time_series_section_2);
             PyDict_SetItemString(metadata_dict, "section_2", py_tmd2);
 			Py_DECREF(py_tmd2);	py_tmd2 = NULL;
 			
             break;
         case VIDEO_CHANNEL_TYPE:
 		
-			PyObject* py_vmd2 = map_mef3_vmd2(channel->metadata.video_section_2);
+			py_vmd2 = map_mef3_vmd2(channel->metadata.video_section_2);
             PyDict_SetItemString(metadata_dict, "section_2", py_vmd2);
 			Py_DECREF(py_vmd2);	py_vmd2 = NULL;
 			
@@ -2841,7 +2843,7 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
     }
 
     // create section 3 dictionary
-	PyObject* py_md3 = map_mef3_md3(channel->metadata.section_3);
+	py_md3 = map_mef3_md3(channel->metadata.section_3);
     PyDict_SetItemString(metadata_dict, "section_3", py_md3);
 	Py_DECREF(py_md3);	py_md3 = NULL;
     
@@ -2885,6 +2887,7 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) {
     PyObject *v_metadata;
     PyObject *v_all_dict;
 	PyObject *v_dict;
+	PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
     
     si4   i;
     CHANNEL *channel;
@@ -2928,17 +2931,17 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) {
 		ts_metadata = PyDict_New();
 
 		// create section time series 1 dictionary
-		PyObject* py_md1 = map_mef3_md1(session->time_series_metadata.section_1);
+		py_md1 = map_mef3_md1(session->time_series_metadata.section_1);
 		PyDict_SetItemString(ts_metadata, "section_1", py_md1);
 		Py_DECREF(py_md1);	py_md1 = NULL;
 
 		// create section time series 2 dictionary
-		PyObject* py_tmd2 = map_mef3_tmd2(session->time_series_metadata.time_series_section_2);
+		py_tmd2 = map_mef3_tmd2(session->time_series_metadata.time_series_section_2);
 		PyDict_SetItemString(ts_metadata, "section_2", py_tmd2);
 		Py_DECREF(py_tmd2);	py_tmd2 = NULL;
 		
 		// create section time series 3 dictionary
-		PyObject* py_md3 = map_mef3_md3(session->time_series_metadata.section_3);
+		py_md3 = map_mef3_md3(session->time_series_metadata.section_3);
 		PyDict_SetItemString(ts_metadata, "section_3", py_md3);
 		Py_DECREF(py_md3);	py_md3 = NULL;
 		
@@ -2954,17 +2957,17 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) {
 		v_metadata = PyDict_New();
 
 		// create section video 1 dictionary
-		PyObject* py_md1 = map_mef3_md1(session->video_metadata.section_1);
+		py_md1 = map_mef3_md1(session->video_metadata.section_1);
 		PyDict_SetItemString(v_metadata, "section_1", py_md1);
 		Py_DECREF(py_md1);	py_md1 = NULL;
 		
 		// create section video 2 dictionary
-		PyObject* py_vmd2 = map_mef3_vmd2(session->video_metadata.video_section_2);
+		py_vmd2 = map_mef3_vmd2(session->video_metadata.video_section_2);
 		PyDict_SetItemString(v_metadata, "section_2", py_vmd2);
 		Py_DECREF(py_vmd2);	py_vmd2 = NULL;
 		
 		// create section video 3 dictionary
-		PyObject* py_md3 = map_mef3_md3(session->video_metadata.section_3);
+		py_md3 = map_mef3_md3(session->video_metadata.section_3);
 		PyDict_SetItemString(v_metadata, "section_3", py_md3);
 		Py_DECREF(py_md3);	py_md3 = NULL;
 		
