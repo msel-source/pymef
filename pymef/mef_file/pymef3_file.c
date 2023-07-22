@@ -1305,7 +1305,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_idx_fps = read_MEF_file(ts_idx_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
 
-    if (ts_idx_fps == NULL){
+    if (ts_idx_fps == NULL) {
         PyErr_SetString(PyExc_FileNotFoundError, "Index file does not exist, exiting...");
         PyErr_Occurred();
         free_file_processing_struct(gen_fps);
@@ -1318,7 +1318,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_data_fps = read_MEF_file(ts_data_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
     
-    if (ts_data_fps == NULL){
+    if (ts_data_fps == NULL) {
         PyErr_SetString(PyExc_FileNotFoundError, "Data file does not exist, exiting...");
         PyErr_Occurred();
         free_file_processing_struct(gen_fps);
@@ -1332,7 +1332,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // TODO optional filtration
     // use allocation below if lossy
-    if (lossy_flag == 1){
+    if (lossy_flag == 1) {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, samps_per_mef_block, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), samps_per_mef_block, samps_per_mef_block, pwd);
         // ASK RED lossy compression user specified???
         rps->compression.mode = RED_MEAN_RESIDUAL_RATIO;
@@ -1340,7 +1340,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         rps->directives.require_normality = MEF_TRUE;
         rps->compression.goal_mean_residual_ratio = 0.10;
         rps->compression.goal_tolerance = 0.01;
-    }else{
+    } else {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, 0, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), 0, 0, pwd);
     }
 
@@ -1482,8 +1482,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 /************************************************************************************/
 
 
-static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_session_path;
     PyObject    *py_password_obj;
@@ -1539,8 +1538,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
 	return ses_metadata_dict;
 }
 
-static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_channel_dir;
     PyObject    *py_password_obj;
@@ -1595,8 +1593,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     return ch_metadata_dict;
 }
 
-static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_segment_dir;
     PyObject    *py_password_obj;
@@ -2633,6 +2630,8 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
     PyObject *uhs_dict;
     PyObject *TOC;
 	PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
+	PyObject *py_uh_ts_data, *py_uh_ts_indices, *py_uh_v_indices;
+	PyObject *py_ts_indices, *py_v_indices;
     si8   number_of_entries;
 
     // create python output dictionary
@@ -2697,11 +2696,11 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
     TOC = NULL;
 
     // create indices dictionary
-    switch (segment->channel_type){
+    switch (segment->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
             number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
 
-			PyObject* py_ts_indices = map_mef3_ti(segment->time_series_indices_fps->time_series_indices, number_of_entries);
+			py_ts_indices = map_mef3_ti(segment->time_series_indices_fps->time_series_indices, number_of_entries);
             PyDict_SetItemString(metadata_dict, "indices", py_ts_indices);
 			Py_DECREF(py_ts_indices);	py_ts_indices = NULL;
 
@@ -2712,7 +2711,7 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
         case VIDEO_CHANNEL_TYPE:
             number_of_entries = segment->video_indices_fps->universal_header->number_of_entries;
 
-			PyObject* py_v_indices = map_mef3_vi(segment->video_indices_fps->video_indices, number_of_entries);
+			py_v_indices = map_mef3_vi(segment->video_indices_fps->video_indices, number_of_entries);
             PyDict_SetItemString(metadata_dict, "indices", py_v_indices);
 			Py_DECREF(py_v_indices);	py_v_indices = NULL;
 
@@ -2737,21 +2736,21 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
 	Py_DECREF(uh_dict);	uh_dict = NULL;
 
     // Data an indices universal headers
-    switch (segment->channel_type){
+    switch (segment->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
 			
-			PyObject* py_uh_ts_data = map_mef3_uh(segment->time_series_data_fps->universal_header);
+			py_uh_ts_data = map_mef3_uh(segment->time_series_data_fps->universal_header);
             PyDict_SetItemString(uhs_dict, "time_series_data", py_uh_ts_data);
 			Py_DECREF(py_uh_ts_data);	py_uh_ts_data = NULL;
 			
-			PyObject* py_uh_ts_indices = map_mef3_uh(segment->time_series_indices_fps->universal_header);
+			py_uh_ts_indices = map_mef3_uh(segment->time_series_indices_fps->universal_header);
             PyDict_SetItemString(uhs_dict, "time_series_indices", py_uh_ts_indices);
 			Py_DECREF(py_uh_ts_indices);	py_uh_ts_indices = NULL;
 			
             break;
         case VIDEO_CHANNEL_TYPE:
 		
-			PyObject* py_uh_v_indices = map_mef3_uh(segment->video_indices_fps->universal_header);
+			py_uh_v_indices = map_mef3_uh(segment->video_indices_fps->universal_header);
             PyDict_SetItemString(uhs_dict, "video_indices", py_uh_v_indices);
 			Py_DECREF(py_uh_v_indices);	py_uh_v_indices = NULL;
 			
@@ -2821,7 +2820,7 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
 	Py_DECREF(py_md1);	py_md1 = NULL;
     
     // create section 2 dictionary
-    switch (channel->channel_type){
+    switch (channel->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
 		
 			py_tmd2 = map_mef3_tmd2(channel->metadata.time_series_section_2);
