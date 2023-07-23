@@ -32,6 +32,37 @@
 #include "meflib.c"
 #include "mefrec.c"
 
+#define PY_DICTSET_FUNC(dict, name, py_func) \
+	py_value_obj = py_func; \
+    PyDict_SetItemString(dict, name, py_value_obj); \
+    Py_DECREF(py_value_obj);	py_value_obj = NULL;
+
+#ifdef _WIN32
+	#define PY_DICTSET_LONG(dict, name, value) \
+		py_value_obj = Py_BuildValue("L", value); \
+		PyDict_SetItemString(dict, name, py_value_obj); \
+		Py_DECREF(py_value_obj);	py_value_obj = NULL;
+		
+	#define PY_DICTSET_ULONG(dict, name, value) \
+		py_value_obj = Py_BuildValue("K", value); \
+		PyDict_SetItemString(dict, name, py_value_obj); \
+		Py_DECREF(py_value_obj);	py_value_obj = NULL;
+#else
+	#define PY_DICTSET_LONG(dict, name, value) \
+		py_value_obj = Py_BuildValue("l", value); \
+		PyDict_SetItemString(dict, name, py_value_obj); \
+		Py_DECREF(py_value_obj);	py_value_obj = NULL;
+		
+	#define PY_DICTSET_ULONG(dict, name, value) \
+		py_value_obj = Py_BuildValue("k", value); \
+		PyDict_SetItemString(dict, name, py_value_obj); \
+		Py_DECREF(py_value_obj);	py_value_obj = NULL;
+#endif
+
+#define PY_DICTSET_BUILD(dict, name, format, value) \
+    py_value_obj = Py_BuildValue(format, value); \
+    PyDict_SetItemString(dict, name, py_value_obj); \
+    Py_DECREF(py_value_obj);	py_value_obj = NULL;
 
 
 /************************************************************************************/
@@ -80,8 +111,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
 
     // Check if the list is empty
     if (PyList_Size(py_record_list) == 0){
-        Py_INCREF(Py_None);
-        return Py_None;
+        Py_RETURN_NONE;
     }
 
     // initialize MEF library
@@ -348,8 +378,8 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     free_file_processing_struct(rec_data_fps);
     free_file_processing_struct(rec_idx_fps);
     free_file_processing_struct(gen_fps);
-    Py_INCREF(Py_None);
-    return Py_None;
+	
+    Py_RETURN_NONE;
 }
 
 static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
@@ -495,8 +525,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     free_file_processing_struct(metadata_fps);
     free_file_processing_struct(gen_fps);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
@@ -643,8 +672,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     free_file_processing_struct(metadata_fps);
     free_file_processing_struct(gen_fps);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
@@ -963,8 +991,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     rps->original_ptr = NULL;
     RED_free_processing_struct(rps);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
@@ -1108,8 +1135,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     free_file_processing_struct(v_idx_fps);
     free_file_processing_struct(gen_fps);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /************************************************************************************/
@@ -1279,7 +1305,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_idx_fps = allocate_file_processing_struct(ts_indices_file_bytes, TIME_SERIES_INDICES_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_idx_fps = read_MEF_file(ts_idx_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
 
-    if (ts_idx_fps == NULL){
+    if (ts_idx_fps == NULL) {
         PyErr_SetString(PyExc_FileNotFoundError, "Index file does not exist, exiting...");
         PyErr_Occurred();
         free_file_processing_struct(gen_fps);
@@ -1292,7 +1318,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     ts_data_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES + RED_MAX_COMPRESSED_BYTES(samps_per_mef_block, 1), TIME_SERIES_DATA_FILE_TYPE_CODE, gen_directives, NULL, 0);
     ts_data_fps = read_MEF_file(ts_data_fps, full_file_name, level_1_password, pwd, gen_directives, USE_GLOBAL_BEHAVIOR);
     
-    if (ts_data_fps == NULL){
+    if (ts_data_fps == NULL) {
         PyErr_SetString(PyExc_FileNotFoundError, "Data file does not exist, exiting...");
         PyErr_Occurred();
         free_file_processing_struct(gen_fps);
@@ -1306,7 +1332,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // TODO optional filtration
     // use allocation below if lossy
-    if (lossy_flag == 1){
+    if (lossy_flag == 1) {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, samps_per_mef_block, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), samps_per_mef_block, samps_per_mef_block, pwd);
         // ASK RED lossy compression user specified???
         rps->compression.mode = RED_MEAN_RESIDUAL_RATIO;
@@ -1314,7 +1340,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         rps->directives.require_normality = MEF_TRUE;
         rps->compression.goal_mean_residual_ratio = 0.10;
         rps->compression.goal_tolerance = 0.01;
-    }else{
+    } else {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, 0, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), 0, 0, pwd);
     }
 
@@ -1429,8 +1455,8 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     rps->compressed_data = NULL;
     rps->original_data = NULL;
     RED_free_processing_struct(rps);
-    Py_INCREF(Py_None);
-    return Py_None;
+    
+    Py_RETURN_NONE;
 }
 
 // ASK No need for modify functions - can be taken care of at python level - just load and rewrite,
@@ -1456,8 +1482,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 /************************************************************************************/
 
 
-static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_session_path;
     PyObject    *py_password_obj;
@@ -1467,7 +1492,6 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     
     // Fuction specific
     SESSION *session;
-    si1     session_path[MEF_FULL_FILE_NAME_BYTES];
     si1     password_arr[PASSWORD_BYTES] = {0};
     si1     *temp_str_bytes;
     si1     *password;
@@ -1487,33 +1511,34 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+    // password entries
+    if (PyUnicode_Check(py_password_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        if (!*temp_str_bytes){
+        
+        if (!*temp_str_bytes)
             password = NULL;
-        }else{
-            password = strcpy(password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            password = strcpy(password_arr, temp_str_bytes);
+        
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         password = NULL;
     }
 
-
-    MEF_strncpy(session_path, py_session_path, MEF_FULL_FILE_NAME_BYTES);
+	// read the session metadata (and record-data)
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
     session = read_MEF_session(NULL, py_session_path, password, NULL, MEF_FALSE, MEF_TRUE);    
     MEF_globals->behavior_on_fail = EXIT_ON_FAIL;
 
-    // Session info
+    // map session metadata
     ses_metadata_dict = map_mef3_session(session, map_indices_flag);
-    
-    return ses_metadata_dict;   
+
+	// return the metadata dictionary
+	return ses_metadata_dict;
 }
 
-static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_channel_dir;
     PyObject    *py_password_obj;
@@ -1542,32 +1567,33 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+    // password entries
+    if (PyUnicode_Check(py_password_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        if (!*temp_str_bytes){
+        
+        if (!*temp_str_bytes)
             password = NULL;
-        }else{
+        else
             password = strcpy(password_arr,temp_str_bytes);
-        }
-    }else{
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         password = NULL;
     }
     
-
-    
+    // read the channel metadata (and record-data)
     MEF_globals->behavior_on_fail = SUPPRESS_ERROR_OUTPUT;
     channel = read_MEF_channel(NULL, py_channel_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
 
-    // map the channel info
+    // map channel metadata
     ch_metadata_dict = map_mef3_channel(channel, map_indices_flag);
     
+	// return the metadata dictionary    
     return ch_metadata_dict;
 }
 
-static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_segment_dir;
     PyObject    *py_password_obj;
@@ -1596,28 +1622,32 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+    // password entries
+    if (PyUnicode_Check(py_password_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        if (!*temp_str_bytes){
+        
+		if (!*temp_str_bytes)
             password = NULL;
-        }else{
+        else
             password = strcpy(password_arr,temp_str_bytes);
-        }
-    }else{
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         password = NULL;
     }
     
+	// read the segment metadata (and record-data)
+
     segment = read_MEF_segment(NULL, py_segment_dir, UNKNOWN_CHANNEL_TYPE, password, NULL, MEF_FALSE, MEF_TRUE);    
-    // map the segment info
+    // map the segment metadata
     seg_metadata_dict = map_mef3_segment(segment,map_indices_flag);
     
+	// return the metadata dictionary    
     return seg_metadata_dict; 
 }
 
-static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
-{
+static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
     // Specified by user
     PyObject    *py_channel_obj;
     PyObject    *ostart, *oend;
@@ -1706,14 +1736,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         end_samp = end_time = PyLong_AsLongLong(oend);
 
     // check if valid data range
-    if (times_specified && start_time >= end_time)
-    {
+    if (times_specified && start_time >= end_time) {
         PyErr_SetString(PyExc_RuntimeError, "Start time later than end time, exiting...");
         PyErr_Occurred();
         return NULL;
     }
-    if (!times_specified && start_samp >= end_samp)
-    {
+    if (!times_specified && start_samp >= end_samp) {
         PyErr_SetString(PyExc_RuntimeError, "Start sample larger than end sample, exiting...");
         PyErr_Occurred();
         return NULL;
@@ -1724,20 +1752,18 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         if (((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time)) |
             ((start_time > channel->latest_end_time) & (end_time > channel->latest_end_time))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         if (end_time > channel->latest_end_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop uutc later than latest end time. Will insert NaNs", 1);
         
         if (start_time < channel->earliest_start_time)
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start uutc earlier than earliest start time. Will insert NaNs", 1);
-    }else{
+    } else {
         if (((start_samp < 0) & (end_samp < 0)) |
             ((start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
-            Py_INCREF(Py_None);
-            return Py_None;
+            Py_RETURN_NONE;
         }
         if (end_samp > channel->metadata.time_series_section_2->number_of_samples){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Setting end sample to number of samples in channel", 1);
@@ -1764,7 +1790,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     // Usnig doubles so we can use NaN values for discontinuities
     py_array_out = (PyArrayObject *) PyArray_SimpleNew(1, dims, NPY_DOUBLE);
-    if (py_array_out == NULL){
+    if (py_array_out == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Memory allocation error, please try shortening the requested segment.");
         PyErr_Occurred();
         return NULL;
@@ -1788,12 +1814,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // then find stop segment by using the previous segment of the (first segment whose start is past the end time)
     for (i = 0; i < n_segments; ++i) {
         
-        if (times_specified){
+        if (times_specified) {
             segment_start_time = channel->segments[i].time_series_data_fps->universal_header->start_time;
             segment_end_time   = channel->segments[i].time_series_data_fps->universal_header->end_time;
             remove_recording_time_offset( &segment_start_time);
             remove_recording_time_offset( &segment_end_time);
-                        
+            
             if ((segment_end_time >= start_time) && (start_segment == -1)) {
                 start_segment = i;
                 end_segment = i;
@@ -1801,7 +1827,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             if ((end_segment != -1) && (segment_start_time <= end_time))
                 end_segment = i;
             
-        }else{
+        } else {
             segment_start_sample = channel->segments[i].metadata_fps->metadata.time_series_section_2->start_sample;
             segment_end_sample   = channel->segments[i].metadata_fps->metadata.time_series_section_2->start_sample +
             channel->segments[i].metadata_fps->metadata.time_series_section_2->number_of_samples;
@@ -1869,8 +1895,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
             total_data_bytes += channel->segments[start_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
-        }
-        else {
+        } else {
             // case where end_idx is last block in segment
             total_samps += channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
             channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample;
@@ -1928,8 +1953,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             total_data_bytes += channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx+1].file_offset -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             num_blocks += end_idx + 1;
-        }
-        else {
+        } else {
             // case where end_idx is last block in segment
             total_samps += channel->segments[end_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].start_sample;
@@ -1957,7 +1981,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // read in RED data
     // normal case - everything is in one segment
     if (start_segment == end_segment) {
-        if (channel->segments[start_segment].time_series_data_fps->fp == NULL){
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL) {
             channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
             channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
         }
@@ -1969,7 +1993,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             fseek(fp, channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset, SEEK_SET);
         #endif
         n_read = fread(cdp, sizeof(si1), (size_t) total_data_bytes, fp);
-        if (n_read != total_data_bytes){
+        if (n_read != total_data_bytes) {
             sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", start_segment);
             PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
@@ -1979,7 +2003,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     // spans across segments
     else {
         // start with first segment
-        if (channel->segments[start_segment].time_series_data_fps->fp == NULL){
+        if (channel->segments[start_segment].time_series_data_fps->fp == NULL) {
             channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
             channel->segments[start_segment].time_series_data_fps->fd = fileno(channel->segments[start_segment].time_series_data_fps->fp);
         }
@@ -1992,7 +2016,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         bytes_to_read = channel->segments[start_segment].time_series_data_fps->file_length -
         channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset;
         n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-        if (n_read != bytes_to_read){
+        if (n_read != bytes_to_read) {
             sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", start_segment);
             PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
         }
@@ -2011,7 +2035,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             bytes_to_read = channel->segments[i].time_series_data_fps->file_length - 
             channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-            if (n_read != bytes_to_read){
+            if (n_read != bytes_to_read) {
                 sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", i);
                 PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
@@ -2021,7 +2045,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         }
         
         // then last segment
-        if (channel->segments[end_segment].time_series_data_fps->fp == NULL){
+        if (channel->segments[end_segment].time_series_data_fps->fp == NULL) {
             channel->segments[end_segment].time_series_data_fps->fp = fopen(channel->segments[end_segment].time_series_data_fps->full_file_name, "rb");
             channel->segments[end_segment].time_series_data_fps->fd = fileno(channel->segments[end_segment].time_series_data_fps->fp);
         }
@@ -2037,15 +2061,14 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
                 PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
             cdp += n_read;
-        }
-        else {
+        } else {
             // case where end_idx is last block in segment
             fp = channel->segments[end_segment].time_series_data_fps->fp;
             fseek(fp, UNIVERSAL_HEADER_BYTES, SEEK_SET);
             bytes_to_read = channel->segments[end_segment].time_series_data_fps->file_length -
             channel->segments[end_segment].time_series_indices_fps->time_series_indices[0].file_offset;
             n_read = fread(cdp, sizeof(si1), (size_t) bytes_to_read, fp);
-            if (n_read != bytes_to_read){
+            if (n_read != bytes_to_read) {
                 sprintf(py_warning_message, "Read in fewer than expected bytes from data file in segment %d.", end_segment);
                 PyErr_WarnEx(PyExc_RuntimeWarning, py_warning_message, 1);
             }
@@ -2091,38 +2114,32 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
     rps->compressed_data = cdp;
     rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
-    if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
-    {
+    if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)) {
         crc_block_failure++;
         last_block_decoded_flag = 0;
         cdp += rps->block_header->block_bytes;
-    }
-    else
-    {
+    } else {
         RED_decode(rps);
         cdp += rps->block_header->block_bytes;
         blocks_decoded++;
         last_block_decoded_flag = 1;
         
-        if (times_specified)
-        {
+        if (times_specified) {
             // rps->block_header->start_time is already offset during RED_decode()
             
             if ((rps->block_header->start_time - start_time) >= 0)
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
             else
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
-        }
-        else
+
+        } else
             offset_into_output_buffer = (si4) (channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->start_sample +
                                                channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].start_sample) - start_samp;
         
         // copy requested samples from first block to output buffer
         // TBD this loop could be optimized
-        for (i=0;i<rps->block_header->number_of_samples;i++)
-        {
-            if (offset_into_output_buffer < 0)
-            {
+        for (i = 0; i < rps->block_header->number_of_samples; i++) {
+            if (offset_into_output_buffer < 0) {
                 offset_into_output_buffer++;
                 continue;
             }
@@ -2139,8 +2156,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
 
     
     // decode blocks in between the first and the last
-    for (i=1;i<num_blocks-1;i++)
-    {
+    for (i = 1; i < num_blocks - 1; i++) {
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         // check that block fits fully within output array
@@ -2149,8 +2165,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         // we need to manually remove offset, since we are using the time value of the block bevore decoding the block
         // (normally the offset is removed during the decoding process)
 
-        if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
-        {
+        if ((rps->block_header->block_bytes == 0) || !check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)) {
             crc_block_failure++;
             
             // two-in-a-row bad block CRCs - this is probably an unrecoverable situation, so just stop decoding.
@@ -2159,32 +2174,29 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
             
             // set a flag, and keep trying successive blocks.
             last_block_decoded_flag = 0;
-        }
-        else
-        {
-            if (times_specified)
-            {
+
+        } else {
+
+            if (times_specified) {
                 block_start_time_offset = rps->block_header->start_time;
                 remove_recording_time_offset( &block_start_time_offset );
                 
                 // The next two checks see if the block contains out-of-bounds samples.
                 // In that case, skip the block and move on
-                if (block_start_time_offset < start_time)
-                {
+                if (block_start_time_offset < start_time) {
                     cdp += rps->block_header->block_bytes;
                     continue;
                 }
-                if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time)
-                {
+                if (block_start_time_offset + ((rps->block_header->number_of_samples / channel->metadata.time_series_section_2->sampling_frequency) * 1e6) >= end_time) {
                     // Comment this out for now, it creates a strange boundary condition
                     // cdp += rps->block_header->block_bytes;
                     continue;
                 }
                 
                 rps->decompressed_ptr = rps->decompressed_data = decomp_data + (int)((((block_start_time_offset - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
-            }
-            else
-            {
+
+            } else {
+
                 // prevent buffer overflow
                 if ((sample_counter + rps->block_header->number_of_samples) > num_samps)
                     goto done_decoding;
@@ -2202,15 +2214,12 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     }
     
 	// decode last block to temp array
-    if (num_blocks > 1)
-    {
+    if (num_blocks > 1) {
         rps->compressed_data = cdp;
         rps->block_header = (RED_BLOCK_HEADER *) rps->compressed_data;
         rps->decompressed_ptr = rps->decompressed_data = temp_data_buf;
-        if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes))
-        {
-            crc_block_failure++;
-            
+        if (!check_block_crc((ui1*)(rps->block_header), max_samps, compressed_data_buffer, total_data_bytes)) {
+			crc_block_failure++;
             goto done_decoding;
         }
         
@@ -2218,21 +2227,17 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
         blocks_decoded++;
         last_block_decoded_flag = 1;
         
-        if (times_specified)
-        {
+        if (times_specified) {
             if ((rps->block_header->start_time  - start_time) >= 0)
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) + 0.5);
             else
                 offset_into_output_buffer = (si4) ((((rps->block_header->start_time - start_time) / 1000000.0) * channel->metadata.time_series_section_2->sampling_frequency) - 0.5);
-        }
-        else
+        } else
             offset_into_output_buffer = sample_counter;
         
         // copy requested samples from last block to output buffer
-        for (i=0;i<rps->block_header->number_of_samples;i++)
-        {
-            if (offset_into_output_buffer < 0)
-            {
+        for (i = 0; i < rps->block_header->number_of_samples; i++) {
+            if (offset_into_output_buffer < 0) {
                 offset_into_output_buffer++;
                 continue;
             }
@@ -2248,8 +2253,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args)
     
 done_decoding:
     
-    if (crc_block_failure > 0)
-    {
+    if (crc_block_failure > 0) {
         if (start_segment != end_segment)
             sprintf(py_warning_message, "CRC data block failure detected, %ld blocks skipped, in segments %d through %d.", num_blocks - blocks_decoded, start_segment, end_segment);
         else
@@ -2262,7 +2266,7 @@ done_decoding:
     // put the data directly into it
 
     // copy requested samples from last block to output buffer
-    for (i=0;i<num_samps;i++){
+    for (i = 0; i < num_samps; i++) {
         if (*(decomp_data + i) == RED_NAN)
             *(numpy_arr_data + i) = NPY_NAN;
         else
@@ -2283,8 +2287,7 @@ done_decoding:
 /****************************  MEF clean up functions  ******************************/
 /************************************************************************************/
 
-static PyObject *clean_mef_session_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *clean_mef_session_metadata(PyObject *self, PyObject *args) {
     SESSION     *session;
     PyObject    *py_session_obj;
 
@@ -2296,12 +2299,10 @@ static PyObject *clean_mef_session_metadata(PyObject *self, PyObject *args)
     session = (SESSION *) PyArray_DATA((PyArrayObject *) py_session_obj);
     free_session(session, MEF_TRUE);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
-static PyObject *clean_mef_channel_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *clean_mef_channel_metadata(PyObject *self, PyObject *args) {
     CHANNEL     *channel;
     PyObject    *py_channel_obj;
 
@@ -2313,12 +2314,10 @@ static PyObject *clean_mef_channel_metadata(PyObject *self, PyObject *args)
     channel = (CHANNEL *) PyArray_DATA((PyArrayObject *) py_channel_obj);
     free_channel(channel, MEF_TRUE);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
-static PyObject *clean_mef_segment_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *clean_mef_segment_metadata(PyObject *self, PyObject *args) {
     SEGMENT     *segment;
     PyObject    *py_segment_obj;
 
@@ -2330,8 +2329,7 @@ static PyObject *clean_mef_segment_metadata(PyObject *self, PyObject *args)
     segment = (SEGMENT *) PyArray_DATA((PyArrayObject *) py_segment_obj);
     free_segment(segment, MEF_TRUE);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 /************************************************************************************/
@@ -2374,26 +2372,22 @@ MEF_strcpy(rh->type_string, temp_str_bytes); // assign to char that we want
 // {
 // }
 
-void    map_python_tmd2(PyObject *tmd2_arr, TIME_SERIES_METADATA_SECTION_2 *tmd2)
-{
+void    map_python_tmd2(PyObject *tmd2_arr, TIME_SERIES_METADATA_SECTION_2 *tmd2) {
     memcpy(tmd2, PyArray_DATA((PyArrayObject *) tmd2_arr), sizeof(TIME_SERIES_METADATA_SECTION_2));
     return;
 }
 
-void    map_python_vmd2(PyObject *vmd2_arr, VIDEO_METADATA_SECTION_2 *vmd2)
-{
+void    map_python_vmd2(PyObject *vmd2_arr, VIDEO_METADATA_SECTION_2 *vmd2) {
     memcpy(vmd2, PyArray_DATA((PyArrayObject *) vmd2_arr), sizeof(VIDEO_METADATA_SECTION_2));
     return;
 }
 
-void    map_python_vi(PyObject *vi_arr, VIDEO_INDEX *vi)
-{
+void    map_python_vi(PyObject *vi_arr, VIDEO_INDEX *vi) {
     memcpy(vi, PyArray_DATA((PyArrayObject *) vi_arr), sizeof(VIDEO_INDEX)*PyArray_SHAPE((PyArrayObject *) vi_arr)[0]);
     return;
 }
 
-void    map_python_md3(PyObject *md3_arr, METADATA_SECTION_3 *md3)
-{
+void    map_python_md3(PyObject *md3_arr, METADATA_SECTION_3 *md3) {
     memcpy(md3, PyArray_DATA((PyArrayObject *) md3_arr), sizeof(METADATA_SECTION_3));
     return;
 }
@@ -2403,57 +2397,48 @@ void    map_python_md3(PyObject *md3_arr, METADATA_SECTION_3 *md3)
 /**************************  Python record struct to Mef  ****************************/
 
 
-void    map_python_rh(PyObject *rh_arr, RECORD_HEADER  *rh)
-{
+void    map_python_rh(PyObject *rh_arr, RECORD_HEADER  *rh) {
     memcpy(rh, PyArray_DATA((PyArrayObject *) rh_arr), sizeof(RECORD_HEADER));
     return;
 }
 
-void    map_python_EDFA_type(PyObject *EDFA_type_arr, MEFREC_EDFA_1_0  *r_type)
-{
+void    map_python_EDFA_type(PyObject *EDFA_type_arr, MEFREC_EDFA_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) EDFA_type_arr), PyArray_ITEMSIZE((PyArrayObject *) EDFA_type_arr));
     return;
 }
 
-void    map_python_LNTP_type(PyObject *LNTP_type_arr, MEFREC_LNTP_1_0  *r_type)
-{
+void    map_python_LNTP_type(PyObject *LNTP_type_arr, MEFREC_LNTP_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) LNTP_type_arr), PyArray_ITEMSIZE((PyArrayObject *) LNTP_type_arr));
     return;
 }
 
-void    map_python_Siez_type(PyObject *Siez_type_arr, MEFREC_Seiz_1_0  *r_type)
-{
+void    map_python_Siez_type(PyObject *Siez_type_arr, MEFREC_Seiz_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) Siez_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Siez_type_arr));
     return;
 }
 
 // NOTE: void r_type because we are mapping all entries
-void    map_python_Siez_ch_type(PyObject *Siez_ch_type_arr, si1 *r_type)
-{
+void    map_python_Siez_ch_type(PyObject *Siez_ch_type_arr, si1 *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) Siez_ch_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Siez_ch_type_arr) * PyArray_SIZE((PyArrayObject *) Siez_ch_type_arr));
     return;
 }   
 
-void    map_python_CSti_type(PyObject *CSti_type_arr, MEFREC_CSti_1_0  *r_type)
-{
+void    map_python_CSti_type(PyObject *CSti_type_arr, MEFREC_CSti_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) CSti_type_arr), PyArray_ITEMSIZE((PyArrayObject *) CSti_type_arr));
     return;
 }
 
-void    map_python_ESti_type(PyObject *ESti_type_arr, MEFREC_ESti_1_0  *r_type)
-{
+void    map_python_ESti_type(PyObject *ESti_type_arr, MEFREC_ESti_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) ESti_type_arr), PyArray_ITEMSIZE((PyArrayObject *) ESti_type_arr));
     return;
 }
 
-void    map_python_Curs_type(PyObject *Curs_type_arr, MEFREC_Curs_1_0  *r_type)
-{
+void    map_python_Curs_type(PyObject *Curs_type_arr, MEFREC_Curs_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) Curs_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Curs_type_arr));
     return;
 }
 
-void    map_python_Epoc_type(PyObject *Epoc_type_arr, MEFREC_Epoc_1_0  *r_type)
-{
+void    map_python_Epoc_type(PyObject *Epoc_type_arr, MEFREC_Epoc_1_0  *r_type) {
     memcpy(r_type, PyArray_DATA((PyArrayObject *) Epoc_type_arr), PyArray_ITEMSIZE((PyArrayObject *) Epoc_type_arr));
     return;
 }
@@ -2461,8 +2446,7 @@ void    map_python_Epoc_type(PyObject *Epoc_type_arr, MEFREC_Epoc_1_0  *r_type)
 
 /*****************************  Mef struct to Python  *******************************/
 
-PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
-{
+PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh) {
     import_array();
 
     // Numpy array out
@@ -2477,8 +2461,7 @@ PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh)
     return py_array_out;
 }
 
-PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
-{
+PyObject *map_mef3_md1(METADATA_SECTION_1 *md1) {
     import_array();
 
     // Numpy array out
@@ -2493,8 +2476,7 @@ PyObject *map_mef3_md1(METADATA_SECTION_1 *md1)
     return py_array_out;
 }
 
-PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd2)
-{
+PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd2) {
     import_array();
 
     // Numpy array out
@@ -2509,8 +2491,7 @@ PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd2)
     return py_array_out;
 }
 
-PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd2)
-{
+PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd2) {
     import_array();
 
     // Numpy array out
@@ -2525,8 +2506,7 @@ PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd2)
     return py_array_out;
 }
 
-PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
-{
+PyObject *map_mef3_md3(METADATA_SECTION_3 *md3) {
     import_array();
 
     // Numpy array out
@@ -2542,8 +2522,7 @@ PyObject *map_mef3_md3(METADATA_SECTION_3 *md3)
 }
 
 // TODO - call number of entries from the parent dtype
-PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries)
-{
+PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries) {
     import_array();
 
     // Numpy array out
@@ -2559,8 +2538,7 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries)
 }
 
 // TODO - call number of entries from the parent dtype
-PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries)
-{
+PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries) {
     import_array();
 
     // Numpy array out
@@ -2575,12 +2553,9 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries)
     return py_array_out;
 }
 
-PyObject *create_mef3_TOC(SEGMENT *segment)
-{
-    // Numpy TOC
-    PyArrayObject *py_array_out;
+PyObject *create_mef3_TOC(SEGMENT *segment) {
 
-    // Helpers
+    PyArrayObject *py_array_out;
     TIME_SERIES_INDEX     *tsi;
 
     si8     number_of_entries;
@@ -2589,7 +2564,6 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     sf8     fs;
     si8     *numpy_arr_data;
     npy_intp dims[2];
-
     si4     i;
     
     // initialize Numpy
@@ -2609,8 +2583,7 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     py_array_out = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_INT64);
     numpy_arr_data = (si8 *) PyArray_GETPTR2(py_array_out, 0, 0);
 
-    for(i = 0; i < number_of_entries; i++){
-
+    for(i = 0; i < number_of_entries; i++) {
 
         start_time = tsi->start_time;
         start_sample = tsi->start_sample;
@@ -2648,26 +2621,26 @@ PyObject *create_mef3_TOC(SEGMENT *segment)
     return (PyObject *) py_array_out;
 }
 
-PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
-{
-    // Dictionaries
+// Map segment
+PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag) {
+    
     PyObject *metadata_dict;
     PyObject *records_dict;
     PyObject *uh_dict;
     PyObject *uhs_dict;
     PyObject *TOC;
-    
-    // Helper variables
+	PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
+	PyObject *py_uh_ts_data, *py_uh_ts_indices, *py_uh_v_indices;
+	PyObject *py_ts_indices, *py_v_indices;
     si8   number_of_entries;
-    
-    METADATA_SECTION_1      *md1;
-        TIME_SERIES_METADATA_SECTION_2  *tmd2;
-        VIDEO_METADATA_SECTION_2    *vmd2;
-    METADATA_SECTION_3      *md3;
-    TIME_SERIES_INDEX       *tsi;
-    VIDEO_INDEX       *vi;
 
-    // Numpy array out
+    // create python output dictionary
+    metadata_dict = PyDict_New();
+	
+	//
+	// map segment specific metadata
+	// 
+	
     npy_intp dims[] = {1};
     npy_intp strides[] = {sizeof(SEGMENT)};
     PyObject    *py_array_out;
@@ -2675,50 +2648,36 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
 
     import_array();
 
-    // Create python output dictionary
-    metadata_dict = PyDict_New();
-    
-    /* SEGMENT SPECIFIC */
     descr = (PyArray_Descr *) create_segment_dtype();
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) segment, NPY_ARRAY_DEFAULT, Py_None);
     
-    // Create specific dictionary
+    // add (segment specific metadata) numpy structure or dictionary to main dictionary
     PyDict_SetItemString(metadata_dict, "segment_specific_metadata", py_array_out); 
-                            
+	Py_DECREF(py_array_out);	py_array_out = NULL;
+
     // Read segment records if present and add it to metadata
     if ((segment->record_indices_fps != NULL) & (segment->record_data_fps != NULL)){
         records_dict = map_mef3_records(segment->record_indices_fps, segment->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+        Py_DECREF(records_dict);	records_dict = NULL;
     }
 
-    // Assign pointers for reading metadata and read universal headers
-    md1 = segment->metadata_fps->metadata.section_1;
-    tmd2 = NULL;
-    vmd2 = NULL;
-    switch (segment->channel_type){
-        case TIME_SERIES_CHANNEL_TYPE:
-            tmd2 = segment->metadata_fps->metadata.time_series_section_2;
-            break;
-        case VIDEO_CHANNEL_TYPE:
-            vmd2 = segment->metadata_fps->metadata.video_section_2; 
-            break;
-        default:
-            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
-            PyErr_Occurred();
-            return NULL;
-    }      
-    md3 = segment->metadata_fps->metadata.section_3;
-
-    // Create section 1 dictionary
-    PyDict_SetItemString(metadata_dict, "section_1", map_mef3_md1(md1));
+    // create section 1 dictionary
+	py_md1 = map_mef3_md1(segment->metadata_fps->metadata.section_1);
+    PyDict_SetItemString(metadata_dict, "section_1", py_md1);
+	Py_DECREF(py_md1);	py_md1 = NULL;
 
     // Create section 2 dictionary
     switch (segment->channel_type){
         case TIME_SERIES_CHANNEL_TYPE:
-            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_tmd2(tmd2));
+			py_tmd2 = map_mef3_tmd2(segment->metadata_fps->metadata.time_series_section_2);
+            PyDict_SetItemString(metadata_dict, "section_2", py_tmd2);
+			Py_DECREF(py_tmd2);	py_tmd2 = NULL;
             break;
         case VIDEO_CHANNEL_TYPE:
-            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_vmd2(vmd2));
+			py_vmd2 = map_mef3_vmd2(segment->metadata_fps->metadata.video_section_2);
+            PyDict_SetItemString(metadata_dict, "section_2", py_vmd2);
+			Py_DECREF(py_vmd2);	py_vmd2 = NULL;
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -2726,31 +2685,35 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
             return NULL;
     }
     
-    // Create section 3 dictionary
-    PyDict_SetItemString(metadata_dict, "section_3", map_mef3_md3(md3));
+    // create section 3 dictionary
+	py_md3 = map_mef3_md3(segment->metadata_fps->metadata.section_3);
+    PyDict_SetItemString(metadata_dict, "section_3", py_md3);
+	Py_DECREF(py_md3);	py_md3 = NULL;
+
 
     // TODO - this should be a list - there is more indices in indices file!!!!
-
     // Set the TOC to NULL so that the logic works
     TOC = NULL;
 
-    // Create indices dictionary
-    
-    switch (segment->channel_type){
+    // create indices dictionary
+    switch (segment->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
             number_of_entries = segment->time_series_indices_fps->universal_header->number_of_entries;
-            tsi = segment->time_series_indices_fps->time_series_indices;
 
-            PyDict_SetItemString(metadata_dict, "indices", map_mef3_ti(tsi, number_of_entries));
+			py_ts_indices = map_mef3_ti(segment->time_series_indices_fps->time_series_indices, number_of_entries);
+            PyDict_SetItemString(metadata_dict, "indices", py_ts_indices);
+			Py_DECREF(py_ts_indices);	py_ts_indices = NULL;
 
             // Create TOC
             TOC = create_mef3_TOC(segment);
+
             break;
         case VIDEO_CHANNEL_TYPE:
             number_of_entries = segment->video_indices_fps->universal_header->number_of_entries;
-            vi = segment->video_indices_fps->video_indices;
 
-            PyDict_SetItemString(metadata_dict, "indices", map_mef3_vi(vi, number_of_entries));
+			py_v_indices = map_mef3_vi(segment->video_indices_fps->video_indices, number_of_entries);
+            PyDict_SetItemString(metadata_dict, "indices", py_v_indices);
+			Py_DECREF(py_v_indices);	py_v_indices = NULL;
 
             break;
         default:
@@ -2758,10 +2721,11 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
             PyErr_Occurred();
             return NULL;
     }
-
     
-    if (TOC != NULL)
+    if (TOC != NULL) {
         PyDict_SetItemString(metadata_dict, "TOC", TOC);
+		Py_DECREF(TOC);	TOC = NULL;
+	}
 
     // Get universal headers
     uhs_dict = PyDict_New();
@@ -2769,15 +2733,27 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
     // Metadata
     uh_dict = map_mef3_uh(segment->metadata_fps->universal_header);
     PyDict_SetItemString(uhs_dict, "metadata", uh_dict);
+	Py_DECREF(uh_dict);	uh_dict = NULL;
 
     // Data an indices universal headers
-    switch (segment->channel_type){
+    switch (segment->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
-            PyDict_SetItemString(uhs_dict, "time_series_data", map_mef3_uh(segment->time_series_data_fps->universal_header));
-            PyDict_SetItemString(uhs_dict, "time_series_indices", map_mef3_uh(segment->time_series_indices_fps->universal_header));
+			
+			py_uh_ts_data = map_mef3_uh(segment->time_series_data_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "time_series_data", py_uh_ts_data);
+			Py_DECREF(py_uh_ts_data);	py_uh_ts_data = NULL;
+			
+			py_uh_ts_indices = map_mef3_uh(segment->time_series_indices_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "time_series_indices", py_uh_ts_indices);
+			Py_DECREF(py_uh_ts_indices);	py_uh_ts_indices = NULL;
+			
             break;
         case VIDEO_CHANNEL_TYPE:
-            PyDict_SetItemString(uhs_dict, "time_series_indices", map_mef3_uh(segment->video_indices_fps->universal_header));
+		
+			py_uh_v_indices = map_mef3_uh(segment->video_indices_fps->universal_header);
+            PyDict_SetItemString(uhs_dict, "video_indices", py_uh_v_indices);
+			Py_DECREF(py_uh_v_indices);	py_uh_v_indices = NULL;
+			
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -2786,30 +2762,31 @@ PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag)
     }
 
     PyDict_SetItemString(metadata_dict, "universal_headers", uhs_dict);
+	Py_DECREF(uhs_dict);	uhs_dict = NULL;
 
     return metadata_dict;
 }
 
-PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funtion also loops through segments
-{
-    // Dictionaries
+// Map channel
+// Note: this funtion also loops through segments
+PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) {
+
     PyObject *metadata_dict;
     PyObject *records_dict;
     PyObject *segment_dict;
-    PyObject *segments_dict;
-    
-    // Helper variables
+    PyObject *segments_all_dict;
+    PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
+	
     si4   i;
-    
-    // Method
     SEGMENT *segment;
-    
-    METADATA_SECTION_1      *md1;
-        TIME_SERIES_METADATA_SECTION_2  *tmd2;
-        VIDEO_METADATA_SECTION_2    *vmd2;
-    METADATA_SECTION_3      *md3;
 
-    // Numpy array out
+    // create python output dictionary
+    metadata_dict = PyDict_New();
+
+	//
+	// map channel specific metadata
+	// 
+	
     npy_intp dims[] = {1};
     npy_intp strides[] = {sizeof(CHANNEL)};
     PyObject    *py_array_out;
@@ -2817,50 +2794,46 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
 
     import_array();
 
-    // Create python output dictionary
-    metadata_dict = PyDict_New();
     
-    /* CHANNEL SPECIFIC */
     descr = (PyArray_Descr *) create_channel_dtype();
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) channel, NPY_ARRAY_DEFAULT, Py_None);
     
-    // Create specific dictionary
+    // add (channel specific metadata) numpy structure or dictionary to main dictionary
     PyDict_SetItemString(metadata_dict, "channel_specific_metadata", py_array_out);
-    
+	Py_DECREF(py_array_out);	py_array_out = NULL;
+	
+	
+	//
+	//
+	//
+	
     // Read channel records if present and add it to metadata
     if ((channel->record_indices_fps != NULL) & (channel->record_data_fps != NULL)){
         records_dict = map_mef3_records(channel->record_indices_fps, channel->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+		Py_DECREF(records_dict);	records_dict = NULL;
     }
 
-    // Assign pointers for reading metadata
-    md1 = channel->metadata.section_1;
-    tmd2 = NULL;
-    vmd2 = NULL;
-    switch (channel->channel_type){
+	// create section 1 dictionary
+	py_md1 = map_mef3_md1(channel->metadata.section_1);
+    PyDict_SetItemString(metadata_dict, "section_1", py_md1);
+	Py_DECREF(py_md1);	py_md1 = NULL;
+    
+    // create section 2 dictionary
+    switch (channel->channel_type) {
         case TIME_SERIES_CHANNEL_TYPE:
-            tmd2 = channel->metadata.time_series_section_2;
+		
+			py_tmd2 = map_mef3_tmd2(channel->metadata.time_series_section_2);
+            PyDict_SetItemString(metadata_dict, "section_2", py_tmd2);
+			Py_DECREF(py_tmd2);	py_tmd2 = NULL;
+			
             break;
         case VIDEO_CHANNEL_TYPE:
-            vmd2 = channel->metadata.video_section_2;  
-            break;
-        default:
-            PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
-            PyErr_Occurred();
-            return NULL;
-    }     
-    md3 = channel->metadata.section_3;
-    
-    // Create section 1 dictionary
-    PyDict_SetItemString(metadata_dict, "section_1", map_mef3_md1(md1));
-    
-    // Create section 2 dictionary
-    switch (channel->channel_type){
-        case TIME_SERIES_CHANNEL_TYPE:
-            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_tmd2(tmd2)); 
-            break;
-        case VIDEO_CHANNEL_TYPE:
-            PyDict_SetItemString(metadata_dict, "section_2", map_mef3_vmd2(vmd2)); 
+		
+			py_vmd2 = map_mef3_vmd2(channel->metadata.video_section_2);
+            PyDict_SetItemString(metadata_dict, "section_2", py_vmd2);
+			Py_DECREF(py_vmd2);	py_vmd2 = NULL;
+			
             break;
         default:
             PyErr_SetString(PyExc_RuntimeError, "Unrecognized channel type, exiting...");
@@ -2868,48 +2841,59 @@ PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag) // This funti
             return NULL;
     }
 
-    // Create section 3 dictionary
-    PyDict_SetItemString(metadata_dict, "section_3", map_mef3_md3(md3));
+    // create section 3 dictionary
+	py_md3 = map_mef3_md3(channel->metadata.section_3);
+    PyDict_SetItemString(metadata_dict, "section_3", py_md3);
+	Py_DECREF(py_md3);	py_md3 = NULL;
     
-    // Loop over segments
-    for (i = 0; i < channel->number_of_segments; ++i){
-        if (i == 0){
-            PyDict_SetItemString(metadata_dict, "segments", PyDict_New()); 
-            segments_dict = PyDict_GetItemString(metadata_dict, "segments");
-        }
-        // Get the channel pointer
-        segment = channel->segments + i;
-        // Map the channel
-        segment_dict = map_mef3_segment(segment,map_indices_flag);
-        // Put into ditionary
-        PyDict_SetItemString(segments_dict, segment->name, segment_dict); 
-    }
-
+	// map all segments
+	if (channel->number_of_segments > 0) {
+		
+		segments_all_dict = PyDict_New();
+		
+		// Loop over segments
+		for (i = 0; i < channel->number_of_segments; ++i) {
+			
+			// Get the channel pointer
+			segment = channel->segments + i;
+			
+			// map the segment and add to dictionary
+			segment_dict = map_mef3_segment(segment, map_indices_flag);
+			PyDict_SetItemString(segments_all_dict, segment->name, segment_dict);
+			Py_DECREF(segment_dict);	segment_dict = NULL;
+			
+		}
+		
+		PyDict_SetItemString(metadata_dict, "segments", segments_all_dict);
+		Py_DECREF(segments_all_dict);	segments_all_dict = NULL;
+		
+	}
+	
     return metadata_dict;
 }
 
-PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funtion also loops through channels
-{
-    // Dictionaries
+// Map session
+// Note: this funtion also loops through channels
+PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) {
+
     PyObject *metadata_dict;
     PyObject *records_dict;
 
     PyObject *ts_metadata;
+	PyObject *ts_all_dict;
     PyObject *ts_dict;
 
     PyObject *v_metadata;
-    PyObject *v_dict;
+    PyObject *v_all_dict;
+	PyObject *v_dict;
+	PyObject *py_md1, *py_tmd2 ,*py_vmd2, *py_md3;
     
-    // Helper variables
     si4   i;
-    
-    // Method 
     CHANNEL *channel;
 
-    METADATA_SECTION_1      *md1;
-        TIME_SERIES_METADATA_SECTION_2  *tmd2;
-        VIDEO_METADATA_SECTION_2    *vmd2;
-    METADATA_SECTION_3      *md3;
+    // Create python output dictionary
+    metadata_dict = PyDict_New();
+    
 
     // Numpy array out
     npy_intp dims[] = {1};
@@ -2919,98 +2903,126 @@ PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag) // This funti
 
     import_array();
 
-    // Create python output dictionary
-    metadata_dict = PyDict_New();
-    
-    /* SESSION SPECIFIC */
-    
     descr = (PyArray_Descr *) create_session_dtype();
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) session, NPY_ARRAY_DEFAULT, Py_None);
     
-    // Create specific dictionary
+    // add (session specific metadata) numpy structure or dictionary to main dictionary
     PyDict_SetItemString(metadata_dict, "session_specific_metadata", py_array_out);
+	Py_DECREF(py_array_out);	py_array_out = NULL;
+	
 
-    // Read session records if present and add it to metadata
+	//
+	//
+	//
+	
+
+    // read session records if present and add it to metadata
     if ((session->record_indices_fps != NULL) & (session->record_data_fps != NULL)){
         records_dict = map_mef3_records(session->record_indices_fps, session->record_data_fps);
         PyDict_SetItemString(metadata_dict, "records_info", records_dict);
+		Py_DECREF(records_dict);	records_dict = NULL;
     }
 
-    // Get time series metadata
-    if (session->number_of_time_series_channels > 0)
-    {
-        // Create dictionary
-        PyDict_SetItemString(metadata_dict, "time_series_metadata", PyDict_New()); 
-        ts_metadata = PyDict_GetItemString(metadata_dict, "time_series_metadata");
+    // get time series metadata
+	if (session->number_of_time_series_channels > 0) {
+		
+		// create dictionary
+		ts_metadata = PyDict_New();
 
-        // Assign pointers for reading time series metadata
-        md1 = session->time_series_metadata.section_1;
-        tmd2 = session->time_series_metadata.time_series_section_2;
-        md3 = session->time_series_metadata.section_3;
-        
-        // Create section time series 1 dictionary
-        PyDict_SetItemString(ts_metadata, "section_1", map_mef3_md1(md1));
-        
-        // Create section time series 2 dictionary
-        PyDict_SetItemString(ts_metadata, "section_2", map_mef3_tmd2(tmd2)); 
-        
-        // Create section time series 3 dictionary
-        PyDict_SetItemString(ts_metadata, "section_3", map_mef3_md3(md3));
-    }
+		// create section time series 1 dictionary
+		py_md1 = map_mef3_md1(session->time_series_metadata.section_1);
+		PyDict_SetItemString(ts_metadata, "section_1", py_md1);
+		Py_DECREF(py_md1);	py_md1 = NULL;
 
-    // Get video metadata
-    if (session->number_of_video_channels > 0)
-    {
-        // Create dictionary
-        PyDict_SetItemString(metadata_dict, "video_metadata", PyDict_New()); 
-        v_metadata = PyDict_GetItemString(metadata_dict, "video_metadata");
+		// create section time series 2 dictionary
+		py_tmd2 = map_mef3_tmd2(session->time_series_metadata.time_series_section_2);
+		PyDict_SetItemString(ts_metadata, "section_2", py_tmd2);
+		Py_DECREF(py_tmd2);	py_tmd2 = NULL;
+		
+		// create section time series 3 dictionary
+		py_md3 = map_mef3_md3(session->time_series_metadata.section_3);
+		PyDict_SetItemString(ts_metadata, "section_3", py_md3);
+		Py_DECREF(py_md3);	py_md3 = NULL;
+		
+		// 
+		PyDict_SetItemString(metadata_dict, "time_series_metadata", ts_metadata); 
+		Py_DECREF(ts_metadata);	ts_metadata = NULL;
+	}
 
-        // Assign pointers for reading video metadata
-        md1 = session->video_metadata.section_1;
-        vmd2 = session->video_metadata.video_section_2;
-        md3 = session->video_metadata.section_3;
-        
-        // Create section video 1 dictionary
-        PyDict_SetItemString(v_metadata, "section_1", map_mef3_md1(md1));
-        
-        // Create section video 2 dictionary
-        PyDict_SetItemString(v_metadata, "section_2", map_mef3_vmd2(vmd2)); 
-        
-        // Create section video 3 dictionary
-        PyDict_SetItemString(v_metadata, "section_3", map_mef3_md3(md3));
-    }
+	// get video metadata
+	if (session->number_of_video_channels > 0) {
+		
+		// create dictionary
+		v_metadata = PyDict_New();
 
-    // Loop over time series channels         
-    for (i = 0; i < session->number_of_time_series_channels; ++i){
-        if (i == 0){
-            PyDict_SetItemString(metadata_dict, "time_series_channels", PyDict_New()); 
-            ts_dict = PyDict_GetItemString(metadata_dict, "time_series_channels");
-        }
-        // Get the channel pointer
-        channel = session->time_series_channels + i;
-        // Put into ditionary
-        PyDict_SetItemString(ts_dict, channel->name,  map_mef3_channel(channel, map_indices_flag)); 
+		// create section video 1 dictionary
+		py_md1 = map_mef3_md1(session->video_metadata.section_1);
+		PyDict_SetItemString(v_metadata, "section_1", py_md1);
+		Py_DECREF(py_md1);	py_md1 = NULL;
+		
+		// create section video 2 dictionary
+		py_vmd2 = map_mef3_vmd2(session->video_metadata.video_section_2);
+		PyDict_SetItemString(v_metadata, "section_2", py_vmd2);
+		Py_DECREF(py_vmd2);	py_vmd2 = NULL;
+		
+		// create section video 3 dictionary
+		py_md3 = map_mef3_md3(session->video_metadata.section_3);
+		PyDict_SetItemString(v_metadata, "section_3", py_md3);
+		Py_DECREF(py_md3);	py_md3 = NULL;
+		
+		//
+		PyDict_SetItemString(metadata_dict, "video_metadata", v_metadata); 
+		Py_DECREF(v_metadata);	v_metadata = NULL;
+		
+	}
+	
+	if (session->number_of_time_series_channels > 0) {
+		ts_all_dict = PyDict_New();
+		
+		// Loop over time series channels
+		for (i = 0; i < session->number_of_time_series_channels; ++i) {
+			
+			// get the channel pointer
+			channel = session->time_series_channels + i;
+			
+			// map the channel and add to dictionary
+			ts_dict = map_mef3_channel(channel, map_indices_flag);
+			PyDict_SetItemString(ts_all_dict, channel->name, ts_dict);
+			Py_DECREF(ts_dict);	ts_dict = NULL;
+			
+		}
+		
+		PyDict_SetItemString(metadata_dict, "time_series_channels", ts_all_dict);
+		Py_DECREF(ts_all_dict);	ts_all_dict = NULL;
+	}
 
-    }
-    // Loop over video channels
-    for (i = 0; i < session->number_of_video_channels; ++i){
-        if (i == 0){
-            PyDict_SetItemString(metadata_dict, "video_channels", PyDict_New()); 
-            v_dict = PyDict_GetItemString(metadata_dict, "video_channels");
-        }
-        // Get the channel pointer
-        channel = session->video_channels + i;
-        // Put into ditionary
-        PyDict_SetItemString(v_dict, channel->name, map_mef3_channel(channel, map_indices_flag)); 
-    }
+	if (session->number_of_time_series_channels > 0) {
+		v_all_dict = PyDict_New();
+		
+		// loop over video channels
+		for (i = 0; i < session->number_of_video_channels; ++i){
+			
+			// get the channel pointer
+			channel = session->video_channels + i;
+			
+			// map the channel and add to dictionary
+			v_dict = map_mef3_channel(channel, map_indices_flag);
+			PyDict_SetItemString(v_all_dict, channel->name, v_dict);
+			Py_DECREF(v_dict);	v_dict = NULL;
+			
+		}
+
+		PyDict_SetItemString(metadata_dict, "video_channels", v_all_dict);
+		Py_DECREF(v_all_dict);	v_all_dict = NULL;
+	}
 
     return metadata_dict;
 }
 
 /**************************  Mef record struct to Python  ****************************/
 
-PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps) // Runs through records and puts them in a dictionary
-{
+// Runs through records and puts them in a dictionary
+PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps) {
 
     // Ditionary
     PyObject    *record_info_dict;
@@ -3024,47 +3036,60 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
     si8     number_of_records;
 
     RECORD_HEADER   *rh;
-    //RECORD_INDEX    *ri;
  
     // Set up output dictionary
     record_info_dict = PyDict_New();
 
-    // Get universal headers
+    // get and map record universal headers
     uhs_dict = PyDict_New();
+	
     uh_dict = map_mef3_uh(ri_fps->universal_header);
     PyDict_SetItemString(uhs_dict, "record_indices", uh_dict);
+	Py_DECREF(uh_dict);		uh_dict = NULL;
+	
     uh_dict = map_mef3_uh(rd_fps->universal_header);
     PyDict_SetItemString(uhs_dict, "record_data", uh_dict);
+	Py_DECREF(uh_dict);		uh_dict = NULL;
+	
     PyDict_SetItemString(record_info_dict, "universal_headers", uhs_dict);
+	Py_DECREF(uhs_dict);	uhs_dict = NULL;
 
     // Create list for records
     number_of_records = ri_fps->universal_header->number_of_entries;
     all_record_list = PyList_New(number_of_records);
 
-    // First entry
-    //ri = ri_fps->record_indices; // This is unneccesary now but can be used to filter read records. Will be done in python now.
+    // map each record (header and body)
+	// Note: Not mapping record indices (ri_fps->record_indices, map_mef3_ri).
+	//       Could have been used to filter read records, but will be done in python now
     rd = rd_fps->raw_data + UNIVERSAL_HEADER_BYTES;
-    
-
-    for (i=0; i < number_of_records; ++i){
+    for (i = 0; i < number_of_records; ++i) {
 
         rh = (RECORD_HEADER *) rd;
-
         record_dict = map_mef3_rh(rh);
-        PyList_SET_ITEM(all_record_list, i, record_dict); // ASK Matt / Dan. Could also be type_string, 
+		
+		// Note: ASK Matt / Dan. Could also be type_string, 
+        PyList_SET_ITEM(all_record_list, i, record_dict); 	// steals reference to object coming out of map_mef3_rh
 
         rd += (RECORD_HEADER_BYTES + rh->bytes);
         
     }
 
     PyDict_SetItemString(record_info_dict, "records", all_record_list);
-
+	Py_DECREF(all_record_list);	all_record_list = NULL;
+	
     return record_info_dict;
 }
 
-PyObject *map_mef3_rh(RECORD_HEADER *rh)
-{
+// map a record
+PyObject *map_mef3_rh(RECORD_HEADER *rh) {
+	
+	PyObject *py_value_obj;
+	
     import_array();
+
+	// Create output dictionary   
+	PyObject *rh_dict = PyDict_New();
+	
 
     // Numpy array out
     npy_intp dims[] = {1};
@@ -3072,51 +3097,48 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
     PyObject    *py_array_out;
     PyArray_Descr    *descr;
 
-    PyObject    *rh_dict;
     MEFREC_Seiz_1_0 *sz;
     ui4     *type_str_int, type_code;
 
     descr = (PyArray_Descr *) create_rh_dtype();
-
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) rh, 1, Py_None);
-    // Create output dictionary   
-    rh_dict = PyDict_New();
 
-    PyDict_SetItemString(rh_dict, "record_header", py_array_out);
-    
+	PyDict_SetItemString(rh_dict, "record_header", py_array_out);
+	Py_DECREF(py_array_out);	py_array_out = NULL;
+	
+	//
     type_str_int = (ui4 *) rh->type_string;
     type_code = *type_str_int;
     switch (type_code) {
         case MEFREC_Note_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Note_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_Note_type(rh));
             break;
         case MEFREC_EDFA_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_EDFA_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_EDFA_type(rh));
             break;
         case MEFREC_LNTP_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_LNTP_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_LNTP_type(rh));
             break;
         case MEFREC_Seiz_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Seiz_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_Seiz_type(rh));
             sz = (MEFREC_Seiz_1_0 *) ((ui1 *) rh + MEFREC_Seiz_1_0_OFFSET);
-            if (sz->number_of_channels > 0){
-                PyDict_SetItemString(rh_dict, "record_subbody", map_mef3_Seiz_ch_type(rh, sz->number_of_channels));
-            }
+            if (sz->number_of_channels > 0)
+                PY_DICTSET_FUNC(rh_dict, "record_subbody", map_mef3_Seiz_ch_type(rh, sz->number_of_channels));
             break;
         case MEFREC_CSti_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_CSti_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_CSti_type(rh));
             break;
         case MEFREC_ESti_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_ESti_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_ESti_type(rh));
             break;
         case MEFREC_SyLg_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_SyLg_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_SyLg_type(rh));
             break;
         case MEFREC_Curs_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Curs_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_Curs_type(rh));
             break;
         case MEFREC_Epoc_TYPE_CODE:
-            PyDict_SetItemString(rh_dict, "record_body", map_mef3_Epoc_type(rh));
+            PY_DICTSET_FUNC(rh_dict, "record_body", map_mef3_Epoc_type(rh));
             break;
         case MEFREC_UnRc_TYPE_CODE:
             //PyErr_SetString(PyExc_RuntimeError, "\"%s\" (0x%x) is an unrecognized record type\n", rh->type_string, type_code);
@@ -3133,74 +3155,53 @@ PyObject *map_mef3_rh(RECORD_HEADER *rh)
     return rh_dict;
 }
 
-PyObject *map_mef3_ri(RECORD_INDEX *ri)
-{
-    // Dictionaries
+PyObject *map_mef3_ri(RECORD_INDEX *ri) {
+    
     PyObject *ri_dict;
-    
-    // Helper variables
-    si1   temp_str[256];
-    // si8   long_file_time;
- 
-    /* RECORD HEADER */
-    
+    PyObject *py_value_obj;
+
     // Create output dictionary   
     ri_dict = PyDict_New();
-    
-    // Set not not entered string   
-    sprintf(temp_str, "not entered");
-    
-    // Insert entries into dictionary                    
-    if (ri->type_string[0])
-        PyDict_SetItemString(ri_dict, "type_string",
-            Py_BuildValue("s", ri->type_string));
-    else
-        PyDict_SetItemString(ri_dict, "type_string", Py_None);
-                             
-    if (ri->version_major != RECORD_INDEX_VERSION_MAJOR_NO_ENTRY)
-        PyDict_SetItemString(ri_dict, "version_major",
-            Py_BuildValue("B", ri->version_major));
-    else
-        PyDict_SetItemString(ri_dict, "version_major", Py_None);   
 
-    if (ri->version_minor != RECORD_INDEX_VERSION_MINOR_NO_ENTRY)
-        PyDict_SetItemString(ri_dict, "version_minor",
-            Py_BuildValue("B", ri->version_minor));
-    else
-        PyDict_SetItemString(ri_dict, "version_minor", Py_None);
+    // Insert entries into dictionary
+    if (ri->type_string[0]) {
+        PY_DICTSET_BUILD(ri_dict, "type_string",          "s", ri->type_string);
+    } else
+        PyDict_SetItemString(ri_dict, "type_string",      Py_None);
 
-    if (ri->encryption != ENCRYPTION_LEVEL_NO_ENTRY)
-        PyDict_SetItemString(ri_dict, "encryption",
-            Py_BuildValue("b", ri->encryption));
-    else
-        PyDict_SetItemString(ri_dict, "encryption", Py_None);
+    if (ri->version_major != RECORD_INDEX_VERSION_MAJOR_NO_ENTRY) {
+        PY_DICTSET_BUILD(ri_dict, "version_major",        "B", ri->version_major);
+    } else
+        PyDict_SetItemString(ri_dict, "version_major",    Py_None);
 
-    if (ri->file_offset != RECORD_INDEX_FILE_OFFSET_NO_ENTRY)
-        PyDict_SetItemString(ri_dict, "file_offset",
-            Py_BuildValue("L", ri->file_offset));
-    else
-        PyDict_SetItemString(ri_dict, "file_offset", Py_None);
+    if (ri->version_minor != RECORD_INDEX_VERSION_MINOR_NO_ENTRY) {
+        PY_DICTSET_BUILD(ri_dict, "version_minor",        "B", ri->version_minor);
+    } else
+        PyDict_SetItemString(ri_dict, "version_minor",    Py_None);
 
-    if (ri->time != RECORD_INDEX_TIME_NO_ENTRY){
-        // long_file_time = Py_BuildValue("L", ri->time);
-        // PyDict_SetItemString(ri_dict, "time",
-        //     ABS(long_file_time));
-        PyDict_SetItemString(ri_dict, "time",
-            Py_BuildValue("L", ri->time));
-    }
-    else
-        PyDict_SetItemString(ri_dict, "time", Py_None);       
+    if (ri->encryption != ENCRYPTION_LEVEL_NO_ENTRY) {
+        PY_DICTSET_BUILD(ri_dict, "encryption",           "b", ri->encryption);
+    } else
+        PyDict_SetItemString(ri_dict, "encryption",       Py_None);
+
+    if (ri->file_offset != RECORD_INDEX_FILE_OFFSET_NO_ENTRY) {
+		PY_DICTSET_LONG (ri_dict, "file_offset",               ri->file_offset);
+    } else
+        PyDict_SetItemString(ri_dict, "file_offset",      Py_None);
+
+    if (ri->time != RECORD_INDEX_TIME_NO_ENTRY) {
+		//PY_DICTSET_LONG (ri_dict, "time",                      ABS(ri->time_));
+		PY_DICTSET_LONG (ri_dict, "time",                      ri->time);
+    } else
+        PyDict_SetItemString(ri_dict, "time",             Py_None);
 
     return ri_dict;
 }
 
 
-PyObject *map_mef3_Note_type(RECORD_HEADER *rh)
-{
-
+PyObject *map_mef3_Note_type(RECORD_HEADER *rh) {
     import_array();
 
-    // Numpy array out
     npy_intp dims[] = {1};
     npy_intp strides[] = {rh->bytes};
     PyObject    *py_array_out;
@@ -3208,15 +3209,14 @@ PyObject *map_mef3_Note_type(RECORD_HEADER *rh)
     ui4     str_len;
     PyArray_Descr    *descr;
 
-    body_p = (si1 *) rh+MEFREC_Note_1_0_TEXT_OFFSET;
+    body_p = (si1 *) rh + MEFREC_Note_1_0_TEXT_OFFSET;
     str_len = (ui4) strlen(body_p);
     descr = (PyArray_Descr *) create_note_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3228,14 +3228,13 @@ PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh)
     PyArray_Descr    *descr;
 
     body_p = (si1 *) rh+MEFREC_EDFA_1_0_OFFSET;
-    str_len = (ui4) strlen(body_p+MEFREC_EDFA_1_0_BYTES);
+    str_len = (ui4) strlen(body_p + MEFREC_EDFA_1_0_BYTES);
     descr = (PyArray_Descr *) create_edfa_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3249,17 +3248,14 @@ PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh)
     template_size = rh->bytes - MEFREC_LNTP_1_0_BYTES;
 
     descr = (PyArray_Descr *) create_lntp_dtype_c(template_size);
-    body_p = (si1 *) rh+MEFREC_LNTP_1_0_OFFSET;
+    body_p = (si1 *) rh + MEFREC_LNTP_1_0_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
-{
-    
+PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh) {
     import_array();
 
-    // Numpy array out
     npy_intp dims[] = {1};
     npy_intp strides[] = {MEFREC_Seiz_1_0_BYTES};
     PyObject    *py_array_out;
@@ -3267,13 +3263,12 @@ PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh)
     PyArray_Descr    *descr;
 
     descr = (PyArray_Descr *) create_seiz_dtype();
-    body_p = (si1 *) rh+MEFREC_Seiz_1_0_OFFSET;
+    body_p = (si1 *) rh + MEFREC_Seiz_1_0_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels)
-{
+PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels) {
     
     import_array();
 
@@ -3285,13 +3280,12 @@ PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels)
     PyArray_Descr    *descr;
 
     descr = (PyArray_Descr *) create_seiz_ch_dtype();
-    body_p = (si1 *) rh+MEFREC_Seiz_1_0_CHANNELS_OFFSET;
+    body_p = (si1 *) rh + MEFREC_Seiz_1_0_CHANNELS_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_CSti_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3302,13 +3296,12 @@ PyObject *map_mef3_CSti_type(RECORD_HEADER *rh)
     PyArray_Descr    *descr;
 
     descr = (PyArray_Descr *) create_csti_dtype();
-    body_p = (si1 *) rh+MEFREC_CSti_1_0_OFFSET;
+    body_p = (si1 *) rh + MEFREC_CSti_1_0_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_ESti_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3319,13 +3312,12 @@ PyObject *map_mef3_ESti_type(RECORD_HEADER *rh)
     PyArray_Descr    *descr;
 
     descr = (PyArray_Descr *) create_esti_dtype();
-    body_p = (si1 *) rh+MEFREC_ESti_1_0_OFFSET;
+    body_p = (si1 *) rh + MEFREC_ESti_1_0_OFFSET;
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3336,15 +3328,14 @@ PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh)
     ui4     str_len;
     PyArray_Descr    *descr;
 
-    body_p = (si1 *) rh+MEFREC_SyLg_1_0_TEXT_OFFSET;
+    body_p = (si1 *) rh + MEFREC_SyLg_1_0_TEXT_OFFSET;
     str_len = (ui4) strlen(body_p);
     descr = (PyArray_Descr *) create_sylg_dtype_c(str_len);
     py_array_out = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides, (void *) body_p, NPY_ARRAY_DEFAULT, Py_None);
     return py_array_out;
 }
 
-PyObject *map_mef3_Curs_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_Curs_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3360,8 +3351,7 @@ PyObject *map_mef3_Curs_type(RECORD_HEADER *rh)
     return py_array_out;
 }
 
-PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh)
-{
+PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh) {
     import_array();
 
     // Numpy array out
@@ -3380,8 +3370,7 @@ PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh)
 /**************************  Numpy data types  ****************************/
 
 // Records
-static PyObject *create_rh_dtype()
-{
+static PyObject *create_rh_dtype() {
 
     import_array();
 
@@ -3411,8 +3400,7 @@ static PyObject *create_rh_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_ri_dtype()
-{
+static PyObject *create_ri_dtype() {
     import_array();
 
     // Numpy array out
@@ -3420,7 +3408,6 @@ static PyObject *create_ri_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s),\
                          (s, s),\
@@ -3441,8 +3428,7 @@ static PyObject *create_ri_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_edfa_dtype(PyObject *self, PyObject *args)
-{
+static PyObject *create_edfa_dtype(PyObject *self, PyObject *args) {
 
     si8     text_len;
 
@@ -3458,7 +3444,6 @@ static PyObject *create_edfa_dtype(PyObject *self, PyObject *args)
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
@@ -3471,9 +3456,7 @@ static PyObject *create_edfa_dtype(PyObject *self, PyObject *args)
     return (PyObject *) descr;
 }
 
-static PyObject *create_edfa_dtype_c(ui4 text_len)
-{
-
+static PyObject *create_edfa_dtype_c(ui4 text_len) {
     import_array();
 
     // Numpy array out
@@ -3481,7 +3464,6 @@ static PyObject *create_edfa_dtype_c(ui4 text_len)
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
@@ -3495,8 +3477,7 @@ static PyObject *create_edfa_dtype_c(ui4 text_len)
 }
 
 // // NOTE: not sure this is correct
-static PyObject *create_lntp_dtype(PyObject *self, PyObject *args)
-{
+static PyObject *create_lntp_dtype(PyObject *self, PyObject *args) {
     si8     template_len;
 
     if (!PyArg_ParseTuple(args,"i",
@@ -3511,7 +3492,6 @@ static PyObject *create_lntp_dtype(PyObject *self, PyObject *args)
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
@@ -3524,8 +3504,7 @@ static PyObject *create_lntp_dtype(PyObject *self, PyObject *args)
     return (PyObject *) descr;
 }
 
-static PyObject *create_lntp_dtype_c(ui4 template_len)
-{
+static PyObject *create_lntp_dtype_c(ui4 template_len) {
 
     import_array();
 
@@ -3534,7 +3513,6 @@ static PyObject *create_lntp_dtype_c(ui4 template_len)
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i)]",
 
@@ -3547,8 +3525,7 @@ static PyObject *create_lntp_dtype_c(ui4 template_len)
     return (PyObject *) descr;
 }
 
-static PyObject *create_note_dtype(PyObject *self, PyObject *args)
-{
+static PyObject *create_note_dtype(PyObject *self, PyObject *args) {
     si8     text_len;
 
     if (!PyArg_ParseTuple(args,"i",
@@ -3573,10 +3550,7 @@ static PyObject *create_note_dtype(PyObject *self, PyObject *args)
     return (PyObject *) descr;
 }
 
-static PyObject *create_note_dtype_c(ui4 text_len)
-{
-
-  
+static PyObject *create_note_dtype_c(ui4 text_len) {
     import_array();
 
     // Numpy array out
@@ -3594,8 +3568,7 @@ static PyObject *create_note_dtype_c(ui4 text_len)
     return (PyObject *) descr;
 }
 
-static PyObject *create_seiz_dtype()
-{
+static PyObject *create_seiz_dtype() {
     import_array();
 
     // Numpy array out
@@ -3603,7 +3576,6 @@ static PyObject *create_seiz_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -3628,8 +3600,7 @@ static PyObject *create_seiz_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_seiz_ch_dtype()
-{
+static PyObject *create_seiz_ch_dtype() {
 
     import_array();
 
@@ -3638,7 +3609,6 @@ static PyObject *create_seiz_ch_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s),\
                          (s, s)]",
@@ -3653,8 +3623,7 @@ static PyObject *create_seiz_ch_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_sylg_dtype(PyObject *self, PyObject *args)
-{
+static PyObject *create_sylg_dtype(PyObject *self, PyObject *args) {
     si8     text_len;
 
     if (!PyArg_ParseTuple(args,"i",
@@ -3669,7 +3638,6 @@ static PyObject *create_sylg_dtype(PyObject *self, PyObject *args)
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i)]",
 
                        "text", "S", text_len);
@@ -3680,10 +3648,7 @@ static PyObject *create_sylg_dtype(PyObject *self, PyObject *args)
     return (PyObject *) descr;
 }
 
-static PyObject *create_sylg_dtype_c(ui4 text_len)
-{
-
-  
+static PyObject *create_sylg_dtype_c(ui4 text_len) {
     import_array();
 
     // Numpy array out
@@ -3701,8 +3666,7 @@ static PyObject *create_sylg_dtype_c(ui4 text_len)
     return (PyObject *) descr;
 }
 
-static PyObject *create_csti_dtype()
-{
+static PyObject *create_csti_dtype() {
     import_array();
 
     // Numpy array out
@@ -3710,7 +3674,6 @@ static PyObject *create_csti_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s),\
                          (s, s, i),\
@@ -3727,8 +3690,7 @@ static PyObject *create_csti_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_esti_dtype()
-{
+static PyObject *create_esti_dtype() {
     import_array();
 
     // Numpy array out
@@ -3736,7 +3698,6 @@ static PyObject *create_esti_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -3761,8 +3722,7 @@ static PyObject *create_esti_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_curs_dtype()
-{
+static PyObject *create_curs_dtype() {
     import_array();
 
     // Numpy array out
@@ -3770,7 +3730,6 @@ static PyObject *create_curs_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -3789,8 +3748,7 @@ static PyObject *create_curs_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_epoc_dtype()
-{
+static PyObject *create_epoc_dtype() {
     import_array();
 
     // Numpy array out
@@ -3798,7 +3756,6 @@ static PyObject *create_epoc_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -3820,8 +3777,7 @@ static PyObject *create_epoc_dtype()
 }
 
 // Library
-static PyObject *create_uh_dtype()
-{
+static PyObject *create_uh_dtype() {
     import_array();
 
     // Numpy array out
@@ -3829,7 +3785,6 @@ static PyObject *create_uh_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s, i),\
@@ -3883,8 +3838,7 @@ static PyObject *create_uh_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_md1_dtype()
-{
+static PyObject *create_md1_dtype() {
     import_array();
 
     // Numpy array out
@@ -3892,7 +3846,6 @@ static PyObject *create_md1_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s, i),\
@@ -3909,8 +3862,7 @@ static PyObject *create_md1_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_tmd2_dtype()
-{
+static PyObject *create_tmd2_dtype() {
     import_array();
 
     // Numpy array out
@@ -3918,7 +3870,6 @@ static PyObject *create_tmd2_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s, i),\
                          (s, s),\
@@ -3982,8 +3933,7 @@ static PyObject *create_tmd2_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_vmd2_dtype()
-{
+static PyObject *create_vmd2_dtype() {
     import_array();
 
     // Numpy array out
@@ -3991,7 +3941,6 @@ static PyObject *create_vmd2_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s, i),\
                          (s, s),\
@@ -4025,8 +3974,7 @@ static PyObject *create_vmd2_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_md3_dtype()
-{
+static PyObject *create_md3_dtype() {
     import_array();
 
     // Numpy array out
@@ -4034,7 +3982,6 @@ static PyObject *create_md3_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -4063,8 +4010,7 @@ static PyObject *create_md3_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_ti_dtype()
-{
+static PyObject *create_ti_dtype() {
     import_array();
 
     // Numpy array out
@@ -4072,7 +4018,6 @@ static PyObject *create_ti_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -4103,8 +4048,7 @@ static PyObject *create_ti_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_vi_dtype()
-{
+static PyObject *create_vi_dtype() {
     import_array();
 
     // Numpy array out
@@ -4112,7 +4056,6 @@ static PyObject *create_vi_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s),\
                          (s, s),\
@@ -4136,8 +4079,7 @@ static PyObject *create_vi_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_segment_dtype()
-{
+static PyObject *create_segment_dtype() {
     import_array();
 
     // Numpy array out
@@ -4145,7 +4087,6 @@ static PyObject *create_segment_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i),\
                          (s, s, i),\
@@ -4176,8 +4117,7 @@ static PyObject *create_segment_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_channel_dtype()
-{
+static PyObject *create_channel_dtype() {
     import_array();
 
     // Numpy array out
@@ -4185,7 +4125,6 @@ static PyObject *create_channel_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s),\
                          (s, s, i),\
                          (s, s, i),\
@@ -4226,8 +4165,7 @@ static PyObject *create_channel_dtype()
     return (PyObject *) descr;
 }
 
-static PyObject *create_session_dtype()
-{
+static PyObject *create_session_dtype() {
     import_array();
 
     // Numpy array out
@@ -4235,7 +4173,6 @@ static PyObject *create_session_dtype()
     PyArray_Descr    *descr;
 
     // Build dictionary
-
     op = Py_BuildValue("[(s, s, i),\
                          (s, s),\
                          (s, s, i),\
