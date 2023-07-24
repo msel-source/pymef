@@ -4097,7 +4097,7 @@ static PyObject *create_segment_dtype() {
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
-						 (s, s, i),\
+                         (s, s, i),\
                          (s, s, i)]",
                        "channel_type", "i4",
                        "metadata_fps", "V", sizeof (void *),
@@ -4109,7 +4109,7 @@ static PyObject *create_segment_dtype() {
                        "name", "S", MEF_SEGMENT_BASE_FILE_NAME_BYTES,
                        "path", "S", MEF_FULL_FILE_NAME_BYTES,
                        "channel_name", "S", MEF_BASE_FILE_NAME_BYTES,
-					   "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
                        "level_UUID", "V", UUID_BYTES);
 
     PyArray_DescrConverter(op, &descr);
