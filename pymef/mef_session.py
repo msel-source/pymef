@@ -1388,8 +1388,7 @@ class MefSession():
                                     uutc_ss[0], uutc_ss[1], True)
             if out_nans and data is None:
                 channel_md = self.session_md['time_series_channels'][channel]
-                size = ((np.diff(uutc_ss)/1e6)
-                        * channel_md['section_2']['sampling_frequency'])
+                size = ((np.diff(uutc_ss) / 1e6)[0] * channel_md['section_2']['sampling_frequency'][0])
                 data = np.empty(int(size))
                 data[:] = np.nan
             data_list.append(data)

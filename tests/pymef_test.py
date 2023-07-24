@@ -629,8 +629,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = int(ch_md2['start_sample'] - self.samps_per_mef_block)
-        end = int(ch_md2['start_sample'] + self.samps_per_mef_block)
+        start = int(ch_md2['start_sample'][0] - self.samps_per_mef_block)
+        end = int(ch_md2['start_sample'][0] + self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -649,8 +649,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = int(ch_md2['number_of_samples'] - self.samps_per_mef_block)
-        end = int(ch_md2['number_of_samples'] + self.samps_per_mef_block)
+        start = int(ch_md2['number_of_samples'][0] - self.samps_per_mef_block)
+        end = int(ch_md2['number_of_samples'][0] + self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -670,8 +670,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = int(ch_md2['start_sample'] - (self.samps_per_mef_block * 2))
-        end = int(ch_md2['start_sample'] - self.samps_per_mef_block)
+        start = int(ch_md2['start_sample'][0] - (self.samps_per_mef_block * 2))
+        end = int(ch_md2['start_sample'][0] - self.samps_per_mef_block)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -690,8 +690,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md2 = ch_md['section_2']
 
-        start = int(ch_md2['number_of_samples'] + self.samps_per_mef_block)
-        end = int(ch_md2['number_of_samples'] + (self.samps_per_mef_block * 2))
+        start = int(ch_md2['number_of_samples'][0] + self.samps_per_mef_block)
+        end = int(ch_md2['number_of_samples'][0] + (self.samps_per_mef_block * 2))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -724,8 +724,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md_spec = ch_md['channel_specific_metadata']
 
-        start = int(ch_md_spec['earliest_start_time'] - 1e6)
-        end = int(ch_md_spec['earliest_start_time'] + 1e6)
+        start = int(ch_md_spec['earliest_start_time'][0] - 1e6)
+        end = int(ch_md_spec['earliest_start_time'][0] + 1e6)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -744,8 +744,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md_spec = ch_md['channel_specific_metadata']
 
-        start = int(ch_md_spec['latest_end_time'] - 1e6)
-        end = int(ch_md_spec['latest_end_time'] + 1e6)
+        start = int(ch_md_spec['latest_end_time'][0] - 1e6)
+        end = int(ch_md_spec['latest_end_time'][0] + 1e6)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -764,8 +764,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md_spec = ch_md['channel_specific_metadata']
 
-        start = int(ch_md_spec['earliest_start_time'] - (1e6 * 2))
-        end = int(ch_md_spec['earliest_start_time'] - 1e6)
+        start = int(ch_md_spec['earliest_start_time'][0] - (1e6 * 2))
+        end = int(ch_md_spec['earliest_start_time'][0] - 1e6)
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -783,8 +783,8 @@ class TestStringMethods(unittest.TestCase):
 
         ch_md_spec = ch_md['channel_specific_metadata']
 
-        start = int(ch_md_spec['latest_end_time'] + 1e6)
-        end = int(ch_md_spec['latest_end_time'] + (1e6 * 2))
+        start = int(ch_md_spec['latest_end_time'][0] + 1e6)
+        end = int(ch_md_spec['latest_end_time'][0] + (1e6 * 2))
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
