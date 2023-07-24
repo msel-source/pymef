@@ -4038,7 +4038,7 @@ static PyObject *create_ti_dtype() {
                        "minimum_sample_value", "i4",
 
                        "protected_region", "V", TIME_SERIES_INDEX_PROTECTED_REGION_BYTES,
-                       "RED_block_flags", "V",
+                       "RED_block_flags", "u1",
                        "RED_block_protected_region", "V", RED_BLOCK_PROTECTED_REGION_BYTES,
                        "RED_block_discretionary_region", "V", RED_BLOCK_DISCRETIONARY_REGION_BYTES);
 
@@ -4070,8 +4070,8 @@ static PyObject *create_vi_dtype() {
                        "end_frame", "u4",
                        "file_offset", "i8",
                        "clip_bytes", "i8",
-                       "RED_block_protected_region", "V", VIDEO_INDEX_PROTECTED_REGION_BYTES,
-                       "RED_block_discretionary_region", "V", VIDEO_INDEX_DISCRETIONARY_REGION_BYTES);
+                       "protected_region", "V", VIDEO_INDEX_PROTECTED_REGION_BYTES,
+                       "discretionary_region", "V", VIDEO_INDEX_DISCRETIONARY_REGION_BYTES);
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
@@ -4097,6 +4097,7 @@ static PyObject *create_segment_dtype() {
                          (s, s, i),\
                          (s, s, i),\
                          (s, s, i),\
+                         (s, s, i),\
                          (s, s, i)]",
                        "channel_type", "i4",
                        "metadata_fps", "V", sizeof (void *),
@@ -4108,8 +4109,8 @@ static PyObject *create_segment_dtype() {
                        "name", "S", MEF_SEGMENT_BASE_FILE_NAME_BYTES,
                        "path", "S", MEF_FULL_FILE_NAME_BYTES,
                        "channel_name", "S", MEF_BASE_FILE_NAME_BYTES,
-                       "level_UUID", "i1", UUID_BYTES);
-
+                       "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
+                       "level_UUID", "V", UUID_BYTES);
 
     PyArray_DescrConverter(op, &descr);
     Py_DECREF(op);
@@ -4151,7 +4152,7 @@ static PyObject *create_channel_dtype() {
                        "name", "S", MEF_BASE_FILE_NAME_BYTES,
                        "extension", "S", TYPE_BYTES,
                        "session_name", "S", MEF_BASE_FILE_NAME_BYTES,
-                       "level_UUID", "i1", UUID_BYTES,
+                       "level_UUID", "V", UUID_BYTES,
                        "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
                        "maximum_number_of_records", "i8",
                        "maximum_record_bytes", "i8",
@@ -4203,7 +4204,7 @@ static PyObject *create_session_dtype() {
                        "name", "S", MEF_BASE_FILE_NAME_BYTES,
                        "path", "S", MEF_FULL_FILE_NAME_BYTES,
                        "anonymized_name", "S", UNIVERSAL_HEADER_ANONYMIZED_NAME_BYTES,
-                       "level_UUID", "i1", UUID_BYTES,
+                       "level_UUID", "V", UUID_BYTES,
 
                        "maximum_number_of_records", "i8",
                        "maximum_record_bytes", "i8",
