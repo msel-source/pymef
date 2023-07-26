@@ -69,8 +69,7 @@
 /******************************  MEF write functions  *******************************/
 /************************************************************************************/
 
-static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
-{
+static PyObject *write_mef_data_records(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_file_path;
     si1     level_1_password_arr[PASSWORD_BYTES] = {0};
@@ -110,44 +109,47 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     }
 
     // Check if the list is empty
-    if (PyList_Size(py_record_list) == 0){
+    if (PyList_Size(py_record_list) == 0) {
         Py_RETURN_NONE;
     }
 
     // initialize MEF library
-    (void) initialize_meflib();  
+    (void) initialize_meflib();
+
     // Apply recording offset
     MEF_globals->recording_time_offset = recording_time_offset;
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
-            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+        
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
-            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+		
+        Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
     
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
@@ -169,7 +171,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     path_processed = 0;
     extract_path_parts(py_file_path, path_out, name, type);
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
         // Segment - OK - extract segment number and check for time series
         uh->segment_number = extract_segment_number(&name[0]);
         if (!path_processed)
@@ -178,11 +180,11 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     }
 
     // Channel level
-    if (path_processed){
+    if (path_processed) {
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
     }
-    if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING) | !strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING) | !strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)) {
         MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
         if (!path_processed)
             MEF_strncpy(record_file_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -190,21 +192,22 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     }
 
     // Session level
-    if (path_processed){
+    if (path_processed) {
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
     } 
-    if (!strcmp(type,SESSION_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SESSION_DIRECTORY_TYPE_STRING)) {
         MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
         if (!path_processed)
             MEF_strncpy(record_file_name, name, MEF_BASE_FILE_NAME_BYTES);
         path_processed = 1;
     }
+
     // Determine the number and size of records - ASK this is pretty dumb that I am calling this twice, we caould do it piecemeal instead
     n_records = (ui4) PyList_Size(py_record_list);
     bytes = UNIVERSAL_HEADER_BYTES;
     rb_bytes = 0;
-    for (li = 0; li<n_records; li++){
+    for (li = 0; li<n_records; li++) {
         py_record_dict = PyList_GetItem(py_record_list, li);
         // Header bytes
         bytes += RECORD_HEADER_BYTES;
@@ -233,9 +236,10 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     rd = rec_data_fps->records;
     ri = rec_idx_fps->record_indices;
     file_offset = ri->file_offset = UNIVERSAL_HEADER_BYTES;
+
     // Run through the python list, read records and write them
     max_rec_bytes = 0;
-    for (li = 0; li<n_records; li++){
+    for (li = 0; li < n_records; li++) {
 
         // set up record header
         rh = (RECORD_HEADER *) rd;
@@ -294,7 +298,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
                 MEF_strncpy(rh->type_string, MEFREC_Seiz_TYPE_STRING, TYPE_BYTES);
                 // Inidividual channels
                 temp_o = PyDict_GetItemString(py_record_dict, "record_subbody");
-                if (temp_o != NULL){
+                if (temp_o != NULL) {
                     map_python_Siez_ch_type(temp_o, (si1 *) rd+MEFREC_Seiz_1_0_BYTES);
                     rh->bytes += (PyArray_ITEMSIZE((PyArrayObject *) temp_o) * PyArray_SIZE((PyArrayObject *) temp_o));
                 }
@@ -382,8 +386,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
@@ -420,35 +423,37 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
-            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
-            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
 
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
@@ -468,7 +473,8 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     // Check for directory type
     extract_path_parts(py_file_path, path_out, name, type);
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
+
         // Segment - OK - extract segment number and check for time series
         uh->segment_number = extract_segment_number(&name[0]);
 
@@ -478,20 +484,20 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
         // TODO - extact segment number
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
+        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)) {
 
             MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
             // Get session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
             MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
-        }else{
+        } else {
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
             PyErr_Occurred();
             return NULL;
         }
-    }else{
+    } else {
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
@@ -528,8 +534,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
-{
+static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args) {
     // Specified by user
     si1    *py_file_path;
     PyObject    *py_pass_1_obj, *py_pass_2_obj;
@@ -566,35 +571,37 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
-            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
-            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
    
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
@@ -624,20 +631,20 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
         // TODO - extact segment number
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)){
+        if (!strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)) {
             MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
             // Get session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
             MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
-        }else{
+        } else {
             //Fire an error that this is not video directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a video channel, exiting...");
             PyErr_Occurred();
             return NULL;
         }
 
-    }else{
+    } else {
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
@@ -675,8 +682,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
-{
+static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args) {
     // Specified by user
     PyArrayObject    *raw_data;
     si1    *py_file_path;
@@ -725,7 +731,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // check raw_data data type, convert if necessary
     array_type = PyArray_TYPE(raw_data);
-    if (array_type != NPY_INT32){
+    if (array_type != NPY_INT32) {
         PyErr_SetString(PyExc_RuntimeError, "Incorrect data type. Please convert your NumPy array to Int32 data type!");
         PyErr_Occurred();
         return NULL;
@@ -734,40 +740,41 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
-            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
-            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+	
+        Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
 
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
     }
-
     
     // set up a generic mef3 fps and process the password data with it
     gen_fps = allocate_file_processing_struct(UNIVERSAL_HEADER_BYTES, NO_FILE_TYPE_CODE, NULL, NULL, 0);
@@ -779,7 +786,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     // extract the segment name and check the firectory-type (if indeed segment)
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
         // segment type/directory
 
         // copy the segment name for file name construction later
@@ -788,14 +795,14 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         // extract the channel name and check the type (if indeed time-series)
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
+        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)) {
             // correct/corresponding directory-type
             
             // extract the session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
             
-        }else{
+        } else {
             
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
@@ -803,7 +810,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
             return NULL;
         }
 
-    }else{
+    } else {
 
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
@@ -883,7 +890,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // TODO optional filtration
     // use allocation below if lossy
-    if (lossy_flag == 1){
+    if (lossy_flag == 1) {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, samps_per_mef_block, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), samps_per_mef_block, samps_per_mef_block, pwd);
         // ASK RED lossy compression user specified???
         rps->compression.mode = RED_MEAN_RESIDUAL_RATIO;
@@ -891,7 +898,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
         rps->directives.require_normality = MEF_TRUE;
         rps->compression.goal_mean_residual_ratio = 0.10;
         rps->compression.goal_tolerance = 0.01;
-    }else{
+    } else {
         rps = RED_allocate_processing_struct(samps_per_mef_block, 0, 0, RED_MAX_DIFFERENCE_BYTES(samps_per_mef_block), 0, 0, pwd);
     }
 
@@ -911,7 +918,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     start_sample = 0;
 
     // Write the data and update the metadata
-    while (samps_remaining){
+    while (samps_remaining) {
 
         // check
         if (samps_remaining < block_samps)
@@ -957,10 +964,10 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
 
     // update metadata
     tmd2->maximum_contiguous_block_bytes = file_offset - UNIVERSAL_HEADER_BYTES;
-    if (tmd2->units_conversion_factor >= 0.0){
+    if (tmd2->units_conversion_factor >= 0.0) {
         tmd2->maximum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
-    }else{
+    } else {
         tmd2->maximum_native_sample_value = (sf8) min_samp * tmd2->units_conversion_factor;
         tmd2->minimum_native_sample_value = (sf8) max_samp * tmd2->units_conversion_factor;
     }
@@ -994,8 +1001,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
-{
+static PyObject *write_mef_v_indices(PyObject *self, PyObject *args) {
     // Specified by user
     PyObject    *vi_array; 
     si1    *py_file_path;
@@ -1036,35 +1042,37 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     MEF_globals->recording_time_offset = recording_start_uutc_time;
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
-            level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_1_password = strcpy(level_1_password_arr, temp_str_bytes);
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
-            level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            level_2_password = strcpy(level_2_password_arr, temp_str_bytes);
+		
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
 
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
@@ -1082,7 +1090,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
     // Check for directory type
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
         // Segment - OK - extract segment number and check for time series
         uh->segment_number = extract_segment_number((si1 *) &name);
 
@@ -1092,20 +1100,20 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
         // TODO - extact segment number
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)){
+        if (!strcmp(type,VIDEO_CHANNEL_DIRECTORY_TYPE_STRING)) {
             MEF_strncpy(uh->channel_name, name, MEF_BASE_FILE_NAME_BYTES);
             // Get session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
             MEF_strncpy(uh->session_name, name, MEF_BASE_FILE_NAME_BYTES);
-        }else{
+        } else {
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a video channel, exiting...");
             PyErr_Occurred();
             return NULL;
         }
 
-    }else{
+    } else {
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
@@ -1142,8 +1150,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args)
 /*************************  MEF modify/append functions  ****************************/
 /************************************************************************************/
 
-static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
-{
+static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args) {
     // Specified by user
     PyArrayObject    *raw_data;
     si1    *py_file_path;
@@ -1196,35 +1203,37 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     // initialize MEF library
     (void) initialize_meflib();
 
-    // tak care of password entries
-    if (PyUnicode_Check(py_pass_1_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    // password entries
+    if (PyUnicode_Check(py_pass_1_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_1_password = NULL;
-        }else{
+        else
             level_1_password = strcpy(level_1_password_arr,temp_str_bytes);
-        }
-    }else{
+
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_1_password = NULL;
     }
 
-    if (PyUnicode_Check(py_pass_2_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8","strict"); // Encode to UTF-8 python objects
+    if (PyUnicode_Check(py_pass_2_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
 
-        if (!*temp_str_bytes){
+        if (!*temp_str_bytes)
             level_2_password = NULL;
-        }else{
+        else
             level_2_password = strcpy(level_2_password_arr,temp_str_bytes);
-        }
-    }else{
+
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         level_2_password = NULL;
     }
 
 
-    if ((level_1_password == NULL) && (level_2_password != NULL)){
+    if ((level_1_password == NULL) && (level_2_password != NULL)) {
         PyErr_SetString(PyExc_RuntimeError, "Level 2 password cannot be set without level 1 password.");
         PyErr_Occurred();
         return NULL;
@@ -1242,7 +1251,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
     // Check for directory type
     MEF_strncpy(file_path, py_file_path, MEF_FULL_FILE_NAME_BYTES);
     extract_path_parts(file_path, path_out, name, type);
-    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)){
+    if (!strcmp(type,SEGMENT_DIRECTORY_TYPE_STRING)) {
 
         // Copy the segment name for later use
         MEF_strncpy(segment_name, name, MEF_BASE_FILE_NAME_BYTES);
@@ -1250,11 +1259,11 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
         // TODO - extact segment number
         MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
         extract_path_parts(path_in, path_out, name, type);
-        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)){
+        if (!strcmp(type,TIME_SERIES_CHANNEL_DIRECTORY_TYPE_STRING)) {
             // Get session name
             MEF_strncpy(path_in, path_out, MEF_FULL_FILE_NAME_BYTES);
             extract_path_parts(path_in, path_out, name, type);
-        }else{
+        } else {
             //Fire an error that this is not time series directory - hence makes no sense to write metadata
             PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
             PyErr_Occurred();
@@ -1262,7 +1271,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
             return NULL;
         }
 
-    }else{
+    } else {
         //Fire an error that this is not segment directory - hence makes no sense to write metadata
         PyErr_SetString(PyExc_RuntimeError, "Not a segment, exiting...");
         PyErr_Occurred();
@@ -1483,6 +1492,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args)
 
 
 static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args) {
+
     // Specified by user
     si1    *py_session_path;
     PyObject    *py_password_obj;
@@ -1534,6 +1544,9 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args) {
     // map session metadata
     ses_metadata_dict = map_mef3_session(session, map_indices_flag);
 
+	// free the meflib globals
+	free_meflib();
+	
 	// return the metadata dictionary
 	return ses_metadata_dict;
 }
@@ -1575,7 +1588,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args) {
         if (!*temp_str_bytes)
             password = NULL;
         else
-            password = strcpy(password_arr,temp_str_bytes);
+            password = strcpy(password_arr, temp_str_bytes);
 		
 		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
     } else {
@@ -1588,7 +1601,10 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args) {
 
     // map channel metadata
     ch_metadata_dict = map_mef3_channel(channel, map_indices_flag);
-    
+
+	// free the meflib globals
+	free_meflib();
+	
 	// return the metadata dictionary    
     return ch_metadata_dict;
 }
@@ -1630,7 +1646,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args) {
 		if (!*temp_str_bytes)
             password = NULL;
         else
-            password = strcpy(password_arr,temp_str_bytes);
+            password = strcpy(password_arr, temp_str_bytes);
 		
 		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
     } else {
@@ -1643,6 +1659,9 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args) {
     // map the segment metadata
     seg_metadata_dict = map_mef3_segment(segment,map_indices_flag);
     
+	// free the meflib globals
+	free_meflib();
+	
 	// return the metadata dictionary    
     return seg_metadata_dict; 
 }
@@ -1719,6 +1738,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
     if (channel->channel_type != TIME_SERIES_CHANNEL_TYPE) {
         PyErr_SetString(PyExc_RuntimeError, "Not a time series channel, exiting...");
         PyErr_Occurred();
+		free_meflib();
         return NULL;
     }
 
@@ -1739,11 +1759,13 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
     if (times_specified && start_time >= end_time) {
         PyErr_SetString(PyExc_RuntimeError, "Start time later than end time, exiting...");
         PyErr_Occurred();
+		free_meflib();
         return NULL;
     }
     if (!times_specified && start_samp >= end_samp) {
         PyErr_SetString(PyExc_RuntimeError, "Start sample larger than end sample, exiting...");
         PyErr_Occurred();
+		free_meflib();
         return NULL;
     }    
 
@@ -1752,6 +1774,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         if (((start_time < channel->earliest_start_time) & (end_time < channel->earliest_start_time)) |
             ((start_time > channel->latest_end_time) & (end_time > channel->latest_end_time))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop times are out of file. Returning None", 1);
+			free_meflib();
             Py_RETURN_NONE;
         }
         if (end_time > channel->latest_end_time)
@@ -1763,13 +1786,14 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         if (((start_samp < 0) & (end_samp < 0)) |
             ((start_samp > channel->metadata.time_series_section_2->number_of_samples) & (end_samp > channel->metadata.time_series_section_2->number_of_samples))){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start and stop samples are out of file. Returning None", 1);
+			free_meflib();
             Py_RETURN_NONE;
         }
         if (end_samp > channel->metadata.time_series_section_2->number_of_samples){
             PyErr_WarnEx(PyExc_RuntimeWarning, "Stop sample larger than number of samples. Setting end sample to number of samples in channel", 1);
             end_samp = channel->metadata.time_series_section_2->number_of_samples;
         }
-        if (start_samp < 0){
+        if (start_samp < 0) {
             PyErr_WarnEx(PyExc_RuntimeWarning, "Start sample smaller than 0. Setting start sample to 0", 1);
             start_samp = 0;
         }
@@ -1793,6 +1817,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
     if (py_array_out == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Memory allocation error, please try shortening the requested segment.");
         PyErr_Occurred();
+		free_meflib();
         return NULL;
     }
     numpy_arr_data = (sf8 *) PyArray_GETPTR1(py_array_out, 0);
@@ -1913,9 +1938,10 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         //    if (channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].minimum_sample_value < chan->min_sample_value)
         //        chan->min_sample_value = channel->segments[start_segment].time_series_indices_fps->time_series_indices[i].minimum_sample_value;
         //}
-    }
-    // spans across segments
-    else {
+		
+    } else {
+		// spans across segments
+    
         // start with first segment
         num_block_in_segment = (ui8) channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_blocks;
         total_samps += channel->segments[start_segment].metadata_fps->metadata.time_series_section_2->number_of_samples -
@@ -1927,6 +1953,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         if (channel->segments[start_segment].time_series_indices_fps->time_series_indices[start_idx].file_offset < 1024){
             PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
             PyErr_Occurred();
+			free_meflib();
             return NULL;
         }
         
@@ -1941,6 +1968,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
             if (channel->segments[i].time_series_indices_fps->time_series_indices[0].file_offset < 1024){
                 PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
                 PyErr_Occurred();
+				free_meflib();
                 return NULL;
             }
         }
@@ -1965,6 +1993,7 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         if (channel->segments[end_segment].time_series_indices_fps->time_series_indices[end_idx].file_offset < 1024){
             PyErr_SetString(PyExc_RuntimeError, "Invalid index file offset, exiting...");
             PyErr_Occurred();
+			free_meflib();
             return NULL;
         }
     }
@@ -1999,9 +2028,9 @@ static PyObject *read_mef_ts_data(PyObject *self, PyObject *args) {
         }
         if (channel->segments[start_segment].time_series_data_fps->directives.close_file == MEF_TRUE)
             fps_close(channel->segments[start_segment].time_series_data_fps);
-    }
-    // spans across segments
-    else {
+    } else {
+		// spans across segments
+	
         // start with first segment
         if (channel->segments[start_segment].time_series_data_fps->fp == NULL) {
             channel->segments[start_segment].time_series_data_fps->fp = fopen(channel->segments[start_segment].time_series_data_fps->full_file_name, "rb");
@@ -2279,6 +2308,9 @@ done_decoding:
     free (compressed_data_buffer);
     free (rps->difference_buffer);
     free (rps);
+
+	// free the meflib globals
+	free_meflib();
 
     return (PyObject *) py_array_out;
 }
@@ -4366,10 +4398,8 @@ void memset_int(si4 *ptr, si4 value, size_t num)
     }
 }
 
-static PyObject *check_mef_password(PyObject *self, PyObject *args)
-{
-    // We need to dive into session - get the first
-    // Specified by user
+static PyObject *check_mef_password(PyObject *self, PyObject *args) {
+
     si1    *py_mef_file_path;
     PyObject    *py_password_obj;
 
@@ -4378,7 +4408,6 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     si1     *temp_str_bytes;
     si1     *password;
     PyObject    *temp_UTF_str;
-        
 
     si1         password_bytes[PASSWORD_BYTES];
     ui1         sha[SHA256_OUTPUT_SIZE];
@@ -4400,20 +4429,21 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     
     // initialize MEF library
     (void) initialize_meflib();
-
-    // tak care of password entries
-    if (PyUnicode_Check(py_password_obj)){
-        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8","strict");
+	
+	// password entries
+    if (PyUnicode_Check(py_password_obj)) {
+        temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
         temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
-        if (!*temp_str_bytes){
+        
+        if (!*temp_str_bytes)
             password = NULL;
-        }else{
-            password = strcpy(password_arr,temp_str_bytes);
-        }
-    }else{
+        else
+            password = strcpy(password_arr, temp_str_bytes);
+        
+		Py_DECREF(temp_UTF_str);	temp_UTF_str = NULL;
+    } else {
         password = NULL;
     }
-    
 
     // Allocate universal header
     uh = (UNIVERSAL_HEADER *) calloc(1, sizeof(UNIVERSAL_HEADER));
@@ -4422,32 +4452,34 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     fp = fopen(py_mef_file_path,"rb");
     nb = fread((void *) uh, sizeof(UNIVERSAL_HEADER), 1, fp);
     fclose(fp);
-    if (nb != 1){
+    if (nb != 1) {
         PyErr_SetString(PyExc_RuntimeError, "Error reading file, exiting...");
         PyErr_Occurred();
         free(uh);
+		free_meflib();
         return NULL;
     }
 
     // If password is NULL check if the file is not encrypted
-    if (password == NULL){
+    if (password == NULL) {
         level_1_cumsum = 0;
-        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) {  // compare with stored level 1 hash
             level_1_cumsum += uh->level_1_password_validation_field[i];
         }
         level_2_cumsum = 0;
-        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+        for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) {  // compare with stored level 1 hash
             level_2_cumsum += uh->level_1_password_validation_field[i];
         }
 
-        // Clean up
+        // clean up
         free(uh);
+		free_meflib();
         
-        if (level_1_cumsum | level_2_cumsum){
+        if (level_1_cumsum | level_2_cumsum) {
             return PyLong_FromLong(-1); // Wrong password
-        }else{
+        } else {
             return PyLong_FromLong(0); // Data not encrypted
-        } 
+        }
     }
 
     // Check the password - extracted from process_pasword_data
@@ -4457,14 +4489,15 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     sha256((ui1 *) password_bytes, PASSWORD_BYTES, sha);  // generate SHA-256 hash of password bytes
     
     level_1_cumsum = 0;
-    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) {  // compare with stored level 1 hash
         level_1_cumsum += uh->level_1_password_validation_field[i];
         if (sha[i] != uh->level_1_password_validation_field[i])
             break;
     }
     if (i == PASSWORD_BYTES) {  // Level 1 password valid - cannot be level 2 password
-        // Clean up
+        // clean up
         free(uh);
+		free_meflib();
         return PyLong_FromLong(1);
     }
     
@@ -4475,23 +4508,26 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args)
     sha256((ui1 *) putative_level_1_password_bytes, PASSWORD_BYTES, sha); // generate SHA-256 hash of putative level 1 password
     
     level_2_cumsum = 0;
-    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i){  // compare with stored level 1 hash
+    for (i = 0; i < PASSWORD_VALIDATION_FIELD_BYTES; ++i) {  // compare with stored level 1 hash
         level_2_cumsum += uh->level_1_password_validation_field[i];
         if (sha[i] != uh->level_1_password_validation_field[i])
             break;
     }
-    if (i == PASSWORD_VALIDATION_FIELD_BYTES){ // Level 2 password valid
+    if (i == PASSWORD_VALIDATION_FIELD_BYTES) { // Level 2 password valid
         // Clean up
         free(uh);
+		free_meflib();
         return PyLong_FromLong(2);
     }
 
-    // Clean up
+    // clean up
     free(uh);
-    
-    if (level_1_cumsum | level_2_cumsum){
+	free_meflib();
+	
+    if (level_1_cumsum | level_2_cumsum) {
         return PyLong_FromLong(-1); // Wrong password
-    }else{
+    } else {
         return PyLong_FromLong(0); // Data not encrypted
     } 
+	
 }
