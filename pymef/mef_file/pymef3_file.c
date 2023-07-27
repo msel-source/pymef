@@ -2505,7 +2505,7 @@ void    map_python_Epoc_type(PyObject *Epoc_type_arr, MEFREC_Epoc_1_0  *r_type) 
 
 // map a char array with a maximum number of byets) to a Python string
 PyObject *map_mef3_decode_maxbytes_to_string(const char *s, size_t max_size) {
-	size_t str_len = strnlen_s(s, max_size);
+	size_t str_len = strnlen(s, max_size);
 	return map_mef3_decode_sizebytes_to_string(s, str_len);
 }
 
