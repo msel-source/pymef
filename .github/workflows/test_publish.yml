@@ -45,7 +45,11 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11, windows-latest]
+        buildplat:
+          - [ubuntu-20.04, manylinux_x86_64]
+          - [ubuntu-20.04, musllinux_x86_64]
+          - [macos-11, macosx_x86_64]
+          - [windows-2019, win_amd64]
         python: ["cp36", "cp37", "cp38", "cp39", "cp310", "cp311"]
 
     steps:
@@ -73,11 +77,13 @@ jobs:
         pip install twine
 
     - name: Build wheels
+      runs-on: ${{ matrix.buildplat[0] }}
       run: python -m cibuildwheel --output-dir dist/
       env:
-        CIBW_BUILD: ${{ matrix.python }}-${{ matrix.os }}
+        CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
     - name: Publish package
+      runs-on: ${{ matrix.buildplat[0] }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
