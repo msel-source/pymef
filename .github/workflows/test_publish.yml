@@ -147,7 +147,7 @@ jobs:
         pip install twine
 
     - name: Build wheels
-        run: python -m cibuildwheel --output-dir dist/
+      run: python -m cibuildwheel --output-dir dist/
 
     - name: Publish package
       env:
