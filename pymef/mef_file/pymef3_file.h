@@ -147,12 +147,17 @@ static char read_mef_session_metadata_docstring[] =
     "Function to read MEF3 session metadata.\n\n\
      Parameters\n\
      ----------\n\
-     target_path - path to MEF3 session being read (str)\n \
+     target_path: str\n\
+        Path to MEF3 session being read\n\
      password: str\n\
         Level 1 or level 2 password.\n\
+     map_indices_flag: bool\n\
+        Flag to enable the mapping of the time-series and video indices (default=True, map indices)\n\
+     copy_metadata_to_dict: bool\n\
+        Flag to copy metadata into a python dictionary structure (True), instead of returning the metadata by reference in Numpy structured datatypes (Default=False)\n\n\
      Returns\n\
      -------\n\
-     Session_metadata: dict\n\
+     session_metadata: dict\n\
         Dictionary with session metadata and all channels and segments metadata and records.";
 
 static char read_mef_channel_metadata_docstring[] =
@@ -163,9 +168,13 @@ static char read_mef_channel_metadata_docstring[] =
         Path to MEF3 channel being read.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
+     map_indices_flag: bool\n\
+        Flag to enable the mapping of the time-series and video indices (default=True, map indices)\n\
+     copy_metadata_to_dict: bool\n\
+        Flag to copy metadata into a python dictionary structure (True), instead of returning the metadata by reference in Numpy structured datatypes (Default=False)\n\n\
      Returns\n\
      -------\n\
-     Channel_metadata: dict\n\
+     channel_metadata: dict\n\
         Dictionary with channel metadata and all segments metadata and records.";
 
 static char read_mef_segment_metadata_docstring[] =
@@ -176,9 +185,13 @@ static char read_mef_segment_metadata_docstring[] =
         Path to MEF3 segment being read.\n\
      password: str\n\
         Level 1 or level 2 password.\n\
+     map_indices_flag: bool\n\
+        Flag to enable the mapping of the time-series and video indices (default=True, map indices)\n\
+     copy_metadata_to_dict: bool\n\
+        Flag to copy metadata into a python dictionary structure (True), instead of returning the metadata by reference in Numpy structured datatypes (Default=False)\n\n\
      Returns\n\
      -------\n\
-     Segment_metadata: dict\n\
+     segment_metadata: dict\n\
         Dictionary with segment metadata and records.";
 
 /* Documentation to be read in Python - helper functions*/
@@ -209,9 +222,9 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args);
 
 /* Pyhon object declaration - read functions*/
 static PyObject *read_mef_ts_data(PyObject *self, PyObject *args);
-static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args);
-static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args);
-static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args);
+static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args, PyObject* kwargs);
+static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args, PyObject* kwargs);
+static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args, PyObject* kwargs);
 
 /* Pyhon object declaration - clean functions*/
 static PyObject *clean_mef_session_metadata(PyObject *self, PyObject *args);
@@ -261,9 +274,9 @@ static PyMethodDef module_methods[] = {
     {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
     {"append_ts_data_and_indices", append_ts_data_and_indices, METH_VARARGS, append_ts_data_and_indices_docstring},
     {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
-    {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS, read_mef_session_metadata_docstring},
-    {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS, read_mef_channel_metadata_docstring},
-    {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS, read_mef_segment_metadata_docstring},
+    {"read_mef_session_metadata", read_mef_session_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_session_metadata_docstring},
+    {"read_mef_channel_metadata", read_mef_channel_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_channel_metadata_docstring},
+    {"read_mef_segment_metadata", read_mef_segment_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_segment_metadata_docstring},
     {"clean_mef_session_metadata", clean_mef_session_metadata, METH_VARARGS, NULL},
     {"clean_mef_channel_metadata", clean_mef_channel_metadata, METH_VARARGS, NULL},
     {"clean_mef_segment_metadata", clean_mef_segment_metadata, METH_VARARGS, NULL},
@@ -348,40 +361,43 @@ void    map_python_Curs_type(PyObject *Curs_type_dict, MEFREC_Curs_1_0  *r_type)
 void    map_python_Epoc_type(PyObject *Epoc_type_dict, MEFREC_Epoc_1_0  *r_type);
 
 
-// ---------- Mef3 to python dictionaries -----------
-PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh);
+// ---------- Mef3 to python -----------
 
-PyObject *map_mef3_md1(METADATA_SECTION_1 *md1);
-PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd);
-PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd);
-PyObject *map_mef3_md3(METADATA_SECTION_3 *md3);
+PyObject *map_mef3_decode_maxbytes_to_string(const char *s, size_t max_size);
+PyObject *map_mef3_decode_sizebytes_to_string(const char *s, size_t size);
+
+PyObject *map_mef3_uh(UNIVERSAL_HEADER *uh, si1 copy_metadata_to_dict);
+
+PyObject *map_mef3_md1(METADATA_SECTION_1 *md1, si1 copy_metadata_to_dict);
+PyObject *map_mef3_tmd2(TIME_SERIES_METADATA_SECTION_2 *tmd, si1 copy_metadata_to_dict);
+PyObject *map_mef3_vmd2(VIDEO_METADATA_SECTION_2 *vmd, si1 copy_metadata_to_dict);
+PyObject *map_mef3_md3(METADATA_SECTION_3 *md3, si1 copy_metadata_to_dict);
 
 
-PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries);
-PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries);
+PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries, si1 copy_metadata_to_dict);
+PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries, si1 copy_metadata_to_dict);
 PyObject *create_mef3_TOC(SEGMENT *segment);
 
-PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag);
-PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag);
-PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag);
+PyObject *map_mef3_segment(SEGMENT *segment, si1 map_indices_flag, si1 copy_metadata_to_dict);
+PyObject *map_mef3_channel(CHANNEL *channel, si1 map_indices_flag, si1 copy_metadata_to_dict);
+PyObject *map_mef3_session(SESSION *session, si1 map_indices_flag, si1 copy_metadata_to_dict);
 
 // Mef record structures
-PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps);
+PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUCT *rd_fps, si1 copy_metadata_to_dict);
 
-PyObject *map_mef3_rh(RECORD_HEADER *rh);
-PyObject *map_mef3_rh_npy(RECORD_HEADER *rh);
+PyObject *map_mef3_rh(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
 PyObject *map_mef3_ri(RECORD_INDEX *ri);
 
-PyObject *map_mef3_Note_type(RECORD_HEADER *rh);
-PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh);
-PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh);
-PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh);
-PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels);
-PyObject *map_mef3_CSti_type(RECORD_HEADER *rh);
-PyObject *map_mef3_ESti_type(RECORD_HEADER *rh);
-PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh);
-PyObject *map_mef3_Curs_type(RECORD_HEADER *rh);
-PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh);
+PyObject *map_mef3_Note_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_EDFA_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_Seiz_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels, si1 copy_metadata_to_dict);
+PyObject *map_mef3_CSti_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_ESti_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_SyLg_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_Curs_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
+PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict);
 
 // Helper functions
 si4 check_block_crc(ui1* block_hdr_ptr, ui4 max_samps, ui1* total_data_ptr, ui8 total_data_bytes);
