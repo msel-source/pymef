@@ -85,16 +85,22 @@ jobs:
         include:
             - os: ubuntu-20.04
               python-version: '3.6'
+              docker_python_version: 'cp36-cp36m'
             - os: ubuntu-20.04
               python-version: '3.7'
+              docker_python_version: 'cp37-cp37m'
             - os: ubuntu-20.04
               python-version: '3.8'
+              docker_python_version: 'cp38-cp38'
             - os: ubuntu-20.04
               python-version: '3.9'
+              docker_python_version: 'cp39-cp39'
             - os: ubuntu-20.04
               python-version: '3.10'
+              docker_python_version: 'cp310-cp310'
             - os: ubuntu-20.04
               python-version: '3.11'
+              docker_python_version: 'cp311-cp311'
 
             - os: macos-latest
               python-version: '3.6'
