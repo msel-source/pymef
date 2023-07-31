@@ -41,10 +41,9 @@ jobs:
     if: contains(github.ref, 'refs/tags/')
     needs: test
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.buildplat[0] }}
 
     strategy:
-      runs-on: ${{ matrix.buildplat[0] }}
       matrix:
         buildplat:
           - [ubuntu-20.04, manylinux_x86_64]
