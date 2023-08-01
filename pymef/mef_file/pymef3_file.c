@@ -65,7 +65,7 @@
     Py_DECREF(py_value_obj);	py_value_obj = NULL;
 
 #define PY_DICTSET_BYTEARRSIZE(dict, name, value, length) \
-	py_value_obj = PyByteArray_FromStringAndSize(value, length); \
+	py_value_obj = PyByteArray_FromStringAndSize((const char*)value, length); \
     PyDict_SetItemString(dict, name, py_value_obj); \
     Py_DECREF(py_value_obj);	py_value_obj = NULL;
 
