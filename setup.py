@@ -19,7 +19,6 @@ United States
 """
 
 from setuptools import setup, Extension
-from pymef.version import __version__
 import numpy
 
 # the c extension module
@@ -28,24 +27,8 @@ MEF_FILE_EXT = Extension("pymef.mef_file.pymef3_file",
                          include_dirs=["meflib/meflib"],
                          extra_compile_args=['-O3'])
 
-setup(name="pymef",
-      version = __version__,
-      description='Wrapper for MEF (multiscale electrophysiology format)',
-      url='https://github.com/msel-source/pymef',
-      author='Jan Cimbalnik',
-      author_email='jan.cimbalnik@fnusa.cz, jan.cimbalnik@mayo.edu',
-      license='Apache 2.0',
-      platforms=['Linux', 'MaxOSX', 'Windows'],
-      keywords='MEF Mayo electrophysiology',
-      install_requires=['numpy'],
+setup(install_requires=['numpy'],
       zip_safe=False,
-      classifiers=['License :: OSI Approved :: Apache Software License',
-                   'Operating System :: MacOS :: MacOS X',
-                   'Operating System :: POSIX :: Linux',
-                   'Operating System :: Microsoft :: Windows',
-                   'Programming Language :: Python :: 3',
-                   'Development Status :: 5 - Production/Stable',
-                   'Topic :: Scientific/Engineering'],
       packages=["pymef", "pymef.mef_file"],
       ext_modules=[MEF_FILE_EXT],
       include_dirs=[numpy.get_include()],
