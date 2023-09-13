@@ -27,7 +27,8 @@ MEF_FILE_EXT = Extension("pymef.mef_file.pymef3_file",
                          include_dirs=["meflib/meflib"],
                          extra_compile_args=['-O3'])
 
-setup(install_requires=['numpy'],
+setup(name="pymef",
+      install_requires=['numpy'],
       zip_safe=False,
       packages=["pymef", "pymef.mef_file"],
       ext_modules=[MEF_FILE_EXT],
