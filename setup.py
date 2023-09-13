@@ -19,7 +19,7 @@ United States
 """
 
 from setuptools import setup, Extension
-from pymef import __version__
+from pymef.version import __version__
 import numpy
 
 # the c extension module
