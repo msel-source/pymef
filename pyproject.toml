@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pymef"
 description = "Pymef is a wrapper library for Multiscale Electrophysiology Format developed by MSEL laboratory."
-readme = "README.md"
+readme = "readme.md"
 license = { text="Apache-2.0" }
 requires-python = ">=3.6"
 dependencies = [
