@@ -30,6 +30,10 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
     "Topic :: Scientific/Engineering",
 ]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pymef.version.__version__"}
 
 [project.urls]
 homepage = "https://github.com/msel-source/pymef"
