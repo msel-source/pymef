@@ -9,7 +9,6 @@ Pymef is a wrapper library for Multiscale Electrophysiology Format developed by
 
 Currently available for all major distributions (Linux, Mac OS, Windows). Only python 3 is supported.
 
-For smooth usage plese see [documentation](https://pymef.readthedocs.io)
 
 Mef v 3.0 basic features
 ------------------------
@@ -41,10 +40,29 @@ To install from source:
 python setup.py install
 ```
 
+Usage
+------------
+```
+from pymef.mef_session import MefSession
+
+session_path = '/path/to/session.mefd'
+password     = 'mef_password'          // leave blank if no password
+
+# read session metadata
+ms = MefSession(session_path, password)
+
+# read data of a single channel from beginning to end
+data = ms.read_ts_channels_sample('Ch01', [[None, None]])
+
+# read data of multiple channels from beginning to end
+data = ms.read_ts_channels_sample(['Ch01', 'Ch05'], [[None, None]])
+```
+
 Documentation
 -------------
 
-Documentation of mef library can be found [here](http://msel.mayo.edu/codes.html).
+The MEF3 specification can be found [here](https://osf.io/e3sf9/download).
+The PyMef documentation can be found [here](https://pymef.readthedocs.io).
 
 Support
 -------
