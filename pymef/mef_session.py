@@ -939,9 +939,12 @@ class MefSession():
             toc_slices = np.stack([toc_start_times, toc_stop_times], axis=1)
             toc_slices = toc_slices[((toc_slices[:, 1] > slice_start_stop[0])
                                      & (toc_slices[:, 0] < slice_start_stop[1]))]
-            
-            toc_slices[0, 0] = slice_start_stop[0]
-            toc_slices[-1, 1] = slice_start_stop[1]
+
+            if toc_slices[0, 0] < slice_start_stop[0]:
+                toc_slices[0, 0] = slice_start_stop[0]
+
+            if toc_slices[-1, 1] > slice_start_stop[1]:
+                toc_slices[-1, 1] = slice_start_stop[1]
 
             segment_path = (slice_session_path+channel+'.timd/'
                             + channel+'-'+str(segment_n).zfill(6)+'.segd/')
@@ -969,6 +972,7 @@ class MefSession():
                 if is_first_write is True:
                 
                     # Zero out the machine generated fields
+                    section_2['recording_duration'] = toc_slices[-1, -1] - toc_slices[0, 0]
                     section_2['maximum_native_sample_value'] = 0.0
                     section_2['minimum_native_sample_value'] = 0.0
                     section_2['number_of_blocks'] = 0
