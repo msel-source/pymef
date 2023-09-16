@@ -5,3 +5,38 @@ requires = [
     "oldest-supported-numpy"
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymef"
+description = "Pymef is a wrapper library for Multiscale Electrophysiology Format developed by MSEL laboratory."
+readme = "readme.md"
+license = { text="Apache-2.0" }
+requires-python = ">=3.6"
+dependencies = [
+    "numpy"
+]
+authors = [{ name=" Jan Cimbalnik", email="jan.cimbalnik@fnusa.cz" }]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.6",
+    "Topic :: Scientific/Engineering",
+]
+keywords = ["MEF", "Mayo", "Electrophysiology"]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pymef.version.__version__"}
+
+[project.urls]
+homepage = "https://github.com/msel-source/pymef"
+documentation = "https://pymef.readthedocs.io/"
+repository = "https://github.com/msel-source/pymef"
