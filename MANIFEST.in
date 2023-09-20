@@ -1,0 +1,5 @@
+recursive-include pymef *.py
+include pymef/mef_file/*.h
+include pymef/mef_file/*.c
+include meflib/meflib/*.h
+include meflib/meflib/*.c
