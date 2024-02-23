@@ -33,6 +33,10 @@ classifiers = [
 keywords = ["MEF", "Mayo", "Electrophysiology"]
 dynamic = ["version"]
 
+[tool.setuptools]
+include-package-data = true
+packages = ['pymef', 'pymef.mef_file']
+
 [tool.setuptools.dynamic]
 version = {attr = "pymef.version.__version__"}
 
