@@ -921,7 +921,7 @@ class MefSession():
         if self.session_md is None:
             raise ValueError("Please read the session metadata first.")
 
-        if not any([isinstance(x, int) for x in slice_start_stop]):
+        if not any([isinstance(x, (int, np.int32, np.int64)) for x in slice_start_stop]):
             raise ValueError("Start and stop must be integers.")
 
         channels_dict = self.session_md['time_series_channels']
@@ -986,8 +986,7 @@ class MefSession():
                     section_2['number_of_samples'] = 0
                 
                     section_3 = ch_md['section_3'].copy()
-                    section_3['recording_time_offset'] = slice_start_stop[0]    
-                
+
                     write_mef_ts_metadata(segment_path,
                                           password_1,
                                           password_2,
@@ -995,7 +994,7 @@ class MefSession():
                                           slice_start_stop[1],
                                           section_2,
                                           section_3)
-                
+
                     data = self.read_ts_channels_uutc(channel, [int(x) for x in ss])
                 
                     tdat_path = (segment_path+channel+'-'+str(segment_n).zfill(6)
@@ -1003,8 +1002,10 @@ class MefSession():
                 
                     if os.path.exists(tdat_path):
                         raise RuntimeError('Data file '+tdat_path+' already exists!')
-                
-                    
+
+                    if np.sum(np.isnan(data)) == len(data):
+                        print(f"Signal of channel {channel} in time {ss} is empty. Skipping...")
+                        continue
                 
                     # lossy compression flag - not used
                     write_mef_ts_data_and_indices(segment_path,
@@ -1019,6 +1020,9 @@ class MefSession():
                 else:
                     
                     data = self.read_ts_channels_uutc(channel, [int(x) for x in ss])
+                    if np.sum(np.isnan(data)) == len(data):
+                        print(f"Signal of channel {channel} in time {ss} is empty. Skipping...")
+                        continue
                     append_ts_data_and_indices(segment_path,
                                                password_1,
                                                password_2,
@@ -1027,6 +1031,12 @@ class MefSession():
                                                spmb,
                                                data.astype('int32'),
                                                True)
+
+            # Once finished check if we have written any data at all
+            if not os.path.exists(tdat_path):
+                print(f"No data written for channel {channel}. Deleting...")
+                shutil.rmtree(slice_session_path+channel+'.timd/')
+
 
     # ----- Data reading functions -----
     def _create_dict_record(self, np_record):
