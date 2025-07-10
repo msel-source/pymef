@@ -80,11 +80,16 @@ jobs:
         pip install twine
 
     - name: Build wheels
-      run: python -m cibuildwheel --output-dir dist/
-      env:
-        CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
-        CIBW_ARCHS: ${{ matrix.buildplat[2] != '' && matrix.buildplat[2] || null }}
-        CIBW_SKIP: "pp*"
+      run: |
+        export CIBW_BUILD="${{ matrix.python }}-${{ matrix.buildplat[1] }}"
+        export CIBW_SKIP="pp*"
+        
+        if [ -n "${{ matrix.buildplat[2] }}" ]; then
+          export CIBW_ARCHS="${{ matrix.buildplat[2] }}"
+        fi
+        
+        python -m cibuildwheel --output-dir dist/
+      shell: bash
 
     - name: Publish package
       env:
