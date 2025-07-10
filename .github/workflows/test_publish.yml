@@ -35,7 +35,7 @@ jobs:
 
     - name: Test package
       run:
-        python -m unittest discover
+        PYTHONPATH=. python -m unittest discover -s pymef/tests
 
   release:
     if: contains(github.ref, 'refs/tags/')
