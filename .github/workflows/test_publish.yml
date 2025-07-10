@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, macos-12, macos-13, macos-14, windows-latest]
+        os: [ubuntu-22.04, macos-13, macos-14, windows-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
@@ -50,7 +50,6 @@ jobs:
       matrix:
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64]
-          - [macos-12, macosx_x86_64]
           - [macos-13, macosx_x86_64]
           - [macos-14, macosx_x86_64]
           - [windows-2019, win_amd64]
