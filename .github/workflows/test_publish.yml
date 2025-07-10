@@ -35,7 +35,7 @@ jobs:
 
     - name: Test package
       run:
-        python setup.py test
+        python -m unittest discover
 
   release:
     if: contains(github.ref, 'refs/tags/')
