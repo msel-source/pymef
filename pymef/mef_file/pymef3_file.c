@@ -1044,7 +1044,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args) {
     (void) initialize_meflib();
 
     // Apply recording offset
-    MEF_globals->recording_time_offset = metadata_fps->metadata.section_3->recording_time_offset;
+    MEF_globals->recording_time_offset = METADATA_RECORDING_TIME_OFFSET_NO_ENTRY;
 
     // NOTE: gen_fps is unecessart here if the metadata file with the universal header already exists, or is it?
     // password entries
