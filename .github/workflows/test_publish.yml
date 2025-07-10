@@ -32,10 +32,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools
         pip install numpy
+        pip install -e .
 
     - name: Test package
       run:
-        PYTHONPATH=. python -m unittest discover -s pymef/tests
+        PYTHONPATH=. python -m unittest
 
   release:
     if: contains(github.ref, 'refs/tags/')
