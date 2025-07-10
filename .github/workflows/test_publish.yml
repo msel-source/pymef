@@ -35,8 +35,10 @@ jobs:
         pip install -e .
 
     - name: Test package
+      env:
+        PYTHONPATH: .
       run:
-        PYTHONPATH=. python -m unittest
+        python -m unittest
 
   release:
     if: contains(github.ref, 'refs/tags/')
