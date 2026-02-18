@@ -23,6 +23,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: pip
+        cache-dependency-path: |
+          pyproject.toml
+          setup.py
 
     - name: Install dependencies
       run: |
@@ -78,6 +81,7 @@ jobs:
       run: python -m cibuildwheel --output-dir dist/
       env:
         CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+        CIBW_ARCHS_MACOS: universal2
 
     - name: Publish package
       env:

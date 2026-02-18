@@ -22,15 +22,19 @@ from setuptools import setup, Extension
 import numpy
 
 # the c extension module
-MEF_FILE_EXT = Extension("pymef.mef_file.pymef3_file",
-                         ["pymef/mef_file/pymef3_file.c"],
-                         include_dirs=["meflib/meflib"],
-                         extra_compile_args=['-O3'])
+MEF_FILE_EXT = Extension(
+    "pymef.mef_file.pymef3_file",
+    ["pymef/mef_file/pymef3_file.c"],
+    include_dirs=[
+        numpy.get_include(),
+        "meflib/meflib",
+    ],
+    extra_compile_args=["-O3"],
+)
 
-setup(name="pymef",
-      install_requires=['numpy'],
-      zip_safe=False,
-      packages=["pymef", "pymef.mef_file"],
-      ext_modules=[MEF_FILE_EXT],
-      include_dirs=[numpy.get_include()],
-      test_suite='tests')
+setup(
+    name="pymef",
+    zip_safe=False,
+    packages=["pymef", "pymef.mef_file"],
+    ext_modules=[MEF_FILE_EXT],
+)
