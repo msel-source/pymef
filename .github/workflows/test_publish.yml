@@ -76,12 +76,17 @@ jobs:
         pip install setuptools
         pip install numpy
         pip install twine
+        pip install build
 
     - name: Build wheels
       run: python -m cibuildwheel --output-dir dist/
       env:
         CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
         CIBW_ARCHS_MACOS: universal2
+
+    - name: Build sdist
+      if: matrix.buildplat[1] == 'manylinux_x86_64' && matrix.python == 'cp312'
+      run: python -m build --sdist
 
     - name: Publish package
       env:
