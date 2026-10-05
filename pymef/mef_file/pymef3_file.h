@@ -235,79 +235,151 @@ static PyObject *clean_mef_segment_metadata(PyObject *self, PyObject *args);
 static PyObject *check_mef_password(PyObject *self, PyObject *args);
 
 /* Python object declaration - numpy data types */
-static PyObject *create_rh_dtype();
-static PyObject *create_ri_dtype();
+static PyObject *create_rh_dtype(void);
+static PyObject *create_ri_dtype(void);
 static PyObject *create_edfa_dtype(PyObject *self, PyObject *args);
 static PyObject *create_edfa_dtype_c(ui4 text_len);
 static PyObject *create_lntp_dtype(PyObject *self, PyObject *args);
 static PyObject *create_lntp_dtype_c(ui4 template_len);
 static PyObject *create_note_dtype(PyObject *self, PyObject *args);
 static PyObject *create_note_dtype_c(ui4 text_len);
-static PyObject *create_seiz_dtype();
-static PyObject *create_seiz_ch_dtype();
+static PyObject *create_seiz_dtype(void);
+static PyObject *create_seiz_ch_dtype(void);
 static PyObject *create_sylg_dtype(PyObject *self, PyObject *args);
 static PyObject *create_sylg_dtype_c(ui4 text_len);
-static PyObject *create_csti_dtype();
-static PyObject *create_esti_dtype();
-static PyObject *create_curs_dtype();
-static PyObject *create_epoc_dtype();
+static PyObject *create_csti_dtype(void);
+static PyObject *create_esti_dtype(void);
+static PyObject *create_curs_dtype(void);
+static PyObject *create_epoc_dtype(void);
 
-static PyObject *create_uh_dtype();
-static PyObject *create_md1_dtype();
-static PyObject *create_tmd2_dtype();
-static PyObject *create_vmd2_dtype();
-static PyObject *create_md3_dtype();
-static PyObject *create_ti_dtype();
-static PyObject *create_vi_dtype();
+static PyObject *create_uh_dtype(void);
+static PyObject *create_md1_dtype(void);
+static PyObject *create_tmd2_dtype(void);
+static PyObject *create_vmd2_dtype(void);
+static PyObject *create_md3_dtype(void);
+static PyObject *create_ti_dtype(void);
+static PyObject *create_vi_dtype(void);
 
-static PyObject *create_segment_dtype();
-static PyObject *create_channel_dtype();
-static PyObject *create_session_dtype();
+static PyObject *create_segment_dtype(void);
+static PyObject *create_channel_dtype(void);
+static PyObject *create_session_dtype(void);
 
+/* Thread safety for free-threaded Python.
+ *
+ * meflib keeps its state in the process-wide MEF_globals struct, which every
+ * entry point re-initializes, modifies, and frees. With the GIL these calls are
+ * already serialized; without it, every function that touches meflib must hold
+ * this lock. PyMutex_Lock detaches the thread state while waiting, so it cannot
+ * deadlock with stop-the-world pauses. */
+#ifdef Py_GIL_DISABLED
+static PyMutex pymef_lock = {0};
+
+#define PYMEF_LOCKED(func) \
+    static PyObject *func##_locked(PyObject *self, PyObject *args) { \
+        PyObject *result; \
+        PyMutex_Lock(&pymef_lock); \
+        result = func(self, args); \
+        PyMutex_Unlock(&pymef_lock); \
+        return result; \
+    }
+#define PYMEF_LOCKED_KW(func) \
+    static PyObject *func##_locked(PyObject *self, PyObject *args, PyObject *kwargs) { \
+        PyObject *result; \
+        PyMutex_Lock(&pymef_lock); \
+        result = func(self, args, kwargs); \
+        PyMutex_Unlock(&pymef_lock); \
+        return result; \
+    }
+#define PYMEF_FUNC(func) func##_locked
+#else
+#define PYMEF_LOCKED(func)
+#define PYMEF_LOCKED_KW(func)
+#define PYMEF_FUNC(func) func
+#endif
+
+PYMEF_LOCKED(write_mef_data_records)
+PYMEF_LOCKED(write_mef_ts_metadata)
+PYMEF_LOCKED(write_mef_v_metadata)
+PYMEF_LOCKED(write_mef_ts_data_and_indices)
+PYMEF_LOCKED(write_mef_v_indices)
+PYMEF_LOCKED(append_ts_data_and_indices)
+PYMEF_LOCKED(read_mef_ts_data)
+PYMEF_LOCKED_KW(read_mef_session_metadata)
+PYMEF_LOCKED_KW(read_mef_channel_metadata)
+PYMEF_LOCKED_KW(read_mef_segment_metadata)
+PYMEF_LOCKED(clean_mef_session_metadata)
+PYMEF_LOCKED(clean_mef_channel_metadata)
+PYMEF_LOCKED(clean_mef_segment_metadata)
+PYMEF_LOCKED(check_mef_password)
+
+/* Python-callable adapters for the argument-less dtype functions (METH_NOARGS) */
+#define PYMEF_NOARGS(func) \
+    static PyObject *func##_noargs(PyObject *self, PyObject *Py_UNUSED(args)) { \
+        return func(); \
+    }
+
+PYMEF_NOARGS(create_rh_dtype)
+PYMEF_NOARGS(create_ri_dtype)
+PYMEF_NOARGS(create_seiz_dtype)
+PYMEF_NOARGS(create_seiz_ch_dtype)
+PYMEF_NOARGS(create_csti_dtype)
+PYMEF_NOARGS(create_esti_dtype)
+PYMEF_NOARGS(create_curs_dtype)
+PYMEF_NOARGS(create_epoc_dtype)
+PYMEF_NOARGS(create_uh_dtype)
+PYMEF_NOARGS(create_md1_dtype)
+PYMEF_NOARGS(create_tmd2_dtype)
+PYMEF_NOARGS(create_vmd2_dtype)
+PYMEF_NOARGS(create_md3_dtype)
+PYMEF_NOARGS(create_ti_dtype)
+PYMEF_NOARGS(create_vi_dtype)
+PYMEF_NOARGS(create_segment_dtype)
+PYMEF_NOARGS(create_channel_dtype)
+PYMEF_NOARGS(create_session_dtype)
 
 /* Specification of the members of the module */
 static PyMethodDef module_methods[] = {
-    {"write_mef_data_records", write_mef_data_records, METH_VARARGS, write_mef_data_records_docstring},
-    {"write_mef_ts_metadata", write_mef_ts_metadata, METH_VARARGS, write_mef_ts_metadata_docstring},
-    {"write_mef_v_metadata", write_mef_v_metadata, METH_VARARGS, write_mef_v_metadata_docstring},
-    {"write_mef_ts_data_and_indices", write_mef_ts_data_and_indices, METH_VARARGS, write_mef_ts_data_and_indices_docstring},
-    {"write_mef_v_indices", write_mef_v_indices, METH_VARARGS, write_mef_v_indices_docstring},
-    {"append_ts_data_and_indices", append_ts_data_and_indices, METH_VARARGS, append_ts_data_and_indices_docstring},
-    {"read_mef_ts_data", read_mef_ts_data, METH_VARARGS, read_mef_ts_data_docstring},
-    {"read_mef_session_metadata", (PyCFunction)read_mef_session_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_session_metadata_docstring},
-    {"read_mef_channel_metadata", (PyCFunction)read_mef_channel_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_channel_metadata_docstring},
-    {"read_mef_segment_metadata", (PyCFunction)read_mef_segment_metadata, METH_VARARGS | METH_KEYWORDS, read_mef_segment_metadata_docstring},
-    {"clean_mef_session_metadata", clean_mef_session_metadata, METH_VARARGS, NULL},
-    {"clean_mef_channel_metadata", clean_mef_channel_metadata, METH_VARARGS, NULL},
-    {"clean_mef_segment_metadata", clean_mef_segment_metadata, METH_VARARGS, NULL},
-    {"check_mef_password", check_mef_password, METH_VARARGS, check_mef_password_docstring},
+    {"write_mef_data_records", PYMEF_FUNC(write_mef_data_records), METH_VARARGS, write_mef_data_records_docstring},
+    {"write_mef_ts_metadata", PYMEF_FUNC(write_mef_ts_metadata), METH_VARARGS, write_mef_ts_metadata_docstring},
+    {"write_mef_v_metadata", PYMEF_FUNC(write_mef_v_metadata), METH_VARARGS, write_mef_v_metadata_docstring},
+    {"write_mef_ts_data_and_indices", PYMEF_FUNC(write_mef_ts_data_and_indices), METH_VARARGS, write_mef_ts_data_and_indices_docstring},
+    {"write_mef_v_indices", PYMEF_FUNC(write_mef_v_indices), METH_VARARGS, write_mef_v_indices_docstring},
+    {"append_ts_data_and_indices", PYMEF_FUNC(append_ts_data_and_indices), METH_VARARGS, append_ts_data_and_indices_docstring},
+    {"read_mef_ts_data", PYMEF_FUNC(read_mef_ts_data), METH_VARARGS, read_mef_ts_data_docstring},
+    {"read_mef_session_metadata", (PyCFunction)PYMEF_FUNC(read_mef_session_metadata), METH_VARARGS | METH_KEYWORDS, read_mef_session_metadata_docstring},
+    {"read_mef_channel_metadata", (PyCFunction)PYMEF_FUNC(read_mef_channel_metadata), METH_VARARGS | METH_KEYWORDS, read_mef_channel_metadata_docstring},
+    {"read_mef_segment_metadata", (PyCFunction)PYMEF_FUNC(read_mef_segment_metadata), METH_VARARGS | METH_KEYWORDS, read_mef_segment_metadata_docstring},
+    {"clean_mef_session_metadata", PYMEF_FUNC(clean_mef_session_metadata), METH_VARARGS, NULL},
+    {"clean_mef_channel_metadata", PYMEF_FUNC(clean_mef_channel_metadata), METH_VARARGS, NULL},
+    {"clean_mef_segment_metadata", PYMEF_FUNC(clean_mef_segment_metadata), METH_VARARGS, NULL},
+    {"check_mef_password", PYMEF_FUNC(check_mef_password), METH_VARARGS, check_mef_password_docstring},
 
     // New numpy stuff
-    {"create_rh_dtype", create_rh_dtype, METH_VARARGS, NULL},
-    {"create_ri_dtype", create_ri_dtype, METH_VARARGS, NULL},
+    {"create_rh_dtype", create_rh_dtype_noargs, METH_NOARGS, NULL},
+    {"create_ri_dtype", create_ri_dtype_noargs, METH_NOARGS, NULL},
     {"create_edfa_dtype", create_edfa_dtype, METH_VARARGS, NULL},
     {"create_lntp_dtype", create_lntp_dtype, METH_VARARGS, NULL},
     {"create_note_dtype", create_note_dtype, METH_VARARGS, NULL},
-    {"create_seiz_dtype", create_seiz_dtype, METH_VARARGS, NULL},
-    {"create_seiz_ch_dtype", create_seiz_ch_dtype, METH_VARARGS, NULL},
+    {"create_seiz_dtype", create_seiz_dtype_noargs, METH_NOARGS, NULL},
+    {"create_seiz_ch_dtype", create_seiz_ch_dtype_noargs, METH_NOARGS, NULL},
     {"create_sylg_dtype", create_sylg_dtype, METH_VARARGS, NULL},
-    {"create_csti_dtype", create_csti_dtype, METH_VARARGS, NULL},
-    {"create_esti_dtype", create_esti_dtype, METH_VARARGS, NULL},
-    {"create_curs_dtype", create_curs_dtype, METH_VARARGS, NULL},
-    {"create_epoc_dtype", create_epoc_dtype, METH_VARARGS, NULL},
+    {"create_csti_dtype", create_csti_dtype_noargs, METH_NOARGS, NULL},
+    {"create_esti_dtype", create_esti_dtype_noargs, METH_NOARGS, NULL},
+    {"create_curs_dtype", create_curs_dtype_noargs, METH_NOARGS, NULL},
+    {"create_epoc_dtype", create_epoc_dtype_noargs, METH_NOARGS, NULL},
 
 
-    {"create_uh_dtype", create_uh_dtype, METH_VARARGS, NULL},
-    {"create_md1_dtype", create_md1_dtype, METH_VARARGS, NULL},
-    {"create_tmd2_dtype", create_tmd2_dtype, METH_VARARGS, NULL},
-    {"create_vmd2_dtype", create_vmd2_dtype, METH_VARARGS, NULL},
-    {"create_md3_dtype", create_md3_dtype, METH_VARARGS, NULL},
-    {"create_ti_dtype", create_ti_dtype, METH_VARARGS, NULL},
-    {"create_vi_dtype", create_vi_dtype, METH_VARARGS, NULL},
+    {"create_uh_dtype", create_uh_dtype_noargs, METH_NOARGS, NULL},
+    {"create_md1_dtype", create_md1_dtype_noargs, METH_NOARGS, NULL},
+    {"create_tmd2_dtype", create_tmd2_dtype_noargs, METH_NOARGS, NULL},
+    {"create_vmd2_dtype", create_vmd2_dtype_noargs, METH_NOARGS, NULL},
+    {"create_md3_dtype", create_md3_dtype_noargs, METH_NOARGS, NULL},
+    {"create_ti_dtype", create_ti_dtype_noargs, METH_NOARGS, NULL},
+    {"create_vi_dtype", create_vi_dtype_noargs, METH_NOARGS, NULL},
 
-    {"create_segment_dtype", create_segment_dtype, METH_VARARGS, NULL},
-    {"create_channel_dtype", create_channel_dtype, METH_VARARGS, NULL},
-    {"create_session_dtype", create_session_dtype, METH_VARARGS, NULL},
+    {"create_segment_dtype", create_segment_dtype_noargs, METH_NOARGS, NULL},
+    {"create_channel_dtype", create_channel_dtype_noargs, METH_NOARGS, NULL},
+    {"create_session_dtype", create_session_dtype_noargs, METH_NOARGS, NULL},
 
     {NULL, NULL, 0, NULL}
 };
@@ -332,6 +404,14 @@ PyObject * PyInit_pymef3_file(void)
 
     if (m == NULL)
         return NULL;
+
+#ifdef Py_GIL_DISABLED
+    /* Safe without the GIL: all meflib access is serialized by pymef_lock */
+    if (PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED) < 0) {
+        Py_DECREF(m);
+        return NULL;
+    }
+#endif
 
     return m;
 }
