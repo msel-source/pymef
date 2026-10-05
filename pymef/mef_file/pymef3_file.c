@@ -132,7 +132,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -146,7 +146,7 @@ static PyObject *write_mef_data_records(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -436,7 +436,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -450,7 +450,7 @@ static PyObject *write_mef_ts_metadata(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -584,7 +584,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -598,7 +598,7 @@ static PyObject *write_mef_v_metadata(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -753,7 +753,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -767,7 +767,7 @@ static PyObject *write_mef_ts_data_and_indices(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -1055,7 +1055,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -1069,7 +1069,7 @@ static PyObject *write_mef_v_indices(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -1216,7 +1216,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args) {
     // password entries
     if (PyUnicode_Check(py_pass_1_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_1_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_1_password = NULL;
@@ -1230,7 +1230,7 @@ static PyObject *append_ts_data_and_indices(PyObject *self, PyObject *args) {
 
     if (PyUnicode_Check(py_pass_2_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_pass_2_obj, "utf-8", "strict"); // Encode to UTF-8 python objects
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 
         if (!*temp_str_bytes)
             level_2_password = NULL;
@@ -1535,7 +1535,7 @@ static PyObject *read_mef_session_metadata(PyObject *self, PyObject *args, PyObj
     // password entries
     if (PyUnicode_Check(py_password_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str);
         
         if (!*temp_str_bytes)
             password = NULL;
@@ -1600,7 +1600,7 @@ static PyObject *read_mef_channel_metadata(PyObject *self, PyObject *args, PyObj
     // password entries
     if (PyUnicode_Check(py_password_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str);
         
         if (!*temp_str_bytes)
             password = NULL;
@@ -1665,7 +1665,7 @@ static PyObject *read_mef_segment_metadata(PyObject *self, PyObject *args, PyObj
     // password entries
     if (PyUnicode_Check(py_password_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str);
         
 		if (!*temp_str_bytes)
             password = NULL;
@@ -2419,7 +2419,7 @@ sf16     ?
 ---- for strings a bit more complicated
 
 temp_UTF_str = PyUnicode_AsEncodedString(temp_o, "utf-8","strict"); // Encode to UTF-8 python objects
-temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str); // Get the *char 
+temp_str_bytes = PyBytes_AsString(temp_UTF_str); // Get the *char 
 MEF_strcpy(rh->type_string, temp_str_bytes); // assign to char that we want
 
 */
@@ -2804,7 +2804,7 @@ PyObject *map_mef3_ti(TIME_SERIES_INDEX *ti, si8 number_of_entries, si1 copy_met
 			PY_DICTSET_BYTEARRSIZE(py_ti_entry_dict, "RED_block_protected_region",      ti_entry->RED_block_protected_region, RED_BLOCK_PROTECTED_REGION_BYTES);
 			PY_DICTSET_BYTEARRSIZE(py_ti_entry_dict, "RED_block_discretionary_region",  ti_entry->RED_block_discretionary_region, RED_BLOCK_DISCRETIONARY_REGION_BYTES);
 			
-			PyList_SET_ITEM(py_array_out, i, py_ti_entry_dict); 	// steals reference 'py_ti_entry_dict'
+			PyList_SetItem(py_array_out, i, py_ti_entry_dict); 	// steals reference 'py_ti_entry_dict'
 
 			// next entry
 			ti_entry += 1;
@@ -2853,7 +2853,7 @@ PyObject *map_mef3_vi(VIDEO_INDEX *vi, si8 number_of_entries, si1 copy_metadata_
 			PY_DICTSET_BYTEARRSIZE(py_vi_entry_dict, "protected_region",          vi_entry->protected_region, VIDEO_INDEX_PROTECTED_REGION_BYTES);
 			PY_DICTSET_BYTEARRSIZE(py_vi_entry_dict, "discretionary_region",      vi_entry->discretionary_region, VIDEO_INDEX_DISCRETIONARY_REGION_BYTES);
 			
-			PyList_SET_ITEM(py_array_out, i, py_vi_entry_dict); 	// steals reference 'py_ti_entry_dict'
+			PyList_SetItem(py_array_out, i, py_vi_entry_dict); 	// steals reference 'py_ti_entry_dict'
 
 			// next entry
 			vi_entry += 1;
@@ -3484,7 +3484,7 @@ PyObject *map_mef3_records(FILE_PROCESSING_STRUCT *ri_fps, FILE_PROCESSING_STRUC
         record_dict = map_mef3_rh(rh, copy_metadata_to_dict);
 		
 		// Note: ASK Matt / Dan. Could also be type_string, 
-        PyList_SET_ITEM(all_record_list, i, record_dict); 	// steals reference to object coming out of map_mef3_rh
+        PyList_SetItem(all_record_list, i, record_dict); 	// steals reference to object coming out of map_mef3_rh
 
         rd += (RECORD_HEADER_BYTES + rh->bytes);
         
@@ -3734,7 +3734,7 @@ PyObject *map_mef3_LNTP_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict) {
 		// Note: commented out because discrepancy between show_mefrec_LNTP_type (si4) and create_lntp_dtype_c (i8), need to verify/test
 		//PyObject* template_list = PyList_New(lntp->length);
 		//for(int i = 0; i < lntp->length; i++)
-		//  PyList_SET_ITEM(list, i, Py_BuildValue("i", template[i])); 	// steals reference to object coming out of Py_BuildValue
+		//  PyList_SetItem(list, i, Py_BuildValue("i", template[i])); 	// steals reference to object coming out of Py_BuildValue
 		//PyDict_SetItemString(py_array_out, "template",                  template_list);
 		//Py_DECREF(template_list);
 		
@@ -3816,7 +3816,7 @@ PyObject *map_mef3_Seiz_ch_type(RECORD_HEADER *rh, si4 number_of_channels, si1 c
 			PY_DICTSET_LONG (py_dict_seiz_channel, "onset",               seiz_channels[i].onset);
 			PY_DICTSET_LONG (py_dict_seiz_channel, "offset",              seiz_channels[i].offset);
 				
-			PyList_SET_ITEM(py_array_out, i, py_dict_seiz_channel); 	// steals reference to object py_dict_seiz_channel
+			PyList_SetItem(py_array_out, i, py_dict_seiz_channel); 	// steals reference to object py_dict_seiz_channel
 			
 		}
 		
@@ -4015,7 +4015,7 @@ PyObject *map_mef3_Epoc_type(RECORD_HEADER *rh, si1 copy_metadata_to_dict) {
 /**************************  Numpy data types  ****************************/
 
 // Records
-static PyObject *create_rh_dtype() {
+static PyObject *create_rh_dtype(void) {
 
     import_array();
 
@@ -4045,7 +4045,7 @@ static PyObject *create_rh_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_ri_dtype() {
+static PyObject *create_ri_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4213,7 +4213,7 @@ static PyObject *create_note_dtype_c(ui4 text_len) {
     return (PyObject *) descr;
 }
 
-static PyObject *create_seiz_dtype() {
+static PyObject *create_seiz_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4245,7 +4245,7 @@ static PyObject *create_seiz_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_seiz_ch_dtype() {
+static PyObject *create_seiz_ch_dtype(void) {
 
     import_array();
 
@@ -4311,7 +4311,7 @@ static PyObject *create_sylg_dtype_c(ui4 text_len) {
     return (PyObject *) descr;
 }
 
-static PyObject *create_csti_dtype() {
+static PyObject *create_csti_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4335,7 +4335,7 @@ static PyObject *create_csti_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_esti_dtype() {
+static PyObject *create_esti_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4367,7 +4367,7 @@ static PyObject *create_esti_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_curs_dtype() {
+static PyObject *create_curs_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4393,7 +4393,7 @@ static PyObject *create_curs_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_epoc_dtype() {
+static PyObject *create_epoc_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4422,7 +4422,7 @@ static PyObject *create_epoc_dtype() {
 }
 
 // Library
-static PyObject *create_uh_dtype() {
+static PyObject *create_uh_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4483,7 +4483,7 @@ static PyObject *create_uh_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_md1_dtype() {
+static PyObject *create_md1_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4507,7 +4507,7 @@ static PyObject *create_md1_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_tmd2_dtype() {
+static PyObject *create_tmd2_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4578,7 +4578,7 @@ static PyObject *create_tmd2_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_vmd2_dtype() {
+static PyObject *create_vmd2_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4619,7 +4619,7 @@ static PyObject *create_vmd2_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_md3_dtype() {
+static PyObject *create_md3_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4655,7 +4655,7 @@ static PyObject *create_md3_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_ti_dtype() {
+static PyObject *create_ti_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4693,7 +4693,7 @@ static PyObject *create_ti_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_vi_dtype() {
+static PyObject *create_vi_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4724,7 +4724,7 @@ static PyObject *create_vi_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_segment_dtype() {
+static PyObject *create_segment_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4763,7 +4763,7 @@ static PyObject *create_segment_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_channel_dtype() {
+static PyObject *create_channel_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -4811,7 +4811,7 @@ static PyObject *create_channel_dtype() {
     return (PyObject *) descr;
 }
 
-static PyObject *create_session_dtype() {
+static PyObject *create_session_dtype(void) {
     import_array();
 
     // Numpy array out
@@ -5046,7 +5046,7 @@ static PyObject *check_mef_password(PyObject *self, PyObject *args) {
 	// password entries
     if (PyUnicode_Check(py_password_obj)) {
         temp_UTF_str = PyUnicode_AsEncodedString(py_password_obj, "utf-8", "strict");
-        temp_str_bytes = PyBytes_AS_STRING(temp_UTF_str);
+        temp_str_bytes = PyBytes_AsString(temp_UTF_str);
         
         if (!*temp_str_bytes)
             password = NULL;

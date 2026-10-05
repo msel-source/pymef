@@ -20,8 +20,12 @@ United States
 
 # Standard library imports
 import unittest
+import sys
+import sysconfig
 import tempfile
+import threading
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 
 # Third party imports
 import numpy as np
@@ -874,6 +878,40 @@ class TestStringMethods(unittest.TestCase):
         ts_metadata_file = self.ts_seg1_path + '/ts_channel-000000.tmet'
         result = pymef3_file.check_mef_password(ts_metadata_file, self.pwd_2)
         self.assertEqual(2, result)
+
+    # ----- Thread safety -----
+
+    @unittest.skipUnless(sysconfig.get_config_var('Py_GIL_DISABLED'),
+                         'requires free-threaded Python')
+    def test_gil_not_reenabled(self):
+        self.assertFalse(sys._is_gil_enabled())
+
+    def test_concurrent_use(self):
+        # meflib uses process-wide globals, so concurrent calls must be
+        # serialized (by the GIL, or by pymef's lock on free-threaded Python)
+        ts_metadata_file = self.ts_seg1_path + '/ts_channel-000000.tmet'
+        expected_sum = np.sum(self.raw_data_all)
+        n_threads = 8
+        barrier = threading.Barrier(n_threads)
+
+        def work():
+            barrier.wait()
+            results = []
+            for _ in range(5):
+                results.append(
+                    pymef3_file.check_mef_password(ts_metadata_file,
+                                                   self.pwd_2))
+                ms = MefSession(self.mef_session_path, self.pwd_2)
+                data = ms.read_ts_channels_sample(self.ts_channel,
+                                                  [None, None])
+                results.append(np.sum(data))
+                ms.close()
+            return results
+
+        with ThreadPoolExecutor(n_threads) as executor:
+            futures = [executor.submit(work) for _ in range(n_threads)]
+            for future in futures:
+                self.assertEqual(future.result(), [2, expected_sum] * 5)
 
 
 if __name__ == '__main__':

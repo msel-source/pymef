@@ -19,6 +19,7 @@ United States
 """
 
 import sys
+import sysconfig
 
 from setuptools import setup, Extension
 import numpy
@@ -30,6 +31,18 @@ if sys.platform != "win32":
     # It is by default on x86 and Apple arm64, but not on Linux aarch64.
     extra_compile_args.append("-fsigned-char")
 
+# Build abi3 (limited API) wheels, except on free-threaded Python, where the
+# limited API is not yet supported (https://github.com/python/cpython/issues/111506)
+use_limited_api = not sysconfig.get_config_var("Py_GIL_DISABLED")
+limited_api_kwargs = dict()
+setup_options = dict()
+if use_limited_api:
+    limited_api_kwargs = dict(
+        define_macros=[("Py_LIMITED_API", "0x030A0000")],  # Python 3.10+
+        py_limited_api=True,
+    )
+    setup_options = {"bdist_wheel": {"py_limited_api": "cp310"}}
+
 # the c extension module
 MEF_FILE_EXT = Extension(
     "pymef.mef_file.pymef3_file",
@@ -39,6 +52,7 @@ MEF_FILE_EXT = Extension(
         "meflib/meflib",
     ],
     extra_compile_args=extra_compile_args,
+    **limited_api_kwargs,
 )
 
 setup(
@@ -46,4 +60,5 @@ setup(
     zip_safe=False,
     packages=["pymef", "pymef.mef_file"],
     ext_modules=[MEF_FILE_EXT],
+    options=setup_options,
 )

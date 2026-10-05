@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-    "setuptools>=42",
-    "wheel",
+    "setuptools>=70.1",
     "numpy>=2.0"
 ]
 build-backend = "setuptools.build_meta"
@@ -27,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Free Threading :: 2 - Beta",
     "Topic :: Scientific/Engineering",
 ]
 keywords = ["MEF", "Mayo", "Electrophysiology"]
@@ -43,3 +43,13 @@ version = {attr = "pymef.version.__version__"}
 homepage = "https://github.com/msel-source/pymef"
 documentation = "https://pymef.readthedocs.io/"
 repository = "https://github.com/msel-source/pymef"
+
+[tool.cibuildwheel]
+# The cp310 build produces an abi3 wheel; later versions reuse it and only run tests.
+# Free-threaded CPython (cp314t, cp315t) can't use the limited API, so it gets
+# version-specific wheels.
+build = "cp3*-*"
+archs = "native"
+test-requires = "pytest"
+test-sources = ["tests"]
+test-command = "pytest tests"
