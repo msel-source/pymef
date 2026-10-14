@@ -4,6 +4,12 @@
 Pymef
 ====
 
+> [!IMPORTANT]
+> **This package is being gradually discontinued in favour of
+> [Mef3IO](https://github.com/bnelair/mef3io).** Mef3IO is backward compatible with
+> pymef and is more actively maintained, so new projects should use it and existing
+> pymef users are encouraged to migrate.
+
 Pymef is a wrapper library for Multiscale Electrophysiology Format developed by 
 [MSEL laboratory](http://msel.mayo.edu/).
 
